@@ -1,0 +1,34 @@
+import { Routes, Route, NavLink } from 'react-router-dom'
+import AvatarsPage from './pages/AvatarsPage'
+import SessionsPage from './pages/SessionsPage'
+import TablePage from './pages/TablePage'
+import styles from './App.module.css'
+
+export default function App() {
+  return (
+    <div className={styles.layout}>
+      <header className={styles.header}>
+        <span className={styles.logo}>⚔ Vestige</span>
+        <nav className={styles.nav}>
+          <NavLink to="/" end className={({ isActive }) => isActive ? styles.active : ''}>
+            Avatars
+          </NavLink>
+          <NavLink to="/sessions" className={({ isActive }) => isActive ? styles.active : ''}>
+            Sessions
+          </NavLink>
+          <NavLink to="/table" className={({ isActive }) => isActive ? styles.active : ''}>
+            Table
+          </NavLink>
+        </nav>
+      </header>
+
+      <main className={styles.main}>
+        <Routes>
+          <Route path="/" element={<AvatarsPage />} />
+          <Route path="/sessions" element={<SessionsPage />} />
+          <Route path="/table" element={<TablePage />} />
+        </Routes>
+      </main>
+    </div>
+  )
+}

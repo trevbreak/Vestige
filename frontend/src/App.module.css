@@ -1,0 +1,51 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 2rem;
+  background: var(--bg-parchment);
+  border-bottom: 1px solid var(--border-gold);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+.nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav a {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding: 0.3rem 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  text-decoration: none;
+}
+
+.nav a:hover { color: var(--gold-light); }
+
+.nav a.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.main {
+  flex: 1;
+  padding: 1.5rem 2rem;
+}

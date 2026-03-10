@@ -1,0 +1,155 @@
+/* === Vestige — DnD AI Avatar System === */
+/* D&D Aesthetic: dark parchment, amber/gold, deep crimson */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg-deep:        #0f0d0a;
+  --bg-parchment:   #1a1510;
+  --bg-card:        #221d15;
+  --bg-card-hover:  #2a2318;
+  --border:         #3d3020;
+  --border-gold:    #7a5c2e;
+
+  --gold:           #c8973a;
+  --gold-light:     #e8b84b;
+  --gold-dim:       #7a5c2e;
+  --crimson:        #8b1a1a;
+  --crimson-light:  #c0392b;
+  --amber:          #d4813a;
+
+  --text-primary:   #e8dcc8;
+  --text-secondary: #a08c6e;
+  --text-muted:     #6b5c44;
+
+  --status-active:   #4caf50;
+  --status-passive:  #ff9800;
+  --status-absent:   #607d8b;
+  --status-speaking: #e8b84b;
+  --status-thinking: #d4813a;
+
+  --font-heading: 'Cinzel', serif;
+  --font-body:    'IM Fell English', serif;
+  --font-ui:      'Inter', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-parchment); }
+::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 3px; }
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-heading);
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+
+a { color: var(--gold); text-decoration: none; }
+a:hover { color: var(--gold-light); }
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.btn {
+  padding: 0.5rem 1.2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  color: var(--gold);
+}
+.btn:hover { background: var(--bg-card-hover); color: var(--gold-light); }
+
+.btn-primary {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  color: var(--bg-deep);
+  font-weight: 600;
+}
+.btn-primary:hover { background: var(--gold); }
+
+.btn-danger {
+  background: var(--crimson);
+  border-color: var(--crimson-light);
+  color: #fff;
+}
+.btn-danger:hover { background: var(--crimson-light); }
+
+.btn-sm { padding: 0.3rem 0.8rem; font-size: 0.8rem; }
+
+input, select, textarea {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  padding: 0.45rem 0.7rem;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--gold-dim);
+}
+textarea { resize: vertical; min-height: 80px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 0.75rem 0; }
+
+.mode-badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.mode-active  { background: #1b3a1e; color: var(--status-active);  border: 1px solid #2e6633; }
+.mode-passive { background: #3a2a10; color: var(--status-passive); border: 1px solid #6e4e18; }
+.mode-absent  { background: #1c2430; color: var(--status-absent);  border: 1px solid #374957; }
+
+@keyframes candleflame {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(200,151,58,0.35); }
+  50%       { box-shadow: 0 0 18px 6px rgba(200,151,58,0.7); }
+}
+.speaking { animation: candleflame 1.4s ease-in-out infinite; }
+
+.text-muted     { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+.text-gold      { color: var(--gold); }
+.text-crimson   { color: var(--crimson-light); }
+.flex           { display: flex; }
+.flex-col       { flex-direction: column; }
+.items-center   { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.mt-1  { margin-top: 0.25rem; }
+.mt-2  { margin-top: 0.5rem; }
+.mt-4  { margin-top: 1rem; }
+.w-full { width: 100%; }
