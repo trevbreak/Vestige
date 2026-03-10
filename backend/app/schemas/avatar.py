@@ -80,6 +80,7 @@ class AvatarUpdate(BaseModel):
     sentence_style: Optional[str] = None
     verbal_tics: Optional[str] = None
     never_say: Optional[str] = None
+    voice_embedding_path: Optional[str] = None
 
     skill_proficiencies: Optional[list[str]] = None
     spells_known: Optional[dict[str, Any]] = None
@@ -97,6 +98,7 @@ class AvatarResponse(AvatarBase):
     updated_at: Optional[datetime] = None
     portrait_path: Optional[str] = None
     voice_sample_path: Optional[str] = None
+    voice_embedding_path: Optional[str] = None
     is_active: bool
 
     model_config = {"from_attributes": True}

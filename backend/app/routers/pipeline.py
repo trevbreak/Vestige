@@ -35,6 +35,8 @@ async def start_pipeline(session_id: int, db: AsyncSession = Depends(get_db)):
     avatar_names: dict[int, str] = {}
     avatar_modes: dict[int, str] = {}
 
+    avatar_embeddings: dict[int, str] = {}
+
     if avatar_ids:
         result = await db.execute(
             select(Avatar).where(Avatar.id.in_(avatar_ids))
@@ -44,9 +46,16 @@ async def start_pipeline(session_id: int, db: AsyncSession = Depends(get_db)):
             # Session overrides avatar's default mode if set
             mode = session.avatar_modes.get(str(avatar.id), avatar.mode)
             avatar_modes[avatar.id] = mode
+            if avatar.voice_embedding_path:
+                avatar_embeddings[avatar.id] = avatar.voice_embedding_path
 
     async def broadcast_entry(entry):
+        """Broadcast a TranscriptEntry (from AudioPipeline)."""
         await ws_manager.broadcast_transcript(session_id, entry)
+
+    async def broadcast_dict(msg: dict):
+        """Broadcast a raw dict (from AudioOutputManager / PresenceLayer)."""
+        await ws_manager.broadcast(msg)
 
     await pipeline_manager.start(
         session_id=session_id,
@@ -54,6 +63,8 @@ async def start_pipeline(session_id: int, db: AsyncSession = Depends(get_db)):
         avatar_names=avatar_names,
         avatar_modes=avatar_modes,
         broadcast_fn=broadcast_entry,
+        broadcast_dict_fn=broadcast_dict,
+        avatar_embeddings=avatar_embeddings,
     )
 
     await ws_manager.broadcast_pipeline_status(session_id, "started")

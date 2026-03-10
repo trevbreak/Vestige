@@ -49,6 +49,7 @@ class Avatar(Base):
     verbal_tics = Column(Text, nullable=True)             # e.g. "often invokes their deity"
     never_say = Column(Text, nullable=True)               # newline-separated list
     voice_sample_path = Column(String(500), nullable=True)
+    voice_embedding_path = Column(String(500), nullable=True)  # path to .npz speaker embedding
 
     # Skills (JSON list of proficient skills)
     skill_proficiencies = Column(JSON, nullable=True, default=list)

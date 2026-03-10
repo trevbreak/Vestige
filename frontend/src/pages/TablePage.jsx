@@ -1,20 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useAvatarStore } from '../stores/avatarStore'
 import { useSessionStore } from '../stores/sessionStore'
+import { useAudioPlayer } from '../hooks/useAudioPlayer'
 import { api } from '../api/client'
 import styles from './TablePage.module.css'
 
 const MODE_ICONS = { active: '🎙', passive: '💬', absent: '💤' }
 
-const STATUS_LABELS = {
-  active: 'Listening',
-  passive: 'Passive',
-  absent: 'Absent',
-  speaking: 'Speaking',
-  thinking: 'Thinking…',
-}
-
-// Avatar status derived from real-time events
 const UTTERANCE_TYPE_LABELS = {
   speech: '',
   backchannel: '💬',
@@ -30,9 +22,12 @@ export default function TablePage() {
   const [transcripts, setTranscripts] = useState([])
   const [wsStatus, setWsStatus] = useState('disconnected')
   const [pipelineRunning, setPipelineRunning] = useState(false)
-  const [avatarStatuses, setAvatarStatuses] = useState({}) // {name: 'thinking'|'speaking'|null}
+  const [avatarStatuses, setAvatarStatuses] = useState({}) // {avatarId: 'thinking'|'speaking'|null}
   const wsRef = useRef(null)
   const transcriptEndRef = useRef(null)
+
+  // Audio playback via Web Audio API
+  const { handleWsMessage: handleAudio, speaking, cancelAll } = useAudioPlayer()
 
   useEffect(() => {
     fetchAvatars()
@@ -42,7 +37,6 @@ export default function TablePage() {
   useEffect(() => {
     if (!selectedSessionId) return
     api.getTranscripts(selectedSessionId).then(setTranscripts).catch(console.error)
-    // Check pipeline status
     fetch(`/api/pipeline/${selectedSessionId}/status`)
       .then((r) => r.json())
       .then((d) => setPipelineRunning(d.running))
@@ -68,27 +62,47 @@ export default function TablePage() {
       let msg
       try { msg = JSON.parse(e.data) } catch { return }
 
+      // ── Audio messages → audio player hook ──────────────────────────
+      if (['audio_start', 'audio_chunk', 'audio_end', 'avatar_speaking'].includes(msg.type)) {
+        handleAudio(msg)
+      }
+
+      // ── Transcript message ───────────────────────────────────────────
       if (msg.type === 'transcript' && msg.session_id === selectedSessionId) {
         const entry = msg.entry
         setTranscripts((prev) => [...prev, { ...entry, _key: Date.now() + Math.random() }])
 
-        // Update avatar thinking/speaking status
         if (entry.speaker_type === 'avatar') {
           const status = entry.utterance_type === 'holding_phrase' ? 'thinking' : 'speaking'
           setAvatarStatuses((prev) => ({ ...prev, [entry.speaker]: status }))
-          // Clear after a short delay
           setTimeout(() => {
             setAvatarStatuses((prev) => {
               const next = { ...prev }
               if (next[entry.speaker] === status) delete next[entry.speaker]
               return next
             })
-          }, entry.utterance_type === 'holding_phrase' ? 8000 : 3000)
+          }, entry.utterance_type === 'holding_phrase' ? 8000 : 4000)
         }
       }
 
+      // ── Avatar speaking (from audio output manager) ──────────────────
+      if (msg.type === 'avatar_speaking' && msg.session_id === selectedSessionId) {
+        const key = msg.avatar_name
+        if (msg.speaking) {
+          setAvatarStatuses((prev) => ({ ...prev, [key]: 'speaking' }))
+        } else {
+          setAvatarStatuses((prev) => {
+            const next = { ...prev }
+            if (next[key] === 'speaking') delete next[key]
+            return next
+          })
+        }
+      }
+
+      // ── Pipeline status ──────────────────────────────────────────────
       if (msg.type === 'pipeline_status' && msg.session_id === selectedSessionId) {
         setPipelineRunning(msg.status === 'started')
+        if (msg.status === 'stopped') cancelAll()
       }
     }
 
@@ -96,7 +110,7 @@ export default function TablePage() {
     ws.onerror = () => setWsStatus('error')
 
     return () => ws.close()
-  }, [selectedSessionId])
+  }, [selectedSessionId, handleAudio, cancelAll])
 
   const togglePipeline = async () => {
     if (!selectedSessionId) return
@@ -116,6 +130,12 @@ export default function TablePage() {
         return s ? avatars.filter((a) => s.avatar_ids.includes(a.id)) : []
       })()
     : []
+
+  // Merge audio player "speaking" state with WS-driven statuses
+  const getAvatarStatus = (avatar) => {
+    if (speaking?.avatarId === avatar.id) return 'speaking'
+    return avatarStatuses[avatar.name] ?? null
+  }
 
   return (
     <div className={styles.table}>
@@ -147,7 +167,7 @@ export default function TablePage() {
             <AvatarPanel
               key={avatar.id}
               avatar={avatar}
-              status={avatarStatuses[avatar.name] ?? null}
+              status={getAvatarStatus(avatar)}
             />
           ))}
           {selectedSessionId && sessionAvatars.length === 0 && (
@@ -225,7 +245,7 @@ function AvatarPanel({ avatar, status }) {
         <span className={`mode-badge mode-${avatar.mode}`}>
           {isSpeaking ? '🗣 Speaking'
            : isThinking ? '⏳ Thinking…'
-           : `${MODE_ICONS[avatar.mode]} ${STATUS_LABELS[avatar.mode]}`}
+           : `${MODE_ICONS[avatar.mode]} ${avatar.mode === 'active' ? 'Listening' : avatar.mode === 'passive' ? 'Passive' : 'Absent'}`}
         </span>
       </div>
     </div>
@@ -237,11 +257,9 @@ function TranscriptLine({ entry }) {
   const isDM = entry.speaker_type === 'dm'
   const isHolding = entry.utterance_type === 'holding_phrase'
   const isBackchannel = entry.utterance_type === 'backchannel'
-  const isInaudible = entry.utterance_type === 'inaudible'
   const isOverlap = entry.utterance_type === 'overlap'
 
-  // Hide noise/inaudible from main transcript
-  if (isInaudible) return null
+  if (entry.utterance_type === 'inaudible') return null
 
   const lineClass = [
     styles.line,

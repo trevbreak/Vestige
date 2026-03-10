@@ -13,7 +13,7 @@
 |---|---|---|
 | **1** | Foundation — API, DB schema, avatar/session CRUD, D&D UI | ✅ Complete |
 | **2** | Voice Input — mic capture, VAD (silero), STT (faster-whisper), AEC | ✅ Complete |
-| **3** | Voice Output — XTTS-v2 TTS, voice cloning, backchannel pre-gen | 🔲 Pending |
+| **3** | Voice Output — XTTS-v2 TTS, voice cloning, backchannel pre-gen | ✅ Complete |
 | **4** | AI Brain — Ollama/Claude router, context engine, prompt builder | 🔲 Pending |
 | **5** | Memory — session transcripts, embeddings, sqlite-vec retrieval | 🔲 Pending |
 | **6** | Rules Engine — D&D 5e action economy, spells, conditions, combat | 🔲 Pending |
@@ -118,7 +118,9 @@ vestige/
 │   │   ├── models/              # SQLAlchemy models
 │   │   ├── schemas/             # Pydantic schemas
 │   │   ├── routers/             # API routers + WebSocket
-│   │   └── services/            # Business logic (Phase 2+)
+│   │   ├── audio/               # Pipeline, VAD, STT, TTS, AEC, post-processor
+│   │   ├── presence/            # Backchannel player, ambient reactions, layer
+│   │   └── services/            # Business logic (pipeline manager, etc.)
 │   ├── tests/                   # pytest test suite
 │   ├── requirements.txt
 │   └── pytest.ini
@@ -144,6 +146,7 @@ vestige/
 
 - [Phase 1 — Foundation](docs/phase1-foundation.md)
 - [Phase 2 — Voice Input Pipeline](docs/phase2-voice-input.md)
+- [Phase 3 — Voice Output Pipeline](docs/phase3-voice-output.md)
 
 ---
 

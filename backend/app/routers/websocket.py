@@ -1,9 +1,13 @@
 """
-WebSocket endpoint for real-time transcript streaming to the browser.
+WebSocket endpoint for real-time transcript and audio streaming to the browser.
 
 Message types sent to clients:
   { type: "transcript", session_id, entry: TranscriptEntry }
   { type: "pipeline_status", status: "started"|"stopped", session_id }
+  { type: "avatar_speaking", session_id, avatar_id, avatar_name, utterance_type, speaking }
+  { type: "audio_start", session_id, avatar_id, avatar_name, utterance_type, total_bytes }
+  { type: "audio_chunk", session_id, avatar_id, data: base64, offset }
+  { type: "audio_end", session_id, avatar_id, avatar_name, cancelled }
   { type: "pong" }
 
 Messages received from clients:
