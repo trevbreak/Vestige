@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     # ── AI / LLM ──────────────────────────────────────────────────────────
     anthropic_api_key: str = ""
     ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3.1:8b"
+    ollama_timeout_s: float = 30.0
+    claude_model: str = "claude-haiku-4-5-20251001"
+    claude_max_tokens: int = 256
 
     # ── Audio Input ───────────────────────────────────────────────────────
     mic_device_index: int = 0

@@ -5,9 +5,11 @@ Provides start/stop control from the API layer.
 Injects the WebSocket broadcast function so the pipeline can push
 transcript entries to connected browsers.
 
-Phase 3: Also manages TTSEngine (singleton), AudioOutputManager (per session),
-and PresenceLayer (per session). Speaker embeddings are loaded automatically
-from avatar.voice_embedding_path when the pipeline starts.
+Phase 3: Manages TTSEngine (singleton), AudioOutputManager (per session),
+and PresenceLayer (per session).
+
+Phase 4: Creates LLMDispatcher per session. Stores avatar profiles so the
+dispatcher can build DispatchRequest objects without DB access.
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ if TYPE_CHECKING:
     from app.audio.pipeline import AudioPipeline
     from app.audio.output_manager import AudioOutputManager
     from app.presence.layer import PresenceLayer
+    from app.llm.dispatcher import LLMDispatcher
 
 log = structlog.get_logger()
 
@@ -31,6 +34,7 @@ class PipelineManager:
         self._output_managers: dict[int, "AudioOutputManager"] = {}
         self._output_tasks: dict[int, asyncio.Task] = {}
         self._presence_layers: dict[int, "PresenceLayer"] = {}
+        self._dispatchers: dict[int, "LLMDispatcher"] = {}
 
         # TTS engine is a singleton — loaded once on first use
         self._tts_engine = None
@@ -53,46 +57,35 @@ class PipelineManager:
         broadcast_fn,
         broadcast_dict_fn=None,
         avatar_embeddings: dict[int, str] | None = None,
+        avatar_profiles: dict[int, dict] | None = None,
     ) -> None:
         """
         Start the full pipeline for a session.
 
         broadcast_fn:      async (TranscriptEntry) → None — for pipeline transcripts
         broadcast_dict_fn: async (dict) → None — for audio/status messages
-                           Falls back to broadcast_fn if not provided (legacy).
         avatar_embeddings: {avatar_id: voice_embedding_path}
+        avatar_profiles:   {avatar_id: dict of Avatar fields} for prompt building
         """
         if session_id in self._pipelines:
             log.warning("pipeline_manager.already_running", session_id=session_id)
             return
 
-        # Use broadcast_dict_fn for raw dict messages; fall back if not provided
         _broadcast_dict = broadcast_dict_fn or broadcast_fn
 
         from app.audio.pipeline import AudioPipeline
         from app.audio.output_manager import AudioOutputManager
         from app.presence.layer import PresenceLayer
+        from app.llm.dispatcher import LLMDispatcher
 
         # ── TTS engine (singleton) ─────────────────────────────────────────
         tts = self._get_tts_engine()
 
-        # Load speaker embeddings for each avatar that has one
         if avatar_embeddings:
             for aid, emb_path in avatar_embeddings.items():
                 if emb_path:
                     ok = tts.load_speaker_embedding(aid, emb_path)
-                    if ok:
-                        log.info(
-                            "pipeline_manager.embedding_loaded",
-                            avatar_id=aid,
-                            path=emb_path,
-                        )
-                    else:
-                        log.warning(
-                            "pipeline_manager.embedding_failed",
-                            avatar_id=aid,
-                            path=emb_path,
-                        )
+                    log.info("pipeline_manager.embedding_loaded", avatar_id=aid, ok=ok)
 
         # ── AudioPipeline (owns the EchoGate we'll share) ─────────────────
         pipeline = AudioPipeline(
@@ -109,9 +102,6 @@ class PipelineManager:
             broadcast_fn=_broadcast_dict,
             aec_gate=pipeline._gate,
         )
-        # Wire TTS lifecycle into pipeline's AEC gate
-        # When output_manager plays, the gate is already managed internally.
-        # We expose output_manager on the pipeline so future phases can call it.
         pipeline._output_manager = output_manager
 
         # ── PresenceLayer ─────────────────────────────────────────────────
@@ -120,12 +110,30 @@ class PipelineManager:
             output_manager=output_manager,
             broadcast_fn=_broadcast_dict,
         )
-        presence._tts_engine = tts  # stash for Phase 4 use via play_holding_phrase
+
+        # ── LLMDispatcher ─────────────────────────────────────────────────
+        dispatcher = LLMDispatcher(
+            session_id=session_id,
+            tts_engine=tts,
+            output_manager=output_manager,
+            presence_layer=presence,
+            context_engine=pipeline._context_engine,
+            broadcast_fn=_broadcast_dict,
+        )
+
+        # Store avatar profiles for building DispatchRequests
+        dispatcher._avatar_profiles = avatar_profiles or {}
+
+        # Cross-references: pipeline → dispatcher (to fire LLM calls)
+        #                   dispatcher → pipeline (to append avatar lines to context)
+        pipeline._dispatcher = dispatcher
+        dispatcher._pipeline = pipeline
 
         # Store references
         self._pipelines[session_id] = pipeline
         self._output_managers[session_id] = output_manager
         self._presence_layers[session_id] = presence
+        self._dispatchers[session_id] = dispatcher
 
         # Start background tasks
         task = asyncio.create_task(pipeline.run(), name=f"pipeline-{session_id}")
@@ -144,6 +152,7 @@ class PipelineManager:
         output_manager = self._output_managers.pop(session_id, None)
         out_task = self._output_tasks.pop(session_id, None)
         self._presence_layers.pop(session_id, None)
+        self._dispatchers.pop(session_id, None)
 
         if pipeline:
             pipeline.stop()
@@ -171,6 +180,9 @@ class PipelineManager:
 
     def get_presence_layer(self, session_id: int) -> "PresenceLayer | None":
         return self._presence_layers.get(session_id)
+
+    def get_dispatcher(self, session_id: int) -> "LLMDispatcher | None":
+        return self._dispatchers.get(session_id)
 
 
 pipeline_manager = PipelineManager()

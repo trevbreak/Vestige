@@ -93,6 +93,9 @@ class AudioPipeline:
         # Track silence gap for passive triggers
         self._last_human_speech_at: float = 0.0
 
+        # Rolling transcript lines for LLM prompt context (Phase 4)
+        self._recent_lines: list[str] = []
+
     # ── Public control API ────────────────────────────────────────────────
 
     def stop(self) -> None:
@@ -113,6 +116,12 @@ class AudioPipeline:
 
     def on_avatar_spoke(self, avatar_id: int) -> None:
         self._context_engine.on_avatar_spoke(avatar_id)
+
+    def add_transcript_line(self, speaker: str, text: str) -> None:
+        """Append an avatar response to the rolling transcript context."""
+        self._recent_lines.append(f"{speaker}: {text}")
+        if len(self._recent_lines) > 30:
+            self._recent_lines = self._recent_lines[-30:]
 
     def set_avatar_mode(self, avatar_id: int, mode: str) -> None:
         self._context_engine.set_avatar_mode(avatar_id, mode)
@@ -256,10 +265,16 @@ class AudioPipeline:
 
             await self._broadcast(entry)
 
+            # Build a transcript snapshot for prompt context (human speech only)
+            if utterance_type in ("speech", "overlap"):
+                self._recent_lines.append(f"Unknown: {seg.text}")
+                if len(self._recent_lines) > 30:
+                    self._recent_lines = self._recent_lines[-30:]
+
             # Context engine evaluation for each active avatar
-            # (Phase 4 will hook the LLM router here; for now we emit the decision)
             if utterance_type in ("speech", "overlap"):
                 silence_gap = time.monotonic() - self._last_human_speech_at
+                _transcript_lines_snapshot = list(self._recent_lines)
                 for avatar_id, state in self._context_engine._avatar_states.items():
                     decision = self._context_engine.evaluate(
                         seg.text,
@@ -274,20 +289,51 @@ class AudioPipeline:
                             route=decision.route,
                             priority=decision.priority,
                         )
-                        # Phase 4 will enqueue to LLM router here
-                        # For now, broadcast a "thinking" status event
-                        await self._broadcast_status(avatar_id, state.name, decision)
+                        await self._dispatch_response(
+                            avatar_id=avatar_id,
+                            avatar_name=state.name,
+                            decision=decision,
+                            transcript_lines=_transcript_lines_snapshot,
+                        )
 
-    async def _broadcast_status(self, avatar_id: int, name: str, decision) -> None:
-        """Placeholder — Phase 4 will dispatch to LLM router."""
-        # This emits a WebSocket event so the frontend can show "Thinking…"
-        await self._broadcast(TranscriptEntry(
+    async def _dispatch_response(
+        self,
+        avatar_id: int,
+        avatar_name: str,
+        decision,
+        transcript_lines: list[str],
+    ) -> None:
+        """Fire a full LLM response cycle via the injected LLMDispatcher."""
+        dispatcher = getattr(self, "_dispatcher", None)
+        if dispatcher is None:
+            # No dispatcher injected (tests / early pipeline start) — emit placeholder
+            await self._broadcast(TranscriptEntry(
+                session_id=self.session_id,
+                speaker=avatar_name,
+                speaker_type="avatar",
+                text=f"[thinking — {decision.context_type} via {decision.route}]",
+                utterance_type="holding_phrase",
+                interrupt_score=decision.interrupt_score,
+                context_type=decision.context_type,
+                llm_route=decision.route,
+            ))
+            return
+
+        from app.llm.dispatcher import DispatchRequest
+        profile = getattr(dispatcher, "_avatar_profiles", {}).get(avatar_id, {})
+
+        req = DispatchRequest(
             session_id=self.session_id,
-            speaker=name,
-            speaker_type="avatar",
-            text=f"[thinking — {decision.context_type} via {decision.route}]",
-            utterance_type="holding_phrase",
-            interrupt_score=decision.interrupt_score,
+            avatar_id=avatar_id,
+            avatar_name=avatar_name,
             context_type=decision.context_type,
-            llm_route=decision.route,
-        ))
+            interrupt_score=decision.interrupt_score,
+            priority=decision.priority,
+            transcript_lines=transcript_lines,
+            **{k: v for k, v in profile.items() if k != "name"},
+        )
+        # Fire and forget — do not block the pipeline loop
+        asyncio.create_task(
+            dispatcher.dispatch(req),
+            name=f"dispatch-{avatar_id}-{self.session_id}",
+        )

@@ -36,6 +36,7 @@ async def start_pipeline(session_id: int, db: AsyncSession = Depends(get_db)):
     avatar_modes: dict[int, str] = {}
 
     avatar_embeddings: dict[int, str] = {}
+    avatar_profiles: dict[int, dict] = {}
 
     if avatar_ids:
         result = await db.execute(
@@ -43,11 +44,31 @@ async def start_pipeline(session_id: int, db: AsyncSession = Depends(get_db)):
         )
         for avatar in result.scalars().all():
             avatar_names[avatar.id] = avatar.name
-            # Session overrides avatar's default mode if set
             mode = session.avatar_modes.get(str(avatar.id), avatar.mode)
             avatar_modes[avatar.id] = mode
             if avatar.voice_embedding_path:
                 avatar_embeddings[avatar.id] = avatar.voice_embedding_path
+            # Snapshot avatar fields for prompt building (avoids DB access in hot path)
+            avatar_profiles[avatar.id] = {
+                "name": avatar.name,
+                "race": avatar.race,
+                "char_class": avatar.char_class,
+                "level": avatar.level,
+                "alignment": avatar.alignment or "",
+                "background": avatar.background or "",
+                "player_name": avatar.player_name,
+                "personality_traits": avatar.personality_traits or "",
+                "ideals": avatar.ideals or "",
+                "bonds": avatar.bonds or "",
+                "flaws": avatar.flaws or "",
+                "sentence_style": avatar.sentence_style or "",
+                "verbal_tics": avatar.verbal_tics or "",
+                "never_say": avatar.never_say or "",
+                "hit_points_current": avatar.hit_points_current,
+                "hit_points_max": avatar.hit_points_max,
+                "spell_slots": avatar.spell_slots or {},
+                "relationships": avatar.relationships or {},
+            }
 
     async def broadcast_entry(entry):
         """Broadcast a TranscriptEntry (from AudioPipeline)."""
@@ -65,6 +86,7 @@ async def start_pipeline(session_id: int, db: AsyncSession = Depends(get_db)):
         broadcast_fn=broadcast_entry,
         broadcast_dict_fn=broadcast_dict,
         avatar_embeddings=avatar_embeddings,
+        avatar_profiles=avatar_profiles,
     )
 
     await ws_manager.broadcast_pipeline_status(session_id, "started")
