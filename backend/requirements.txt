@@ -17,7 +17,8 @@ pydantic-settings==2.6.1
 anthropic==0.40.0
 httpx==0.28.1
 
-# Audio (Phase 2+)
+# Audio (Phase 2+) — numpy always required; sounddevice/whisper/silero need GPU
+numpy>=2.0
 # sounddevice==0.5.1
 # faster-whisper==1.1.0
 # silero-vad @ git+https://github.com/snakers4/silero-vad.git

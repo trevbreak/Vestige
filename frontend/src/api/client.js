@@ -43,4 +43,9 @@ export const api = {
   // Transcripts
   getTranscripts: (sessionId, limit = 100, offset = 0) =>
     request(`/transcripts/session/${sessionId}?limit=${limit}&offset=${offset}`),
+
+  // Pipeline
+  getPipelineStatus: (sessionId) => request(`/pipeline/${sessionId}/status`),
+  startPipeline: (sessionId) => request(`/pipeline/${sessionId}/start`, { method: 'POST' }),
+  stopPipeline: (sessionId) => request(`/pipeline/${sessionId}/stop`, { method: 'POST' }),
 }

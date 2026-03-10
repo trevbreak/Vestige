@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.db.database import init_db
-from app.routers import avatars, sessions, transcripts, health, websocket
+from app.routers import avatars, sessions, transcripts, health, websocket, pipeline
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -19,6 +19,8 @@ async def lifespan(app: FastAPI):
     log.info("startup.db_ready")
     yield
     log.info("shutdown")
+    from app.services.pipeline_manager import pipeline_manager
+    await pipeline_manager.stop_all()
 
 
 app = FastAPI(
@@ -47,3 +49,4 @@ app.include_router(avatars.router, prefix="/api")
 app.include_router(sessions.router, prefix="/api")
 app.include_router(transcripts.router, prefix="/api")
 app.include_router(websocket.router)
+app.include_router(pipeline.router, prefix="/api")

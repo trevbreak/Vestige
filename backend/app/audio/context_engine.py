@@ -1,0 +1,267 @@
+"""
+Context Engine.
+
+Decides when and whether an avatar should respond to a transcript utterance.
+
+Decision flow:
+  1. Interrupt confidence scoring
+  2. Additional trigger checks (recent name mention, combat, silence gap)
+  3. Suppression checks (AEC, human speaking, avatar cooldown, DM hotword)
+  4. Context type classification → routing hint
+  5. Response queue priority assignment
+"""
+
+from __future__ import annotations
+
+import time
+import re
+from dataclasses import dataclass, field
+from app.config import get_settings
+
+settings = get_settings()
+
+# ── Hotwords ──────────────────────────────────────────────────────────────────
+DM_HOTWORDS = frozenset({"hold", "pause", "stop", "wait", "cut"})
+
+# ── Combat trigger phrases (DM speech) ───────────────────────────────────────
+COMBAT_TRIGGERS = frozenset({
+    "roll initiative", "what do you do", "your turn", "roll for",
+    "make a", "saving throw", "attack roll", "damage roll",
+})
+
+# ── Character-directed prompt fragments ──────────────────────────────────────
+DIRECTED_FRAGMENTS = frozenset({
+    "what do you", "what does", "your character", "what about you",
+    "how do you", "what would", "what will you",
+})
+
+# ── Claude routing keywords (emotional/complex scenes) ───────────────────────
+CLAUDE_KEYWORDS = frozenset({
+    "backstory", "trauma", "betray", "forgive", "sacrifice", "regret",
+    "childhood", "died", "loved", "swore", "oath", "memory", "dream",
+    "fear", "family", "vow", "alone", "promised",
+})
+
+# ── Context type → routing + max sentence length ─────────────────────────────
+CONTEXT_TYPES: dict[str, dict] = {
+    "combat_turn":     {"max_sentences": 2, "route": "ollama"},
+    "casual_roleplay": {"max_sentences": 2, "route": "ollama"},
+    "party_debate":    {"max_sentences": 2, "route": "ollama"},
+    "direct_question": {"max_sentences": 3, "route": "ollama"},
+    "emotional_beat":  {"max_sentences": 5, "route": "claude"},
+    "backstory_call":  {"max_sentences": 5, "route": "claude"},
+    "npc_social":      {"max_sentences": 4, "route": "claude"},
+    "moral_dilemma":   {"max_sentences": 4, "route": "claude"},
+}
+
+
+@dataclass
+class EngineDecision:
+    should_respond: bool
+    priority: int                      # 1 (highest) – 5 (lowest)
+    context_type: str = "casual_roleplay"
+    route: str = "ollama"              # "ollama" | "claude" | "template"
+    interrupt_score: float = 0.0
+    reason: str = ""                   # debug / logging
+
+
+@dataclass
+class AvatarState:
+    """Per-avatar mutable state tracked by the engine."""
+    avatar_id: int
+    name: str
+    mode: str = "active"               # active | passive | absent
+    last_spoke_at: float = 0.0
+    last_name_mentioned_at: float = 0.0
+
+
+class ContextEngine:
+    """
+    Stateful engine that evaluates each incoming transcript utterance
+    against every active avatar and returns a decision.
+    """
+
+    def __init__(self):
+        self._avatar_states: dict[int, AvatarState] = {}
+        self._last_any_avatar_spoke: float = 0.0
+        self._dm_hotword_at: float = 0.0
+        self._human_speaking: bool = False
+        self._aec_gate_closed: bool = False
+
+    # ── State management ─────────────────────────────────────────────────
+
+    def register_avatar(self, avatar_id: int, name: str, mode: str = "active") -> None:
+        self._avatar_states[avatar_id] = AvatarState(avatar_id, name, mode)
+
+    def unregister_avatar(self, avatar_id: int) -> None:
+        self._avatar_states.pop(avatar_id, None)
+
+    def set_avatar_mode(self, avatar_id: int, mode: str) -> None:
+        if avatar_id in self._avatar_states:
+            self._avatar_states[avatar_id].mode = mode
+
+    def on_human_speech_start(self) -> None:
+        self._human_speaking = True
+
+    def on_human_speech_end(self) -> None:
+        self._human_speaking = False
+
+    def on_avatar_spoke(self, avatar_id: int) -> None:
+        now = time.monotonic()
+        if avatar_id in self._avatar_states:
+            self._avatar_states[avatar_id].last_spoke_at = now
+        self._last_any_avatar_spoke = now
+
+    def on_aec_gate_changed(self, closed: bool) -> None:
+        self._aec_gate_closed = closed
+
+    def on_dm_hotword(self) -> None:
+        self._dm_hotword_at = time.monotonic()
+
+    # ── Core evaluation ──────────────────────────────────────────────────
+
+    def evaluate(
+        self,
+        transcript: str,
+        avatar_id: int,
+        is_combat: bool = False,
+        silence_gap: float = 0.0,
+    ) -> EngineDecision:
+        """
+        Evaluate whether `avatar_id` should respond to `transcript`.
+
+        Parameters
+        ----------
+        transcript   : raw text of the utterance
+        avatar_id    : avatar to evaluate
+        is_combat    : True if we're in an active combat round
+        silence_gap  : seconds since last human speech
+        """
+        state = self._avatar_states.get(avatar_id)
+        if not state:
+            return EngineDecision(False, 5, reason="avatar_not_registered")
+
+        # ── 1. Suppression checks ─────────────────────────────────────
+        now = time.monotonic()
+
+        if state.mode == "absent":
+            return EngineDecision(False, 5, reason="mode_absent")
+
+        if self._aec_gate_closed:
+            return EngineDecision(False, 5, reason="aec_gate_closed")
+
+        if self._human_speaking:
+            return EngineDecision(False, 5, reason="human_speaking")
+
+        dm_hotword_age = now - self._dm_hotword_at
+        if dm_hotword_age < 30.0:
+            return EngineDecision(False, 1, reason="dm_hotword_active")
+
+        self_age = now - state.last_spoke_at
+        if self_age < settings.self_cooldown_seconds:
+            return EngineDecision(False, 5, reason="self_cooldown")
+
+        any_avatar_age = now - self._last_any_avatar_spoke
+        if any_avatar_age < settings.avatar_cooldown_seconds:
+            return EngineDecision(False, 5, reason="avatar_cooldown")
+
+        # ── 2. Interrupt confidence scoring ───────────────────────────
+        score = _interrupt_confidence(transcript, state.name)
+
+        # ── 3. Additional triggers ────────────────────────────────────
+        is_direct = score >= settings.interrupt_confidence_threshold
+        has_question = "?" in transcript
+        combat_trigger = is_combat or _is_combat_trigger(transcript)
+        silence_trigger = (
+            state.mode == "active"
+            and silence_gap >= settings.silence_gap_trigger
+        )
+        name_recent = (now - state.last_name_mentioned_at) < 60.0
+        if _name_in_text(transcript, state.name):
+            state.last_name_mentioned_at = now
+            name_recent = True
+
+        # Passive mode: only respond when directly addressed
+        if state.mode == "passive" and not is_direct and not name_recent:
+            return EngineDecision(False, 5, reason="passive_not_addressed")
+
+        # ── 4. Context type & route ───────────────────────────────────
+        context_type = _classify_context(transcript, is_combat=combat_trigger)
+        route = CONTEXT_TYPES[context_type]["route"]
+
+        # ── 5. Priority & final decision ─────────────────────────────
+        if combat_trigger and is_direct:
+            priority = 2
+        elif is_direct:
+            priority = 2
+        elif has_question:
+            priority = 3
+        elif combat_trigger:
+            priority = 4
+        elif silence_trigger:
+            priority = 5
+        elif name_recent:
+            priority = 3
+        else:
+            return EngineDecision(False, 5, interrupt_score=score, reason="below_threshold")
+
+        return EngineDecision(
+            should_respond=True,
+            priority=priority,
+            context_type=context_type,
+            route=route,
+            interrupt_score=score,
+            reason="ok",
+        )
+
+
+# ── Pure helper functions (no state) ─────────────────────────────────────────
+
+def _interrupt_confidence(transcript: str, avatar_name: str) -> float:
+    score = 0.0
+    lower = transcript.lower()
+    if avatar_name.lower() in lower:
+        score += 0.8
+    if "?" in transcript:
+        score += 0.3
+    if any(frag in lower for frag in DIRECTED_FRAGMENTS):
+        score += 0.4
+    return min(score, 1.0)
+
+
+def _name_in_text(text: str, name: str) -> bool:
+    return name.lower() in text.lower()
+
+
+def _is_combat_trigger(text: str) -> bool:
+    lower = text.lower()
+    return any(t in lower for t in COMBAT_TRIGGERS)
+
+
+def _is_dm_hotword(text: str) -> bool:
+    lower = text.strip().lower()
+    return any(hw in lower for hw in DM_HOTWORDS)
+
+
+def _classify_context(transcript: str, is_combat: bool = False) -> str:
+    lower = transcript.lower()
+
+    if is_combat or _is_combat_trigger(transcript):
+        return "combat_turn"
+
+    if any(kw in lower for kw in CLAUDE_KEYWORDS):
+        # Check for moral/backstory themes
+        if any(kw in lower for kw in {"sacrific", "betray", "swore", "oath", "vow"}):
+            return "moral_dilemma"
+        if any(kw in lower for kw in {"backstory", "childhood", "family", "died", "loved"}):
+            return "backstory_call"
+        return "emotional_beat"
+
+    if "?" in transcript:
+        return "direct_question"
+
+    # Simple heuristics for social encounters
+    if any(w in lower for w in {"persuade", "intimidate", "deceive", "negotiate", "convince"}):
+        return "npc_social"
+
+    return "casual_roleplay"

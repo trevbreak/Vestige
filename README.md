@@ -12,7 +12,7 @@
 | Phase | Description | Status |
 |---|---|---|
 | **1** | Foundation — API, DB schema, avatar/session CRUD, D&D UI | ✅ Complete |
-| **2** | Voice Input — mic capture, VAD (silero), STT (faster-whisper), AEC | 🔲 Pending |
+| **2** | Voice Input — mic capture, VAD (silero), STT (faster-whisper), AEC | ✅ Complete |
 | **3** | Voice Output — XTTS-v2 TTS, voice cloning, backchannel pre-gen | 🔲 Pending |
 | **4** | AI Brain — Ollama/Claude router, context engine, prompt builder | 🔲 Pending |
 | **5** | Memory — session transcripts, embeddings, sqlite-vec retrieval | 🔲 Pending |
@@ -143,6 +143,7 @@ vestige/
 ## Documentation
 
 - [Phase 1 — Foundation](docs/phase1-foundation.md)
+- [Phase 2 — Voice Input Pipeline](docs/phase2-voice-input.md)
 
 ---
 
