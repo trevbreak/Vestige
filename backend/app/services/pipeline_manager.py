@@ -129,6 +129,10 @@ class PipelineManager:
         pipeline._dispatcher = dispatcher
         dispatcher._pipeline = pipeline
 
+        # Phase 5: inject DB session factory for memory retrieval
+        from app.db.database import AsyncSessionLocal
+        pipeline._db_factory = AsyncSessionLocal
+
         # Store references
         self._pipelines[session_id] = pipeline
         self._output_managers[session_id] = output_manager

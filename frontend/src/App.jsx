@@ -2,6 +2,7 @@ import { Routes, Route, NavLink } from 'react-router-dom'
 import AvatarsPage from './pages/AvatarsPage'
 import SessionsPage from './pages/SessionsPage'
 import TablePage from './pages/TablePage'
+import MemoryReviewPage from './pages/MemoryReviewPage'
 import styles from './App.module.css'
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/" element={<AvatarsPage />} />
           <Route path="/sessions" element={<SessionsPage />} />
           <Route path="/table" element={<TablePage />} />
+          <Route path="/sessions/:sessionId/memory" element={<MemoryReviewPage />} />
         </Routes>
       </main>
     </div>

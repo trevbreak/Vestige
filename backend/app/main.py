@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.db.database import init_db
-from app.routers import avatars, sessions, transcripts, health, websocket, pipeline
+from app.routers import avatars, sessions, transcripts, health, websocket, pipeline, memory
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -50,3 +50,4 @@ app.include_router(sessions.router, prefix="/api")
 app.include_router(transcripts.router, prefix="/api")
 app.include_router(websocket.router)
 app.include_router(pipeline.router, prefix="/api")
+app.include_router(memory.router, prefix="/api")

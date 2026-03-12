@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useSessionStore } from '../stores/sessionStore'
 import { useAvatarStore } from '../stores/avatarStore'
 import { api } from '../api/client'
 import styles from './SessionsPage.module.css'
 
 export default function SessionsPage() {
+  const navigate = useNavigate()
   const { sessions, loading, error, fetchSessions, addSession, updateSession } = useSessionStore()
   const { avatars, fetchAvatars } = useAvatarStore()
   const [creating, setCreating] = useState(false)
@@ -135,6 +137,12 @@ export default function SessionsPage() {
                   End Session
                 </button>
               )}
+              <button
+                className="btn btn-sm"
+                onClick={() => navigate(`/sessions/${s.id}/memory`)}
+              >
+                Memory Review
+              </button>
             </div>
           </div>
         ))}

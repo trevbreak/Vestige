@@ -48,4 +48,25 @@ export const api = {
   getPipelineStatus: (sessionId) => request(`/pipeline/${sessionId}/status`),
   startPipeline: (sessionId) => request(`/pipeline/${sessionId}/start`, { method: 'POST' }),
   stopPipeline: (sessionId) => request(`/pipeline/${sessionId}/stop`, { method: 'POST' }),
+
+  // Memory (Phase 5)
+  summariseSession: (sessionId) =>
+    request(`/memory/sessions/${sessionId}/summarise`, { method: 'POST', body: {} }),
+  getSessionSummary: (sessionId) =>
+    request(`/memory/sessions/${sessionId}/summary`),
+  approveSessionSummary: (sessionId) =>
+    request(`/memory/sessions/${sessionId}/approve`, { method: 'POST' }),
+  getAvatarChunks: (avatarId, includeInactive = false) =>
+    request(`/memory/avatars/${avatarId}/chunks?include_inactive=${includeInactive}`),
+  deleteChunk: (chunkId) =>
+    request(`/memory/chunks/${chunkId}`, { method: 'DELETE' }),
+  rollingSessionSummary: (sessionId, transcriptLines) =>
+    request(`/memory/sessions/${sessionId}/rolling-summary`, {
+      method: 'POST',
+      body: { transcript_lines: transcriptLines },
+    }),
+  attributeSpeakers: (sessionId, attributions) =>
+    request(`/sessions/${sessionId}/speakers`, { method: 'POST', body: { attributions } }),
+  sheetUpdate: (avatarId, data) =>
+    request(`/avatars/${avatarId}/sheet-update`, { method: 'POST', body: data }),
 }

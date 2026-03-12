@@ -322,6 +322,19 @@ class AudioPipeline:
         from app.llm.dispatcher import DispatchRequest
         profile = getattr(dispatcher, "_avatar_profiles", {}).get(avatar_id, {})
 
+        # Phase 5: retrieve relevant memories for this avatar
+        memory_chunks: list[str] = []
+        db_factory = getattr(self, "_db_factory", None)
+        if db_factory is not None:
+            try:
+                from app.memory.retriever import memory_retriever
+                async with db_factory() as db:
+                    memory_chunks = await memory_retriever.retrieve_from_transcript(
+                        db, avatar_id, transcript_lines
+                    )
+            except Exception as e:
+                log.warning("pipeline.memory_retrieval_failed", error=str(e))
+
         req = DispatchRequest(
             session_id=self.session_id,
             avatar_id=avatar_id,
@@ -330,6 +343,7 @@ class AudioPipeline:
             interrupt_score=decision.interrupt_score,
             priority=decision.priority,
             transcript_lines=transcript_lines,
+            memory_chunks=memory_chunks,
             **{k: v for k, v in profile.items() if k != "name"},
         )
         # Fire and forget — do not block the pipeline loop

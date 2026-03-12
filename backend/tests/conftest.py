@@ -21,7 +21,7 @@ async def override_get_db():
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
     """Create all tables before each test and drop after."""
-    from app.models import avatar, session, transcript  # noqa
+    from app.models import avatar, session, transcript, memory  # noqa
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
