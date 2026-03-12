@@ -101,6 +101,10 @@ export const api = {
       method: 'DELETE',
       body: { avatar_id: avatarId, condition },
     }),
+  // Settings (Phase 7)
+  getSettings: () => request('/settings'),
+  updateSettings: (data) => request('/settings', { method: 'PATCH', body: data }),
+
   deathSave: (sessionId, avatarId, success) =>
     request(`/combat/${sessionId}/death-save`, {
       method: 'POST',

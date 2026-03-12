@@ -24,6 +24,7 @@ from app.audio.transcriber import Transcriber, TranscriptSegment
 from app.audio.backchannel_classifier import classify_utterance, is_inaudible
 from app.audio.overlap_detector import detect_overlap, select_dominant_half
 from app.audio.context_engine import ContextEngine, _is_dm_hotword
+from app.audio.cross_avatar import CrossAvatarReferencer
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -89,6 +90,9 @@ class AudioPipeline:
                 names.get(aid, f"Avatar {aid}"),
                 modes.get(aid, "active"),
             )
+
+        # Phase 7: cross-avatar reference injector
+        self._cross_avatar = CrossAvatarReferencer()
 
         # Track silence gap for passive triggers
         self._last_human_speech_at: float = 0.0
@@ -360,6 +364,12 @@ class AudioPipeline:
             except Exception as e:
                 log.warning("pipeline.combat_actions_failed", error=str(e))
 
+        # Phase 7: cross-avatar reference injection (25% probability)
+        cross_avatar_note = self._cross_avatar.get_reference_note(
+            requesting_avatar_id=avatar_id,
+            requesting_avatar_name=avatar_name,
+        )
+
         req = DispatchRequest(
             session_id=self.session_id,
             avatar_id=avatar_id,
@@ -370,6 +380,7 @@ class AudioPipeline:
             transcript_lines=transcript_lines,
             memory_chunks=memory_chunks,
             available_actions_text=available_actions_text,
+            cross_avatar_note=cross_avatar_note,
             **{k: v for k, v in profile.items() if k != "name"},
         )
         # Fire and forget — do not block the pipeline loop

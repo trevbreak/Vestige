@@ -3,6 +3,7 @@ import AvatarsPage from './pages/AvatarsPage'
 import SessionsPage from './pages/SessionsPage'
 import TablePage from './pages/TablePage'
 import MemoryReviewPage from './pages/MemoryReviewPage'
+import SettingsPage from './pages/SettingsPage'
 import styles from './App.module.css'
 
 export default function App() {
@@ -20,6 +21,9 @@ export default function App() {
           <NavLink to="/table" className={({ isActive }) => isActive ? styles.active : ''}>
             Table
           </NavLink>
+          <NavLink to="/settings" className={({ isActive }) => isActive ? styles.active : ''}>
+            Settings
+          </NavLink>
         </nav>
       </header>
 
@@ -29,6 +33,7 @@ export default function App() {
           <Route path="/sessions" element={<SessionsPage />} />
           <Route path="/table" element={<TablePage />} />
           <Route path="/sessions/:sessionId/memory" element={<MemoryReviewPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>
     </div>

@@ -240,6 +240,12 @@ class LLMDispatcher:
         pipeline = getattr(self, "_pipeline", None)
         if pipeline is not None:
             pipeline.add_transcript_line(req.avatar_name, processed.text)
+            # Phase 7: record for cross-avatar reference injection
+            pipeline._cross_avatar.record_speech(
+                avatar_id=req.avatar_id,
+                name=req.avatar_name,
+                text=processed.text,
+            )
 
         log.info(
             "dispatcher.dispatch_done",

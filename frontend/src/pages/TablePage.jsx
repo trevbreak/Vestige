@@ -4,6 +4,7 @@ import { useSessionStore } from '../stores/sessionStore'
 import { useAudioPlayer } from '../hooks/useAudioPlayer'
 import { api } from '../api/client'
 import InitiativeTracker from '../components/InitiativeTracker'
+import EmberParticles from '../components/EmberParticles'
 import styles from './TablePage.module.css'
 
 const MODE_ICONS = { active: '🎙', passive: '💬', absent: '💤' }
@@ -140,6 +141,7 @@ export default function TablePage() {
 
   return (
     <div className={styles.table}>
+      <EmberParticles />
       <aside className={styles.sidebar}>
         <div className={styles.sideSection}>
           <label className={styles.sideLabel}>Session</label>

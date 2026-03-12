@@ -17,7 +17,7 @@
 | **4** | AI Brain — Ollama/Claude router, context engine, prompt builder | ✅ Complete |
 | **5** | Memory — session transcripts, embeddings, sqlite-vec retrieval | ✅ Complete |
 | **6** | Rules Engine — D&D 5e action economy, spells, conditions, combat | ✅ Complete |
-| **7** | Polish — inter-avatar dynamics, DM controls, settings panel | 🔲 Pending |
+| **7** | Polish — inter-avatar dynamics, DM controls, settings panel | ✅ Complete |
 
 ---
 
@@ -150,6 +150,7 @@ vestige/
 - [Phase 4 — AI Brain](docs/phase4-ai-brain.md)
 - [Phase 5 — Memory System](docs/phase5-memory.md)
 - [Phase 6 — Rules Engine & Combat](docs/phase6-rules.md)
+- [Phase 7 — Polish & Inter-Avatar Dynamics](docs/phase7-polish.md)
 
 ---
 
