@@ -69,4 +69,41 @@ export const api = {
     request(`/sessions/${sessionId}/speakers`, { method: 'POST', body: { attributions } }),
   sheetUpdate: (avatarId, data) =>
     request(`/avatars/${avatarId}/sheet-update`, { method: 'POST', body: data }),
+
+  // Combat (Phase 6)
+  getCombatState: (sessionId) => request(`/combat/${sessionId}/state`),
+  startCombat: (sessionId, combatants) =>
+    request(`/combat/${sessionId}/start`, { method: 'POST', body: { combatants } }),
+  endCombat: (sessionId) => request(`/combat/${sessionId}/end`, { method: 'POST' }),
+  nextTurn: (sessionId) => request(`/combat/${sessionId}/next-turn`, { method: 'POST' }),
+  setInitiative: (sessionId, avatarId, initiative) =>
+    request(`/combat/${sessionId}/initiative`, {
+      method: 'POST',
+      body: { avatar_id: avatarId, initiative },
+    }),
+  applyDamage: (sessionId, avatarId, damage) =>
+    request(`/combat/${sessionId}/damage`, {
+      method: 'POST',
+      body: { avatar_id: avatarId, damage },
+    }),
+  applyHeal: (sessionId, avatarId, hp) =>
+    request(`/combat/${sessionId}/heal`, {
+      method: 'POST',
+      body: { avatar_id: avatarId, hp },
+    }),
+  addCondition: (sessionId, avatarId, condition) =>
+    request(`/combat/${sessionId}/condition`, {
+      method: 'POST',
+      body: { avatar_id: avatarId, condition },
+    }),
+  removeCondition: (sessionId, avatarId, condition) =>
+    request(`/combat/${sessionId}/condition`, {
+      method: 'DELETE',
+      body: { avatar_id: avatarId, condition },
+    }),
+  deathSave: (sessionId, avatarId, success) =>
+    request(`/combat/${sessionId}/death-save`, {
+      method: 'POST',
+      body: { avatar_id: avatarId, success },
+    }),
 }

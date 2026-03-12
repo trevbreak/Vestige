@@ -133,6 +133,10 @@ class PipelineManager:
         from app.db.database import AsyncSessionLocal
         pipeline._db_factory = AsyncSessionLocal
 
+        # Phase 6: inject combat manager for turn-based action context
+        from app.services.combat_manager import combat_manager
+        pipeline._combat_manager = combat_manager
+
         # Store references
         self._pipelines[session_id] = pipeline
         self._output_managers[session_id] = output_manager
@@ -157,6 +161,10 @@ class PipelineManager:
         out_task = self._output_tasks.pop(session_id, None)
         self._presence_layers.pop(session_id, None)
         self._dispatchers.pop(session_id, None)
+
+        # Phase 6: clean up combat state
+        from app.services.combat_manager import combat_manager
+        combat_manager.stop_session(session_id)
 
         if pipeline:
             pipeline.stop()

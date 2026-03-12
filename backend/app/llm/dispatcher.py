@@ -67,7 +67,8 @@ class DispatchRequest:
 
     # Current session context
     transcript_lines: list[str] = None   # ["Speaker: text", ...]
-    memory_chunks: list[str] = None      # Phase 5 placeholder
+    memory_chunks: list[str] = None      # Phase 5: retrieved memory
+    available_actions_text: str = ""     # Phase 6: combat action block
     cross_avatar_note: str = ""
 
     def __post_init__(self):
@@ -151,6 +152,7 @@ class LLMDispatcher:
             memory_chunks=req.memory_chunks,
             transcript_lines=req.transcript_lines,
             context_type=req.context_type,
+            available_actions_text=req.available_actions_text,
             cross_avatar_note=req.cross_avatar_note,
         )
         system_prompt, user_message = _prompt_builder.build(ctx)

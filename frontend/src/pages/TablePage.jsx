@@ -3,6 +3,7 @@ import { useAvatarStore } from '../stores/avatarStore'
 import { useSessionStore } from '../stores/sessionStore'
 import { useAudioPlayer } from '../hooks/useAudioPlayer'
 import { api } from '../api/client'
+import InitiativeTracker from '../components/InitiativeTracker'
 import styles from './TablePage.module.css'
 
 const MODE_ICONS = { active: '🎙', passive: '💬', absent: '💤' }
@@ -176,6 +177,11 @@ export default function TablePage() {
             </p>
           )}
         </div>
+
+        <InitiativeTracker
+          sessionId={selectedSessionId}
+          sessionAvatars={sessionAvatars}
+        />
 
         <div className={styles.wsStatus}>
           <span className={`${styles.dot} ${styles[wsStatus]}`} />

@@ -16,7 +16,7 @@
 | **3** | Voice Output — XTTS-v2 TTS, voice cloning, backchannel pre-gen | ✅ Complete |
 | **4** | AI Brain — Ollama/Claude router, context engine, prompt builder | ✅ Complete |
 | **5** | Memory — session transcripts, embeddings, sqlite-vec retrieval | ✅ Complete |
-| **6** | Rules Engine — D&D 5e action economy, spells, conditions, combat | 🔲 Pending |
+| **6** | Rules Engine — D&D 5e action economy, spells, conditions, combat | ✅ Complete |
 | **7** | Polish — inter-avatar dynamics, DM controls, settings panel | 🔲 Pending |
 
 ---
@@ -149,6 +149,7 @@ vestige/
 - [Phase 3 — Voice Output Pipeline](docs/phase3-voice-output.md)
 - [Phase 4 — AI Brain](docs/phase4-ai-brain.md)
 - [Phase 5 — Memory System](docs/phase5-memory.md)
+- [Phase 6 — Rules Engine & Combat](docs/phase6-rules.md)
 
 ---
 

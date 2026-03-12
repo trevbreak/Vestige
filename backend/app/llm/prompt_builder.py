@@ -86,6 +86,9 @@ class AvatarContext:
     context_type: str = "default"
     is_combat: bool = False
 
+    # Phase 6: combat available actions block (plain text, injected during combat turns)
+    available_actions_text: str = ""
+
     # Cross-avatar reference (25% chance injection — Phase 7)
     cross_avatar_note: str = ""
 
@@ -115,6 +118,7 @@ class PromptBuilder:
             self._mechanical_state(ctx),
             self._party_relationships(ctx),
             self._relevant_memory(ctx),
+            self._available_actions(ctx),
             self._response_rules(ctx),
         ]
         return "\n\n".join(s for s in sections if s)
@@ -188,6 +192,12 @@ class PromptBuilder:
         for chunk in ctx.memory_chunks:
             lines.append(f"- {chunk}")
         return "\n".join(lines)
+
+    def _available_actions(self, ctx: AvatarContext) -> str:
+        """Phase 6: inject combat action block when in a combat turn."""
+        if not ctx.available_actions_text:
+            return ""
+        return ctx.available_actions_text
 
     def _response_rules(self, ctx: AvatarContext) -> str:
         length_instr = LENGTH_INSTRUCTIONS.get(ctx.context_type, LENGTH_INSTRUCTIONS["default"])

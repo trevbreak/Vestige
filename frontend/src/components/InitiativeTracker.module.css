@@ -1,0 +1,319 @@
+.tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  padding: 0.6rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.idle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── Setup form ───────────────────────────────────────────────────── */
+
+.setupList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.setupRow {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.setupName {
+  flex: 1;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.4rem;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-primary);
+}
+
+.setupInit,
+.setupHp {
+  width: 48px;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.3rem;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.setupRow.enemy .setupName {
+  border-color: var(--crimson-light);
+}
+
+.addEnemyBtn {
+  font-size: 0.72rem;
+  color: var(--crimson-light);
+  background: none;
+  border: 1px dashed var(--crimson-light);
+  border-radius: 3px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 0.15rem;
+}
+
+.addEnemyBtn:hover { background: #2a1010; }
+
+.setupActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+/* ── Combatant list ───────────────────────────────────────────────── */
+
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.combatant {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  transition: border-color 0.2s;
+}
+
+.combatant.current {
+  border-color: var(--gold);
+  background: #1e1a0f;
+}
+
+.combatant.enemy {
+  border-color: #3a1515;
+}
+
+.combatant.enemy.current {
+  border-color: var(--crimson-light);
+  background: #1e0f0f;
+}
+
+.combatantTop {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.initBadge {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  color: var(--gold-dim);
+  min-width: 22px;
+  text-align: center;
+  border: 1px solid var(--border-gold);
+  border-radius: 3px;
+  padding: 0 0.2rem;
+}
+
+.current .initBadge {
+  background: var(--border-gold);
+  color: var(--bg-deep);
+}
+
+.combatantName {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  flex: 1;
+  font-weight: 500;
+}
+
+.current .combatantName { color: var(--gold); }
+.enemy .combatantName   { color: var(--crimson-light); }
+
+.hpText {
+  font-size: 0.72rem;
+  font-family: var(--font-heading);
+  min-width: 48px;
+  text-align: right;
+}
+
+/* ── HP bar ───────────────────────────────────────────────────────── */
+
+.hpBar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hpFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s, background 0.3s;
+}
+
+/* ── Conditions ───────────────────────────────────────────────────── */
+
+.conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.conditionBadge {
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: default;
+}
+
+/* ── Quick damage / heal ──────────────────────────────────────────── */
+
+.quickActions {
+  margin-top: 0.1rem;
+}
+
+.quickRow {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.quickInput {
+  width: 44px;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.3rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.quickBtn {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dmgBtn  { background: var(--crimson-light); color: #fff; }
+.healBtn { background: var(--status-active);  color: #fff; }
+
+.dmgBtn:hover  { opacity: 0.85; }
+.healBtn:hover { opacity: 0.85; }
+
+/* ── Death saves ──────────────────────────────────────────────────── */
+
+.deathSaves {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.dsLabel {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.dsPips {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+}
+
+.dsButtons {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.dsBtnSuccess,
+.dsBtnFail {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dsBtnSuccess { background: var(--status-active); color: #fff; }
+.dsBtnFail    { background: var(--crimson-light);  color: #fff; }
+
+/* ── Footer buttons ───────────────────────────────────────────────── */
+
+.nextTurnBtn {
+  align-self: stretch;
+  margin-top: 0.1rem;
+}
+
+.endBtn {
+  font-size: 0.68rem;
+  background: none;
+  border: 1px solid var(--crimson-light);
+  color: var(--crimson-light);
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  cursor: pointer;
+}
+
+.endBtn:hover { background: #2a1010; }
+
+.iconBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+.iconBtn:hover { color: var(--text-primary); background: var(--bg-deep); }
+
+/* ── Error ────────────────────────────────────────────────────────── */
+
+.error {
+  font-size: 0.72rem;
+  color: var(--crimson-light);
+  padding: 0.2rem 0.4rem;
+  background: #1e0f0f;
+  border-radius: 3px;
+  border: 1px solid var(--crimson-light);
+}

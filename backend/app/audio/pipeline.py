@@ -248,6 +248,15 @@ class AudioPipeline:
                 self._context_engine.on_dm_hotword()
                 log.info("pipeline.dm_hotword", text=seg.text)
 
+            # Phase 6: combat signal detection from DM speech
+            _combat_mgr = getattr(self, "_combat_manager", None)
+            if _combat_mgr is not None:
+                _combat_mgr.process_transcript(
+                    self.session_id,
+                    speaker="DM",  # pipeline doesn't know speaker yet; treat as DM for detection
+                    text=seg.text,
+                )
+
             # Determine speaker (Phase 2: all human until diarization in future phase)
             speaker = "Unknown"
             speaker_type = "human"
@@ -335,6 +344,22 @@ class AudioPipeline:
             except Exception as e:
                 log.warning("pipeline.memory_retrieval_failed", error=str(e))
 
+        # Phase 6: get available actions text if in combat
+        available_actions_text = ""
+        _combat_mgr = getattr(self, "_combat_manager", None)
+        if _combat_mgr is not None:
+            try:
+                profile_for_combat = profile or {}
+                available_actions_text = _combat_mgr.get_available_actions_text(
+                    session_id=self.session_id,
+                    avatar_id=avatar_id,
+                    avatar_name=avatar_name,
+                    spells_known=list(profile_for_combat.get("spells_known", {}).keys()),
+                    equipment=profile_for_combat.get("equipment", []),
+                )
+            except Exception as e:
+                log.warning("pipeline.combat_actions_failed", error=str(e))
+
         req = DispatchRequest(
             session_id=self.session_id,
             avatar_id=avatar_id,
@@ -344,6 +369,7 @@ class AudioPipeline:
             priority=decision.priority,
             transcript_lines=transcript_lines,
             memory_chunks=memory_chunks,
+            available_actions_text=available_actions_text,
             **{k: v for k, v in profile.items() if k != "name"},
         )
         # Fire and forget — do not block the pipeline loop
