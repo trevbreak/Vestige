@@ -118,22 +118,20 @@ def _check_whisper() -> dict:
 
 
 def _check_embedder() -> dict:
+    # Use the module singleton so we never load SentenceTransformer twice into CUDA.
+    from app.memory.embedder import embedder
     t0 = time.monotonic()
     try:
-        import torch
-        from sentence_transformers import SentenceTransformer
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        model = SentenceTransformer("all-MiniLM-L6-v2", device=device)
-        # Probe: embed one word
-        vec = model.encode("hello", normalize_embeddings=True)
-        dim = len(vec)
+        result = embedder.embed("hello")
+        ok = result != embedder.dim * b"\x00"  # non-zero vector means real model loaded
+        dim = embedder.dim
         ms = round((time.monotonic() - t0) * 1000)
-        log.info("startup.embedder_ok", dim=dim, device=device, latency_ms=ms)
-        return {"ok": True, "loaded": True, "dim": dim, "device": device, "latency_ms": ms}
-    except ImportError:
-        ms = round((time.monotonic() - t0) * 1000)
-        log.error("startup.embedder_missing", note="sentence-transformers not installed")
-        return {"ok": False, "loaded": False, "error": "sentence-transformers not installed", "latency_ms": ms}
+        if ok:
+            log.info("startup.embedder_ok", dim=dim, latency_ms=ms)
+            return {"ok": True, "loaded": True, "dim": dim, "latency_ms": ms}
+        else:
+            log.error("startup.embedder_missing", note="sentence-transformers not installed")
+            return {"ok": False, "loaded": False, "error": "sentence-transformers not installed", "latency_ms": ms}
     except Exception as e:
         ms = round((time.monotonic() - t0) * 1000)
         log.error("startup.embedder_failed", error=str(e))
