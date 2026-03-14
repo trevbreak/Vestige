@@ -36,14 +36,9 @@ class PipelineManager:
         self._presence_layers: dict[int, "PresenceLayer"] = {}
         self._dispatchers: dict[int, "LLMDispatcher"] = {}
 
-        # TTS engine is a singleton — loaded once on first use
-        self._tts_engine = None
-
     def _get_tts_engine(self):
-        if self._tts_engine is None:
-            from app.audio.tts import TTSEngine
-            self._tts_engine = TTSEngine()
-        return self._tts_engine
+        from app.audio.tts import tts_engine
+        return tts_engine
 
     def is_running(self, session_id: int) -> bool:
         return session_id in self._pipelines

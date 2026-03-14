@@ -57,8 +57,9 @@ def _check_vad() -> dict:
         import torch
         from silero_vad import load_silero_vad
         model = load_silero_vad()
-        # Probe: one silent 30 ms chunk at 16 kHz (480 samples)
-        chunk = torch.zeros(480, dtype=torch.float32)
+        # Probe: one silent 512-sample chunk at 16 kHz
+        # silero requires sr / chunk_len <= 31.25, i.e. chunk >= 512 samples at 16 kHz
+        chunk = torch.zeros(512, dtype=torch.float32)
         with torch.no_grad():
             prob = model(chunk, 16000).item()
         ms = round((time.monotonic() - t0) * 1000)
@@ -76,21 +77,28 @@ def _check_vad() -> dict:
 
 def _check_whisper() -> dict:
     from app.config import get_settings
+    from app.audio.transcriber import transcriber
     s = get_settings()
     t0 = time.monotonic()
+
+    # Load via the singleton — this is the only place WhisperModel(...) is ever called.
+    # AudioPipeline reuses this same instance, so CUDA is initialised exactly once.
+    ok = transcriber.load(
+        model_size=s.whisper_model,
+        device=s.whisper_device,
+        compute_type=s.whisper_compute_type,
+    )
+    if not ok:
+        ms = round((time.monotonic() - t0) * 1000)
+        err = "load failed — check logs for details"
+        return {"ok": False, "loaded": False, "error": err,
+                "model": s.whisper_model, "device": s.whisper_device,
+                "compute_type": s.whisper_compute_type, "latency_ms": ms}
+
+    # Probe: transcribe 0.1 s of silence through the singleton
     try:
-        from faster_whisper import WhisperModel
-        log.info("startup.whisper_loading", model=s.whisper_model,
-                 device=s.whisper_device, compute_type=s.whisper_compute_type)
-        model = WhisperModel(
-            s.whisper_model,
-            device=s.whisper_device,
-            compute_type=s.whisper_compute_type,
-        )
-        # Probe: transcribe 0.1 s of silence
-        silence = np.zeros(1600, dtype=np.float32)
-        segs, info = model.transcribe(silence, language="en", beam_size=1)
-        list(segs)  # consume generator to confirm no exception
+        silence = np.zeros(1600, dtype=np.int16)  # int16 as pipeline sends
+        transcriber.transcribe(silence, sample_rate=16000)
         ms = round((time.monotonic() - t0) * 1000)
         log.info("startup.whisper_ok", model=s.whisper_model,
                  device=s.whisper_device, compute_type=s.whisper_compute_type,
@@ -101,21 +109,12 @@ def _check_whisper() -> dict:
             "compute_type": s.whisper_compute_type,
             "latency_ms": ms,
         }
-    except ImportError:
-        ms = round((time.monotonic() - t0) * 1000)
-        log.error("startup.whisper_missing", note="faster-whisper not installed")
-        return {"ok": False, "loaded": False, "error": "faster-whisper not installed", "latency_ms": ms}
     except Exception as e:
         ms = round((time.monotonic() - t0) * 1000)
-        log.error("startup.whisper_failed", error=str(e),
-                  model=s.whisper_model, device=s.whisper_device,
-                  compute_type=s.whisper_compute_type)
-        return {
-            "ok": False, "loaded": False, "error": str(e),
-            "model": s.whisper_model, "device": s.whisper_device,
-            "compute_type": s.whisper_compute_type,
-            "latency_ms": ms,
-        }
+        log.error("startup.whisper_probe_failed", error=str(e))
+        return {"ok": False, "loaded": True, "error": str(e),
+                "model": s.whisper_model, "device": s.whisper_device,
+                "compute_type": s.whisper_compute_type, "latency_ms": ms}
 
 
 def _check_embedder() -> dict:
@@ -142,24 +141,23 @@ def _check_embedder() -> dict:
 
 
 def _check_tts() -> dict:
-    """TTS is optional — WARNING only if unavailable."""
+    """
+    Load XTTS-v2 via the module-level singleton.  Optional — WARNING only if
+    unavailable.  Must run BEFORE Whisper so XTTS claims its CUDA allocations
+    first; loading order affects CTranslate2 CUDA stream assignment.
+    """
+    from app.audio.tts import tts_engine
     t0 = time.monotonic()
-    try:
-        from TTS.api import TTS  # noqa: F401
-        # Don't load the full model at startup (it takes ~30s) —
-        # just confirm the package imports cleanly.  The pipeline_manager
-        # loads it lazily on first session start.
-        ms = round((time.monotonic() - t0) * 1000)
-        log.info("startup.tts_package_ok", latency_ms=ms)
-        return {"ok": True, "loaded": False, "note": "package ok; model loads on first session", "latency_ms": ms}
-    except ImportError:
-        ms = round((time.monotonic() - t0) * 1000)
-        log.warning("startup.tts_missing", note="Coqui TTS not installed — TTS will use silent stub")
-        return {"ok": False, "loaded": False, "error": "Coqui TTS not installed", "latency_ms": ms}
-    except Exception as e:
-        ms = round((time.monotonic() - t0) * 1000)
-        log.warning("startup.tts_failed", error=str(e))
-        return {"ok": False, "loaded": False, "error": str(e), "latency_ms": ms}
+    ok = tts_engine.load(device="cuda")
+    ms = round((time.monotonic() - t0) * 1000)
+    if ok:
+        log.info("startup.tts_ok", latency_ms=ms)
+        return {"ok": True, "loaded": True, "latency_ms": ms}
+    else:
+        log.warning("startup.tts_failed_or_missing",
+                    note="TTS unavailable — avatars will be silent")
+        return {"ok": False, "loaded": False,
+                "error": "TTS load failed — check logs", "latency_ms": ms}
 
 
 def _check_ollama() -> dict:
@@ -225,24 +223,22 @@ async def run_startup_checks() -> None:
     loop = asyncio.get_running_loop()
     log.info("startup.checks_begin")
 
-    # Critical models — run sequentially so GPU memory isn't hammered in parallel
-    # (VAD and Whisper both want CUDA; sentence-transformers comes after)
+    # All GPU models load sequentially to avoid CUDA context corruption.
+    # Order matters: TTS (XTTS-v2) must claim its CUDA allocations before
+    # Whisper (CTranslate2), otherwise a device-side assert is triggered.
+    # VAD (silero/torch) and embedder (sentence-transformers) follow.
     for name, fn in [
+        ("tts",      _check_tts),
         ("vad",      _check_vad),
         ("whisper",  _check_whisper),
         ("embedder", _check_embedder),
     ]:
         _results[name] = await loop.run_in_executor(None, fn)
 
-    # Optional / network checks — run concurrently
-    tts_fut     = loop.run_in_executor(None, _check_tts)
-    ollama_fut  = loop.run_in_executor(None, _check_ollama)
-    claude_fut  = loop.run_in_executor(None, _check_claude)
-    (
-        _results["tts"],
-        _results["ollama"],
-        _results["claude"],
-    ) = await asyncio.gather(tts_fut, ollama_fut, claude_fut)
+    # Network-only checks — safe to run concurrently
+    ollama_fut = loop.run_in_executor(None, _check_ollama)
+    claude_fut = loop.run_in_executor(None, _check_claude)
+    _results["ollama"], _results["claude"] = await asyncio.gather(ollama_fut, claude_fut)
 
     # Summary banner
     ok  = [k for k, v in _results.items() if v.get("ok")]

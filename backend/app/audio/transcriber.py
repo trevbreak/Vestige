@@ -1,11 +1,12 @@
 """
 faster-whisper transcription wrapper.
 
-Loads the model once on startup and exposes a synchronous
-`transcribe()` method. The pipeline orchestrator calls this
-from a thread pool to avoid blocking the asyncio event loop.
+Exposes a module-level singleton `transcriber` that is loaded once at startup
+(via startup_checks.py) and reused by every AudioPipeline session.
 
-Falls back gracefully if faster-whisper is not installed.
+Loading twice in the same process with CUDA triggers a device-side assert in
+some CTranslate2/driver combinations, so we intentionally never call
+WhisperModel(...) more than once per process.
 """
 
 from __future__ import annotations
@@ -29,43 +30,53 @@ class TranscriptSegment:
 
 class Transcriber:
     """
-    Singleton-style faster-whisper wrapper.
+    Module-level singleton faster-whisper wrapper.
 
-    The model is loaded once and reused across all transcription calls.
-    Thread-safe for concurrent calls from asyncio's thread pool.
+    Do not call __init__ directly after startup — use the module-level
+    `transcriber` instance.  Call `transcriber.load(...)` once at startup
+    (done by startup_checks.py) to prime the model.
     """
 
-    def __init__(
+    def __init__(self):
+        self._model = None
+        self.model_size: str = "large-v3"
+        self.device: str = "cuda"
+        self.compute_type: str = "float16"
+
+    def load(
         self,
         model_size: str = "large-v3",
         device: str = "cuda",
         compute_type: str = "float16",
-    ):
+    ) -> bool:
+        """
+        Load (or reload) the WhisperModel.  Returns True on success.
+        Safe to call only once — subsequent calls are no-ops if already loaded.
+        """
+        if self._model is not None:
+            log.info("transcriber.already_loaded", model=self.model_size)
+            return True
+
         self.model_size = model_size
         self.device = device
         self.compute_type = compute_type
-        self._model = None
-        self._load()
 
-    def _load(self) -> None:
         try:
             from faster_whisper import WhisperModel
-            log.info("transcriber.loading", model=self.model_size, device=self.device)
-            self._model = WhisperModel(
-                self.model_size,
-                device=self.device,
-                compute_type=self.compute_type,
-            )
-            log.info("transcriber.ready")
+            log.info("transcriber.loading", model=model_size, device=device,
+                     compute_type=compute_type)
+            self._model = WhisperModel(model_size, device=device, compute_type=compute_type)
+            log.info("transcriber.ready", model=model_size, device=device,
+                     compute_type=compute_type)
+            return True
         except ImportError:
-            log.warning(
-                "transcriber.faster_whisper_not_installed",
-                note="Transcription running in stub mode",
-            )
+            log.warning("transcriber.faster_whisper_not_installed",
+                        note="Transcription running in stub mode")
+            return False
         except Exception as e:
-            log.error("transcriber.load_failed", error=str(e))
-            log.warning("transcriber.will_retry_on_next_segment",
-                        note="Model load failed — will retry on first transcription call")
+            log.error("transcriber.load_failed", error=str(e),
+                      model=model_size, device=device, compute_type=compute_type)
+            return False
 
     @property
     def available(self) -> bool:
@@ -92,14 +103,10 @@ class Transcriber:
         Empty list on failure.
         """
         if not self.available:
-            # Try loading again — a transient CUDA error on startup may have cleared
-            log.info("transcriber.retry_load")
-            self._load()
-
-        if not self.available:
-            # Stub: return placeholder so tests and dev can proceed without GPU
+            log.warning("transcriber.not_loaded",
+                        note="Call transcriber.load() at startup before transcribing")
             return [TranscriptSegment(
-                text="[transcription unavailable — faster-whisper not installed]",
+                text="[transcription unavailable — model not loaded]",
                 start_ms=0,
                 end_ms=int(len(audio) / sample_rate * 1000),
                 confidence=0.0,
@@ -152,7 +159,8 @@ class Transcriber:
             confidence = float(min(1.0, max(0.0, 1.0 + avg_logprob)))
 
             if no_speech_prob > cfg.whisper_no_speech_threshold:
-                log.info("transcriber.no_speech_dropped", text=text, no_speech_prob=round(no_speech_prob, 3))
+                log.info("transcriber.no_speech_dropped", text=text,
+                         no_speech_prob=round(no_speech_prob, 3))
                 continue
 
             from app.audio.backchannel_classifier import is_inaudible
@@ -166,3 +174,7 @@ class Transcriber:
             ))
 
         return results
+
+
+# Module-level singleton — loaded once at startup, shared across all sessions
+transcriber = Transcriber()

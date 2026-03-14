@@ -52,6 +52,9 @@ class RuntimeSettings(BaseModel):
     backchannel_min_gap: Optional[float] = Field(None, ge=2.0, le=60.0)
     backchannel_chance: Optional[float] = Field(None, ge=0.0, le=1.0)
 
+    # Audio device
+    mic_device_index: Optional[int] = Field(None, ge=0)
+
     # Memory
     memory_top_k: Optional[int] = Field(None, ge=1, le=20)
     transcript_context_lines: Optional[int] = Field(None, ge=5, le=100)
@@ -81,6 +84,8 @@ class SettingsOut(BaseModel):
     response_jitter_max: float
     backchannel_min_gap: float
     backchannel_chance: float
+    # Audio device
+    mic_device_index: int
     # Memory
     memory_top_k: int
     transcript_context_lines: int
@@ -110,6 +115,7 @@ def get_current_settings():
         response_jitter_max=s.response_jitter_max,
         backchannel_min_gap=s.backchannel_min_gap,
         backchannel_chance=s.backchannel_chance,
+        mic_device_index=s.mic_device_index,
         memory_top_k=s.memory_top_k,
         transcript_context_lines=s.transcript_context_lines,
     )

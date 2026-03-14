@@ -90,6 +90,8 @@ function SystemStatusSection({ refreshTrigger }) {
   const [loading, setLoading] = useState(true)
   const [micResult, setMicResult] = useState(null)
   const [micTesting, setMicTesting] = useState(false)
+  const [selectedDevice, setSelectedDevice] = useState(null)
+  const [deviceSaving, setDeviceSaving] = useState(false)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -97,6 +99,7 @@ function SystemStatusSection({ refreshTrigger }) {
       const [s, d] = await Promise.all([api.getSystemStatus(), api.getAudioDevices()])
       setStatus(s)
       setDevices(d)
+      setSelectedDevice(null) // reset pending selection on refresh
     } catch (e) {
       console.error('Status check failed:', e)
     } finally {
@@ -119,6 +122,19 @@ function SystemStatusSection({ refreshTrigger }) {
     }
   }
 
+  const handleDeviceApply = async () => {
+    if (selectedDevice === null) return
+    setDeviceSaving(true)
+    try {
+      await api.updateSettings({ mic_device_index: selectedDevice })
+      await refresh()
+    } catch (e) {
+      console.error('Failed to update mic device:', e)
+    } finally {
+      setDeviceSaving(false)
+    }
+  }
+
   const cfg = status?.config ?? {}
   const ollama = status?.services?.ollama ?? {}
   const whisper = status?.models?.faster_whisper ?? {}
@@ -130,7 +146,8 @@ function SystemStatusSection({ refreshTrigger }) {
   const modelInstalled = ollamaModels.some(
     (m) => m === configuredModel || m.startsWith(configuredModel.split(':')[0])
   )
-  const currentDevice = devices?.devices?.find((d) => d.index === cfg.mic_device_index)
+  const activeDeviceIndex = cfg.mic_device_index ?? 0
+  const pendingIndex = selectedDevice !== null ? selectedDevice : activeDeviceIndex
 
   return (
     <section className={`card ${styles.section}`}>
@@ -200,17 +217,34 @@ function SystemStatusSection({ refreshTrigger }) {
 
         <div className={styles.statusGroup}>
           <div className={styles.statusGroupTitle}>Microphone</div>
-          <div className={styles.statusRow}>
-            <span className={styles.statusLabel}>Device {cfg.mic_device_index ?? '?'}:</span>
-            <span className={styles.statusDetail}>
-              {currentDevice ? currentDevice.name : (loading ? '...' : 'unknown')}
-            </span>
-          </div>
-          {devices?.devices?.length > 0 && (
+          {devices?.devices?.length > 0 ? (
+            <div className={styles.micSelectRow}>
+              <select
+                className={styles.input}
+                style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}
+                value={pendingIndex}
+                onChange={(e) => setSelectedDevice(Number(e.target.value))}
+                disabled={loading || deviceSaving}
+              >
+                {devices.devices.map((d) => (
+                  <option key={d.index} value={d.index}>
+                    [{d.index}] {d.name}
+                  </option>
+                ))}
+              </select>
+              {selectedDevice !== null && selectedDevice !== activeDeviceIndex && (
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={handleDeviceApply}
+                  disabled={deviceSaving}
+                >
+                  {deviceSaving ? 'Applying...' : 'Apply'}
+                </button>
+              )}
+            </div>
+          ) : (
             <div className={styles.statusRow}>
-              <span className={styles.statusDetail}>
-                {devices.devices.length} input device(s) available
-              </span>
+              <span className={styles.statusDetail}>{loading ? '...' : 'No input devices found'}</span>
             </div>
           )}
           <div className={styles.micTestRow}>

@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from app.config import get_settings
 from app.audio.aec_gate import EchoGate
 from app.audio.vad import VADProcessor
-from app.audio.transcriber import Transcriber, TranscriptSegment
+from app.audio.transcriber import transcriber as _transcriber_singleton, TranscriptSegment
 from app.audio.backchannel_classifier import classify_utterance, is_inaudible
 from app.audio.overlap_detector import detect_overlap, select_dominant_half
 from app.audio.context_engine import ContextEngine, _is_dm_hotword
@@ -75,11 +75,7 @@ class AudioPipeline:
             sample_rate=settings.sample_rate,
             threshold=settings.vad_threshold,
         )
-        self._transcriber = Transcriber(
-            model_size=settings.whisper_model,
-            device=settings.whisper_device,
-            compute_type=settings.whisper_compute_type,
-        )
+        self._transcriber = _transcriber_singleton  # loaded once at startup
         self._context_engine = ContextEngine()
 
         names = avatar_names or {}

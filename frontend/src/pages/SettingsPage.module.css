@@ -302,6 +302,20 @@
   50% { opacity: 1; }
 }
 
+/* ── Mic device select ────────────────────────────────────────────── */
+
+.micSelectRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.micSelectRow select {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ── Mic test ─────────────────────────────────────────────────────── */
 
 .micTestRow {

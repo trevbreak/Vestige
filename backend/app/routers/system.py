@@ -37,6 +37,15 @@ def get_system_status():
     # Live Ollama re-check (cheap HTTP ping, not a model load)
     ollama = checks.get("ollama", {"ok": False, "error": "not checked yet"})
 
+    # Check sounddevice availability
+    try:
+        import sounddevice as _sd  # noqa: F401
+        sd_ok = True
+        sd_error = None
+    except ImportError:
+        sd_ok = False
+        sd_error = "sounddevice not installed"
+
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "config": {
@@ -53,6 +62,9 @@ def get_system_status():
             "whisper":  checks.get("whisper",  {"ok": False, "error": "not checked"}),
             "embedder": checks.get("embedder", {"ok": False, "error": "not checked"}),
             "tts":      checks.get("tts",      {"ok": False, "error": "not checked"}),
+        },
+        "audio": {
+            "sounddevice": {"ok": sd_ok, "error": sd_error},
         },
         "services": {
             "ollama": ollama,
