@@ -72,6 +72,14 @@ async def start_pipeline(session_id: int, db: AsyncSession = Depends(get_db)):
                 "hit_points_max": avatar.hit_points_max,
                 "spell_slots": avatar.spell_slots or {},
                 "relationships": avatar.relationships or {},
+                # Phase 8: personality + voice fields
+                "personality_prompt": avatar.personality_prompt or "",
+                "verbosity": avatar.verbosity if avatar.verbosity is not None else 0.5,
+                "interrupts_often": avatar.interrupts_often or False,
+                "personality_archetype": avatar.personality_archetype or "extrovert",
+                "holding_phrase_chance": avatar.holding_phrase_chance if avatar.holding_phrase_chance is not None else 0.5,
+                "voice_id": avatar.voice_id,
+                "tts_engine_preference": avatar.tts_engine_preference or "auto",
             }
 
     async def broadcast_entry(entry):

@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Any
 from datetime import datetime
+
+_VALID_ARCHETYPES = {"introvert", "extrovert", "reactive", "stoic"}
 
 
 class AvatarBase(BaseModel):
@@ -42,6 +44,24 @@ class AvatarBase(BaseModel):
 
     mode: str = "active"
     relationships: Optional[dict[str, str]] = {}
+
+    # Phase 8: LLM-generated persona
+    personality_prompt: Optional[str] = None
+    verbosity: float = Field(0.5, ge=0.0, le=1.0)
+    interrupts_often: bool = False
+    personality_archetype: str = "extrovert"
+    holding_phrase_chance: float = Field(0.5, ge=0.0, le=1.0)
+
+    # Phase 8: Edge-TTS voice
+    voice_id: Optional[str] = None
+    tts_engine_preference: str = "auto"
+
+    @field_validator("personality_archetype")
+    @classmethod
+    def validate_archetype(cls, v: str) -> str:
+        if v not in _VALID_ARCHETYPES:
+            raise ValueError(f"personality_archetype must be one of {sorted(_VALID_ARCHETYPES)}")
+        return v
 
 
 class AvatarCreate(AvatarBase):
@@ -90,6 +110,15 @@ class AvatarUpdate(BaseModel):
     mode: Optional[str] = None
     relationships: Optional[dict[str, str]] = None
     is_active: Optional[bool] = None
+
+    # Phase 8
+    personality_prompt: Optional[str] = None
+    verbosity: Optional[float] = Field(None, ge=0.0, le=1.0)
+    interrupts_often: Optional[bool] = None
+    personality_archetype: Optional[str] = None
+    holding_phrase_chance: Optional[float] = Field(None, ge=0.0, le=1.0)
+    voice_id: Optional[str] = None
+    tts_engine_preference: Optional[str] = None
 
 
 class AvatarResponse(AvatarBase):

@@ -82,6 +82,14 @@ class PipelineManager:
                     ok = tts.load_speaker_embedding(aid, emb_path)
                     log.info("pipeline_manager.embedding_loaded", avatar_id=aid, ok=ok)
 
+        # Phase 8: register per-avatar voice preferences (Edge-TTS / XTTS-v2)
+        for aid, profile in (avatar_profiles or {}).items():
+            tts.register_avatar_voice(
+                avatar_id=aid,
+                voice_id=profile.get("voice_id"),
+                engine_preference=profile.get("tts_engine_preference", "auto"),
+            )
+
         # ── AudioPipeline (owns the EchoGate we'll share) ─────────────────
         # AudioPipeline.__init__ loads the Whisper model (blocking, up to 30s).
         # Run it in a thread executor so the event loop stays responsive.
@@ -94,6 +102,7 @@ class PipelineManager:
                 broadcast_fn=broadcast_fn,
                 avatar_names=avatar_names,
                 avatar_modes=avatar_modes,
+                avatar_profiles=avatar_profiles,
             ),
         )
 

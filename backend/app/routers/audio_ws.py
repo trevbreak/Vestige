@@ -54,6 +54,7 @@ async def audio_stream(websocket: WebSocket, session_id: int):
     speech_start_ms = 0
     elapsed_samples = 0
     last_human_speech_at: float = 0.0
+    consecutive_silent_chunks = 0  # chunks of silence accumulated since last speech chunk
 
     settings = pipeline._vad.sample_rate  # just confirming sample_rate ref
     sample_rate = 16000
@@ -107,8 +108,9 @@ async def audio_stream(websocket: WebSocket, session_id: int):
             if not pipeline._gate.is_open():
                 continue
 
-            # Re-read threshold each chunk so settings changes take effect immediately
-            vad_threshold = get_settings().vad_threshold
+            # Re-read thresholds each chunk so settings changes take effect immediately
+            cfg = get_settings()
+            vad_threshold = cfg.vad_threshold
             speech_prob = pipeline._vad.process_chunk(int16_chunk)
 
             # VAD probe logging
@@ -121,6 +123,10 @@ async def audio_stream(websocket: WebSocket, session_id: int):
                 _vad_probe_max = 0.0
                 _vad_probe_count = 0
 
+            # How many consecutive silent 32ms chunks constitute end-of-utterance
+            chunk_ms = len(int16_chunk) / sample_rate * 1000
+            trailing_silence_chunks = max(1, int(cfg.vad_trailing_silence_ms / chunk_ms))
+
             if speech_prob >= vad_threshold:
                 if not in_speech:
                     in_speech = True
@@ -128,18 +134,24 @@ async def audio_stream(websocket: WebSocket, session_id: int):
                     pipeline._context_engine.on_human_speech_start()
                     log.info("audio_ws.speech_start", session_id=session_id, speech_prob=round(speech_prob, 3))
                 speech_buffer.append(int16_chunk)
+                consecutive_silent_chunks = 0
                 last_human_speech_at = time.monotonic()
                 pipeline._last_human_speech_at = last_human_speech_at
 
             elif in_speech:
-                in_speech = False
-                pipeline._context_engine.on_human_speech_end()
-                if speech_buffer:
+                # Accumulate silent chunks into the buffer until trailing silence threshold
+                speech_buffer.append(int16_chunk)
+                consecutive_silent_chunks += 1
+                if consecutive_silent_chunks >= trailing_silence_chunks:
+                    in_speech = False
+                    consecutive_silent_chunks = 0
+                    pipeline._context_engine.on_human_speech_end()
                     audio = np.concatenate(speech_buffer)
                     n_chunks = len(speech_buffer)
                     speech_buffer = []
                     log.info("audio_ws.speech_end", session_id=session_id,
-                             chunks=n_chunks, duration_ms=current_ms - speech_start_ms)
+                             chunks=n_chunks, duration_ms=current_ms - speech_start_ms,
+                             trailing_silence_ms=cfg.vad_trailing_silence_ms)
                     await pipeline._flush_buffer(audio, speech_start_ms, current_ms)
 
     except Exception as e:

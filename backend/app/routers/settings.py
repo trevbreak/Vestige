@@ -36,9 +36,16 @@ class RuntimeSettings(BaseModel):
 
     # Audio input
     vad_threshold: Optional[float] = Field(None, ge=0.05, le=0.99)
+    vad_trailing_silence_ms: Optional[int] = Field(None, ge=100, le=3000)
     aec_decay_ms: Optional[int] = Field(None, ge=0, le=2000)
+    # Whisper transcription (beam_size, thresholds take effect immediately;
+    # whisper_model/device/compute_type require server restart)
+    whisper_beam_size: Optional[int] = Field(None, ge=1, le=10)
     whisper_no_speech_threshold: Optional[float] = Field(None, ge=0.1, le=1.0)
     whisper_log_prob_threshold: Optional[float] = Field(None, ge=-5.0, le=0.0)
+    whisper_model: Optional[str] = None
+    whisper_device: Optional[str] = None
+    whisper_compute_type: Optional[str] = None
 
     # Trigger timing
     silence_gap_trigger: Optional[float] = Field(None, ge=1.0, le=30.0)
@@ -71,9 +78,14 @@ class SettingsOut(BaseModel):
     ollama_timeout_s: float
     # Audio
     vad_threshold: float
+    vad_trailing_silence_ms: int
     aec_decay_ms: int
+    whisper_beam_size: int
     whisper_no_speech_threshold: float
     whisper_log_prob_threshold: float
+    whisper_model: str
+    whisper_device: str
+    whisper_compute_type: str
     # Timing
     silence_gap_trigger: float
     self_cooldown_seconds: float
@@ -104,9 +116,14 @@ def get_current_settings():
         claude_max_tokens=s.claude_max_tokens,
         ollama_timeout_s=s.ollama_timeout_s,
         vad_threshold=s.vad_threshold,
+        vad_trailing_silence_ms=s.vad_trailing_silence_ms,
         aec_decay_ms=s.aec_decay_ms,
+        whisper_beam_size=s.whisper_beam_size,
         whisper_no_speech_threshold=s.whisper_no_speech_threshold,
         whisper_log_prob_threshold=s.whisper_log_prob_threshold,
+        whisper_model=s.whisper_model,
+        whisper_device=s.whisper_device,
+        whisper_compute_type=s.whisper_compute_type,
         silence_gap_trigger=s.silence_gap_trigger,
         self_cooldown_seconds=s.self_cooldown_seconds,
         avatar_cooldown_seconds=s.avatar_cooldown_seconds,

@@ -29,13 +29,24 @@ silero-vad>=6.0
 coqui-tts>=0.27.0
 transformers>=4.57,<5.0
 
+# TTS voices (Phase 8+) — Edge-TTS for accent variety; pydub for MP3→WAV decode
+edge-tts>=6.1
+pydub>=0.25
+
 # Embeddings (Phase 5+)
 sentence-transformers>=3.0
 sqlite-vec==0.1.6
 
+# Observability (Phase 8+) — Arize Phoenix LLM tracing UI
+arize-phoenix>=4.0
+openinference-instrumentation-anthropic>=0.1
+opentelemetry-sdk>=1.20
+opentelemetry-exporter-otlp-proto-grpc>=1.20
+
 # Utilities
 python-dotenv==1.0.1
 structlog==24.4.0
+PyYAML>=6.0
 
 # Testing
 pytest==8.3.4

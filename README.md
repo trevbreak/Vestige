@@ -18,6 +18,7 @@
 | **5** | Memory — session transcripts, embeddings, sqlite-vec retrieval | ✅ Complete |
 | **6** | Rules Engine — D&D 5e action economy, spells, conditions, combat | ✅ Complete |
 | **7** | Polish — inter-avatar dynamics, DM controls, settings panel | ✅ Complete |
+| **8** | Avatar Realism — personality prompts, differentiated voices, Phoenix tracing | ✅ Complete |
 
 ---
 
@@ -72,6 +73,7 @@ Mic → sounddevice → silero-vad → faster-whisper (CUDA)
 *   NVIDIA GPU with CUDA (for Phase 2+)
 *   [Ollama](https://ollama.com/download) installed and running locally (for Phase 4+)
 *   Anthropic API key (for Phase 4+)
+*   [ffmpeg](https://ffmpeg.org/download.html) on your system PATH (for Phase 8+ Edge-TTS voice playback — MP3 decode)
 
 ### 1\. Install and Start Ollama
 
@@ -133,6 +135,8 @@ Start services in this order each session:
 2.  Backend: `cd backend && .venv/Scripts/uvicorn app.main:app --reload --port 8000`
 3.  Frontend: `cd frontend && npm run dev`
 
+**LLM Tracing UI (Phase 8+):** Once the backend starts, Arize Phoenix is automatically launched at [http://localhost:6006](http://localhost:6006). Open it to inspect every LLM prompt/response, latency, token counts, and run evaluations. No extra setup needed — it starts in-process with the backend. See the [Phoenix docs](https://docs.arize.com/phoenix) for eval/annotation workflows.
+
 ### Tests
 
 ```
@@ -187,6 +191,7 @@ vestige/
 *   [Phase 5 — Memory System](docs/phase5-memory.md)
 *   [Phase 6 — Rules Engine & Combat](docs/phase6-rules.md)
 *   [Phase 7 — Polish & Inter-Avatar Dynamics](docs/phase7-polish.md)
+*   [Phase 8 — Avatar Personality & Voice Behaviors](docs/avatar-personality-behaviors.md)
 
 ---
 

@@ -1,0 +1,25 @@
+claude_context_types:
+  - emotional_beat
+  - backstory_call
+  - npc_social
+  - moral_dilemma
+
+claude_routing_keywords:
+  - backstory
+  - trauma
+  - betrayal
+  - forgive
+  - sacrifice
+  - regret
+  - childhood
+  - died
+  - loved
+  - swore
+  - oath
+  - memory
+  - dream
+  - fear
+  - family
+  - vow
+  - alone
+  - promised

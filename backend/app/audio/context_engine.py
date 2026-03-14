@@ -17,30 +17,9 @@ import time
 import re
 from dataclasses import dataclass, field
 from app.config import get_settings
+from app.prompts.loader import prompt_loader
 
 settings = get_settings()
-
-# ── Hotwords ──────────────────────────────────────────────────────────────────
-DM_HOTWORDS = frozenset({"hold", "pause", "stop", "wait", "cut"})
-
-# ── Combat trigger phrases (DM speech) ───────────────────────────────────────
-COMBAT_TRIGGERS = frozenset({
-    "roll initiative", "what do you do", "your turn", "roll for",
-    "make a", "saving throw", "attack roll", "damage roll",
-})
-
-# ── Character-directed prompt fragments ──────────────────────────────────────
-DIRECTED_FRAGMENTS = frozenset({
-    "what do you", "what does", "your character", "what about you",
-    "how do you", "what would", "what will you",
-})
-
-# ── Claude routing keywords (emotional/complex scenes) ───────────────────────
-CLAUDE_KEYWORDS = frozenset({
-    "backstory", "trauma", "betray", "forgive", "sacrifice", "regret",
-    "childhood", "died", "loved", "swore", "oath", "memory", "dream",
-    "fear", "family", "vow", "alone", "promised",
-})
 
 # ── Context type → routing + max sentence length ─────────────────────────────
 CONTEXT_TYPES: dict[str, dict] = {
@@ -73,6 +52,10 @@ class AvatarState:
     mode: str = "active"               # active | passive | absent
     last_spoke_at: float = 0.0
     last_name_mentioned_at: float = 0.0
+    # Phase 8: personality-driven response gating
+    verbosity: float = 0.5             # 0.0=silent, 1.0=talks constantly
+    interrupts_often: bool = False     # lowers interrupt confidence threshold
+    personality_archetype: str = "extrovert"  # introvert | extrovert | reactive | stoic
 
 
 class ContextEngine:
@@ -90,8 +73,23 @@ class ContextEngine:
 
     # ── State management ─────────────────────────────────────────────────
 
-    def register_avatar(self, avatar_id: int, name: str, mode: str = "active") -> None:
-        self._avatar_states[avatar_id] = AvatarState(avatar_id, name, mode)
+    def register_avatar(
+        self,
+        avatar_id: int,
+        name: str,
+        mode: str = "active",
+        verbosity: float = 0.5,
+        interrupts_often: bool = False,
+        personality_archetype: str = "extrovert",
+    ) -> None:
+        self._avatar_states[avatar_id] = AvatarState(
+            avatar_id=avatar_id,
+            name=name,
+            mode=mode,
+            verbosity=verbosity,
+            interrupts_often=interrupts_often,
+            personality_archetype=personality_archetype,
+        )
 
     def unregister_avatar(self, avatar_id: int) -> None:
         self._avatar_states.pop(avatar_id, None)
@@ -185,6 +183,41 @@ class ContextEngine:
         if state.mode == "passive" and not is_direct and not name_recent:
             return EngineDecision(False, 5, reason="passive_not_addressed")
 
+        # ── 3b. Personality archetype gate ───────────────────────────
+        archetype = state.personality_archetype
+
+        if archetype == "stoic":
+            # Stoic: only speaks when named, directly addressed, or in combat
+            if not is_direct and not name_recent and not combat_trigger:
+                return EngineDecision(False, 5, reason="stoic_not_triggered")
+
+        elif archetype == "introvert":
+            # Introvert: only speaks when directly addressed or recently named
+            if not is_direct and not name_recent:
+                return EngineDecision(False, 5, reason="introvert_not_addressed")
+
+        elif archetype == "reactive":
+            # Reactive: engages with questions, debate, combat — not ambient silence
+            if not is_direct and not name_recent and not has_question and not combat_trigger:
+                return EngineDecision(False, 5, reason="reactive_not_triggered")
+            if not is_direct and not name_recent:
+                import random as _random
+                if _random.random() > state.verbosity:
+                    return EngineDecision(False, 5, reason="reactive_verbosity_roll")
+
+        else:
+            # extrovert (default): apply verbosity roll for ambient/casual triggers
+            # silence_trigger is a passive engagement pathway — not subject to verbosity roll
+            if not is_direct and not name_recent and not combat_trigger and not silence_trigger:
+                import random as _random
+                if _random.random() > state.verbosity:
+                    return EngineDecision(False, 5, reason="extrovert_verbosity_roll")
+
+        # interrupts_often: lower the effective threshold so they cut in more
+        if state.interrupts_often:
+            effective_threshold = settings.interrupt_confidence_threshold * 0.7
+            is_direct = score >= effective_threshold
+
         # ── 4. Context type & route ───────────────────────────────────
         context_type = _classify_context(transcript, is_combat=combat_trigger)
         route = CONTEXT_TYPES[context_type]["route"]
@@ -218,13 +251,14 @@ class ContextEngine:
 # ── Pure helper functions (no state) ─────────────────────────────────────────
 
 def _interrupt_confidence(transcript: str, avatar_name: str) -> float:
+    directed_fragments = prompt_loader.get_context_keyword_set("directed_fragments")
     score = 0.0
     lower = transcript.lower()
     if avatar_name.lower() in lower:
         score += 0.8
     if "?" in transcript:
         score += 0.3
-    if any(frag in lower for frag in DIRECTED_FRAGMENTS):
+    if any(frag in lower for frag in directed_fragments):
         score += 0.4
     return min(score, 1.0)
 
@@ -234,13 +268,15 @@ def _name_in_text(text: str, name: str) -> bool:
 
 
 def _is_combat_trigger(text: str) -> bool:
+    combat_triggers = prompt_loader.get_context_keyword_set("combat_triggers")
     lower = text.lower()
-    return any(t in lower for t in COMBAT_TRIGGERS)
+    return any(t in lower for t in combat_triggers)
 
 
 def _is_dm_hotword(text: str) -> bool:
+    dm_hotwords = prompt_loader.get_context_keyword_set("dm_hotwords")
     lower = text.strip().lower()
-    return any(hw in lower for hw in DM_HOTWORDS)
+    return any(hw in lower for hw in dm_hotwords)
 
 
 def _classify_context(transcript: str, is_combat: bool = False) -> str:
@@ -249,19 +285,22 @@ def _classify_context(transcript: str, is_combat: bool = False) -> str:
     if is_combat or _is_combat_trigger(transcript):
         return "combat_turn"
 
-    if any(kw in lower for kw in CLAUDE_KEYWORDS):
-        # Check for moral/backstory themes
-        if any(kw in lower for kw in {"sacrific", "betray", "swore", "oath", "vow"}):
+    claude_keywords = prompt_loader.get_context_keyword_set("claude_keywords")
+    moral_keywords = prompt_loader.get_context_keyword_set("moral_keywords")
+    backstory_keywords = prompt_loader.get_context_keyword_set("backstory_keywords")
+    npc_social_keywords = prompt_loader.get_context_keyword_set("npc_social_keywords")
+
+    if any(kw in lower for kw in claude_keywords):
+        if any(kw in lower for kw in moral_keywords):
             return "moral_dilemma"
-        if any(kw in lower for kw in {"backstory", "childhood", "family", "died", "loved"}):
+        if any(kw in lower for kw in backstory_keywords):
             return "backstory_call"
         return "emotional_beat"
 
     if "?" in transcript:
         return "direct_question"
 
-    # Simple heuristics for social encounters
-    if any(w in lower for w in {"persuade", "intimidate", "deceive", "negotiate", "convince"}):
+    if any(w in lower for w in npc_social_keywords):
         return "npc_social"
 
     return "casual_roleplay"

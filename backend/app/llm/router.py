@@ -22,25 +22,12 @@ import json
 import structlog
 from dataclasses import dataclass
 
+from contextlib import nullcontext
+
 from app.config import get_settings
+from app.prompts.loader import prompt_loader
 
 log = structlog.get_logger()
-
-# ── Routing table ─────────────────────────────────────────────────────────────
-
-CLAUDE_CONTEXT_TYPES = frozenset({
-    "emotional_beat",
-    "backstory_call",
-    "npc_social",
-    "moral_dilemma",
-})
-
-# Keywords in recent transcript that escalate routing to Claude
-CLAUDE_ROUTING_KEYWORDS = frozenset({
-    "backstory", "trauma", "betrayal", "forgive", "sacrifice", "regret",
-    "childhood", "died", "loved", "swore", "oath", "memory", "dream",
-    "fear", "family", "vow", "alone", "promised",
-})
 
 
 @dataclass
@@ -60,11 +47,12 @@ def select_route(context_type: str, recent_transcript: str = "") -> str:
 
     Keyword escalation: if the recent transcript contains emotional keywords,
     route to Claude regardless of context_type.
+    Keywords and context types are loaded from routing_keywords.yaml.
     """
     lower = recent_transcript.lower()
-    if any(kw in lower for kw in CLAUDE_ROUTING_KEYWORDS):
+    if any(kw in lower for kw in prompt_loader.claude_routing_keywords):
         return "claude"
-    if context_type in CLAUDE_CONTEXT_TYPES:
+    if context_type in prompt_loader.claude_context_types:
         return "claude"
     return "ollama"
 
@@ -86,63 +74,86 @@ def call_ollama(
     model = model or _settings.ollama_model
     t0 = time.monotonic()
 
+    # Phase 8: OTel span for Phoenix tracing (no-op if Phoenix not configured)
     try:
-        import urllib.request
-        import urllib.error
+        from app.tracing import get_tracer as _get_tracer
+        _span_ctx = _get_tracer("vestige.ollama").start_as_current_span("ollama.chat")
+    except Exception:
+        _span_ctx = nullcontext()
 
-        payload = json.dumps({
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user",   "content": user_message},
-            ],
-            "stream": False,
-            "options": {
-                "temperature": 0.85,
-                "top_p": 0.9,
-                "num_predict": num_predict,
-            },
-        }).encode()
+    with _span_ctx as _span:
+        def _set_attr(key: str, val) -> None:
+            try:
+                if _span and hasattr(_span, "set_attribute"):
+                    _span.set_attribute(key, val)
+            except Exception:
+                pass
 
-        req = urllib.request.Request(
-            f"{_settings.ollama_base_url}/api/chat",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=_settings.ollama_timeout_s) as resp:
-            body = json.loads(resp.read())
+        _set_attr("llm.model", model)
+        _set_attr("llm.system", system_prompt[:500])
+        _set_attr("llm.user", user_message[:500])
 
-        text = body.get("message", {}).get("content", "").strip()
-        latency = (time.monotonic() - t0) * 1000
-        prompt_tok = body.get("prompt_eval_count", 0)
-        completion_tok = body.get("eval_count", 0)
+        try:
+            import urllib.request
+            import urllib.error
 
-        log.debug(
-            "llm.ollama_response",
-            model=model,
-            latency_ms=round(latency),
-            tokens=completion_tok,
-        )
-        return LLMResponse(
-            text=text,
-            route="ollama",
-            model=model,
-            prompt_tokens=prompt_tok,
-            completion_tokens=completion_tok,
-            latency_ms=latency,
-        )
+            payload = json.dumps({
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user",   "content": user_message},
+                ],
+                "stream": False,
+                "options": {
+                    "temperature": 0.85,
+                    "top_p": 0.9,
+                    "num_predict": num_predict,
+                },
+            }).encode()
 
-    except Exception as e:
-        latency = (time.monotonic() - t0) * 1000
-        log.warning("llm.ollama_failed", error=str(e), latency_ms=round(latency))
-        return LLMResponse(
-            text="",
-            route="stub",
-            model=model,
-            latency_ms=latency,
-            error=str(e),
-        )
+            req = urllib.request.Request(
+                f"{_settings.ollama_base_url}/api/chat",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=_settings.ollama_timeout_s) as resp:
+                body = json.loads(resp.read())
+
+            text = body.get("message", {}).get("content", "").strip()
+            latency = (time.monotonic() - t0) * 1000
+            prompt_tok = body.get("prompt_eval_count", 0)
+            completion_tok = body.get("eval_count", 0)
+
+            _set_attr("llm.response", text[:500])
+            _set_attr("llm.latency_ms", round(latency))
+            _set_attr("llm.completion_tokens", completion_tok)
+
+            log.debug(
+                "llm.ollama_response",
+                model=model,
+                latency_ms=round(latency),
+                tokens=completion_tok,
+            )
+            return LLMResponse(
+                text=text,
+                route="ollama",
+                model=model,
+                prompt_tokens=prompt_tok,
+                completion_tokens=completion_tok,
+                latency_ms=latency,
+            )
+
+        except Exception as e:
+            latency = (time.monotonic() - t0) * 1000
+            log.warning("llm.ollama_failed", error=str(e), latency_ms=round(latency))
+            return LLMResponse(
+                text="",
+                route="stub",
+                model=model,
+                latency_ms=latency,
+                error=str(e),
+            )
 
 
 # ── Claude client ─────────────────────────────────────────────────────────────

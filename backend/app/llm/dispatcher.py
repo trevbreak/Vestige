@@ -27,6 +27,7 @@ from app.config import get_settings
 from app.llm.prompt_builder import PromptBuilder, AvatarContext
 from app.llm.router import call_llm, LLMResponse
 from app.audio.response_post_processor import ResponsePostProcessor, ProcessedResponse
+from app.presence.ambient_reactions import should_play_holding_phrase
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -64,6 +65,10 @@ class DispatchRequest:
     spell_slots: dict = None
     active_conditions: list = None
     relationships: dict = None
+
+    # Phase 8: personality
+    personality_prompt: str = ""
+    holding_phrase_chance: float = 0.5
 
     # Current session context
     transcript_lines: list[str] = None   # ["Speaker: text", ...]
@@ -120,13 +125,14 @@ class LLMDispatcher:
             priority=req.priority,
         )
 
-        # 1. Play holding phrase immediately (before LLM call)
-        await self._presence.play_holding_phrase(
-            avatar_id=req.avatar_id,
-            avatar_name=req.avatar_name,
-            context_type=req.context_type,
-            tts_engine=self._tts,
-        )
+        # 1. Conditionally play holding phrase (Phase 8: probability-gated per avatar)
+        if should_play_holding_phrase(req.context_type, req.holding_phrase_chance):
+            await self._presence.play_holding_phrase(
+                avatar_id=req.avatar_id,
+                avatar_name=req.avatar_name,
+                context_type=req.context_type,
+                tts_engine=self._tts,
+            )
 
         # 2. Build prompt
         ctx = AvatarContext(
@@ -154,6 +160,7 @@ class LLMDispatcher:
             context_type=req.context_type,
             available_actions_text=req.available_actions_text,
             cross_avatar_note=req.cross_avatar_note,
+            personality_prompt=req.personality_prompt,
         )
         system_prompt, user_message = _prompt_builder.build(ctx)
 

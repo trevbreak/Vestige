@@ -63,8 +63,9 @@ class AudioPipeline:
         session_id: int,
         active_avatar_ids: list[int],
         broadcast_fn,       # async callable: (TranscriptEntry) -> None
-        avatar_names: dict[int, str] | None = None,  # {avatar_id: name}
-        avatar_modes: dict[int, str] | None = None,  # {avatar_id: mode}
+        avatar_names: dict[int, str] | None = None,   # {avatar_id: name}
+        avatar_modes: dict[int, str] | None = None,   # {avatar_id: mode}
+        avatar_profiles: dict[int, dict] | None = None,  # {avatar_id: profile dict}
     ):
         self.session_id = session_id
         self._running = False
@@ -80,11 +81,16 @@ class AudioPipeline:
 
         names = avatar_names or {}
         modes = avatar_modes or {}
+        profiles = avatar_profiles or {}
         for aid in active_avatar_ids:
+            profile = profiles.get(aid, {})
             self._context_engine.register_avatar(
                 aid,
                 names.get(aid, f"Avatar {aid}"),
                 modes.get(aid, "active"),
+                verbosity=profile.get("verbosity", 0.5),
+                interrupts_often=profile.get("interrupts_often", False),
+                personality_archetype=profile.get("personality_archetype", "extrovert"),
             )
 
         # Phase 7: cross-avatar reference injector

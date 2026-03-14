@@ -122,7 +122,7 @@ class Transcriber:
             segments_iter, info = self._model.transcribe(
                 float_audio,
                 language=language,
-                beam_size=5,
+                beam_size=cfg.whisper_beam_size,
                 vad_filter=False,           # We do our own VAD upstream
                 word_timestamps=False,
                 condition_on_previous_text=False,  # prevents hallucination loops

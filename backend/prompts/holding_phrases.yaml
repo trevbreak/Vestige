@@ -1,0 +1,45 @@
+combat_turn:
+  - "[tense] I'm working out my options..."
+  - "[tense] Give me a moment..."
+  - "[urgently] Hold on, let me think..."
+
+casual_roleplay:
+  - "[quietly] Give me a moment..."
+  - "Hmm..."
+  - "Let me think on that..."
+
+direct_question:
+  - "Hmm, let me think on that..."
+  - "That's... a good question."
+  - "Give me a second..."
+
+party_debate:
+  - "Hmm."
+  - "[quietly] I'm weighing this..."
+  - "There's something to that..."
+
+emotional_beat:
+  - "[quietly] ..."
+  - "[quietly] That's... a lot to take in."
+  - "I need a moment."
+
+backstory_call:
+  - "[quietly] That's not something I talk about lightly."
+  - "..."
+  - "[quietly] Where do I even start..."
+
+npc_social:
+  - "Let me think about how to put this..."
+  - "Hmm."
+  - "That's... interesting."
+
+moral_dilemma:
+  - "[quietly] This isn't simple."
+  - "Hmm. I'm not sure there's a right answer here."
+  - "[tense] Give me a moment to think."
+
+default:
+  - "Hmm."
+  - "Right..."
+  - "..."
+  - "Let me think..."

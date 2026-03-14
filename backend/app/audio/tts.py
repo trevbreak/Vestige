@@ -54,8 +54,13 @@ class SynthesisResult:
 
 class TTSEngine:
     """
-    Module-level singleton XTTS-v2 engine.
+    Module-level singleton TTS engine.
 
+    Dispatches to either:
+      • XTTS-v2 (Coqui) — high-quality voice cloning from speaker embeddings
+      • Edge-TTS (Microsoft) — free neural voices with accent variety
+
+    The choice is determined per-avatar by engine_preference + embedding availability.
     Do not instantiate directly after startup — use the module-level
     `tts_engine` instance and call `tts_engine.load()` once at startup
     (done by startup_checks.py).
@@ -68,6 +73,9 @@ class TTSEngine:
         self._model = None
         self._speakers: dict[int, dict] = {}
         self._lock = threading.Lock()
+        # Phase 8: per-avatar voice preferences
+        self._engine_preferences: dict[int, str] = {}  # avatar_id → "auto"|"xtts"|"edge"
+        self._voice_ids: dict[int, str] = {}            # avatar_id → edge-tts voice_id
 
     def load(self, device: str = "cuda") -> bool:
         """
@@ -113,9 +121,44 @@ class TTSEngine:
     def has_speaker(self, avatar_id: int) -> bool:
         return avatar_id in self._speakers
 
+    def register_avatar_voice(
+        self,
+        avatar_id: int,
+        voice_id: str | None = None,
+        engine_preference: str = "auto",
+    ) -> None:
+        """Register per-avatar TTS engine preference and Edge-TTS voice_id."""
+        self._engine_preferences[avatar_id] = engine_preference or "auto"
+        if voice_id:
+            self._voice_ids[avatar_id] = voice_id
+
     # ── Synthesis ─────────────────────────────────────────────────────────
 
     def synthesize(
+        self,
+        text: str,
+        avatar_id: int,
+        emotion: str = "default",
+        language: str = "en",
+        volume: float = 1.0,
+    ) -> SynthesisResult:
+        # Phase 8: dispatch to Edge-TTS if configured
+        pref = self._engine_preferences.get(avatar_id, "auto")
+        voice_id = self._voice_ids.get(avatar_id)
+
+        use_edge = (
+            pref == "edge"
+            or (pref == "auto" and not self.has_speaker(avatar_id) and bool(voice_id))
+        )
+
+        if use_edge and voice_id:
+            from app.audio.edge_tts_engine import edge_tts_engine
+            return edge_tts_engine.synthesize(text, voice_id, emotion, volume)
+
+        # Fall through to XTTS-v2
+        return self._synthesize_xtts(text, avatar_id, emotion, language, volume)
+
+    def _synthesize_xtts(
         self,
         text: str,
         avatar_id: int,

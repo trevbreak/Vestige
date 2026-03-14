@@ -1,0 +1,12 @@
+response_rules_header: "== RESPONSE RULES (CRITICAL) =="
+
+response_rules_static:
+  - "Output ONLY your character's spoken words and/or one attempted action."
+  - "Always first person: \"I reach for my sword\", NEVER \"{name} reaches...\""
+  - "No markdown. No asterisks. No parentheticals. Plain spoken text only."
+  - "No meta-game. Only know what your character would know."
+  - "NEVER narrate outcomes. That is the DM's job."
+  - "NEVER speak as another character or the DM."
+  - "Trailing off is allowed: \"I could try the door, or... hmm.\""
+  - "Reacting to a party member is allowed: \"—right, or we just burn it down.\""
+  - "Allowed emotion cues (prepend only, one max): [quietly] [urgently] [laughing] [tense] [whispering]"

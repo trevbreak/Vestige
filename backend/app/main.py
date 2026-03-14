@@ -19,7 +19,9 @@ from app.routers import avatars, sessions, transcripts, health, websocket, pipel
 from app.routers import settings as settings_router
 from app.routers import system as system_router
 from app.routers import audio_ws
+from app.routers import prompts as prompts_router
 from app.startup_checks import run_startup_checks
+from app.tracing import init_tracing
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -30,6 +32,7 @@ async def lifespan(app: FastAPI):
     log.info("startup.begin")
     if settings.debug_mode:
         log.warning("startup.debug_mode_enabled — verbose logging is ON")
+    init_tracing()
     await init_db()
     log.info("startup.db_ready")
     await run_startup_checks()
@@ -88,3 +91,4 @@ app.include_router(combat.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(system_router.router, prefix="/api")
 app.include_router(audio_ws.router)
+app.include_router(prompts_router.router, prefix="/api")

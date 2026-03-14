@@ -51,6 +51,19 @@ class Avatar(Base):
     voice_sample_path = Column(String(500), nullable=True)
     voice_embedding_path = Column(String(500), nullable=True)  # path to .npz speaker embedding
 
+    # Phase 8: LLM-generated persona
+    personality_prompt = Column(Text, nullable=True)           # rich first-person persona description
+    verbosity = Column(Float, nullable=False, default=0.5)     # 0.0=silent, 1.0=talks constantly
+    interrupts_often = Column(Boolean, nullable=False, default=False)
+    personality_archetype = Column(String(20), nullable=False, default="extrovert")
+    # valid: introvert | extrovert | reactive | stoic
+    holding_phrase_chance = Column(Float, nullable=False, default=0.5)
+
+    # Phase 8: Edge-TTS voice
+    voice_id = Column(String(100), nullable=True)              # e.g. "en-GB-RyanNeural"
+    tts_engine_preference = Column(String(20), nullable=False, default="auto")
+    # auto | xtts | edge
+
     # Skills (JSON list of proficient skills)
     skill_proficiencies = Column(JSON, nullable=True, default=list)
 

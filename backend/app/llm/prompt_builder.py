@@ -22,20 +22,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-
-# ── Context-type → length instruction ────────────────────────────────────────
-
-LENGTH_INSTRUCTIONS: dict[str, str] = {
-    "combat_turn":     "1 sentence for your action, 1 optional flavour sentence. Be decisive.",
-    "casual_roleplay": "1–2 sentences. Err short. React naturally.",
-    "direct_question": "2–3 sentences. Answer directly, stay in character.",
-    "party_debate":    "1–2 sentences. State your position briefly.",
-    "emotional_beat":  "Up to 4 sentences if this moment truly warrants it. Otherwise stay brief.",
-    "backstory_call":  "Up to 4 sentences. Speak carefully — this matters to your character.",
-    "npc_social":      "2–3 sentences. Engage the NPC in character.",
-    "moral_dilemma":   "2–3 sentences. Show the weight of the choice, don't resolve it easily.",
-    "default":         "1–2 sentences. Err short.",
-}
+from app.prompts.loader import prompt_loader
 
 
 @dataclass
@@ -92,6 +79,9 @@ class AvatarContext:
     # Cross-avatar reference (25% chance injection — Phase 7)
     cross_avatar_note: str = ""
 
+    # Phase 8: LLM-generated rich persona description (replaces sparse traits block when set)
+    personality_prompt: str = ""
+
 
 class PromptBuilder:
     """
@@ -135,16 +125,23 @@ class PromptBuilder:
         if ctx.background:
             lines.append(f"Background: {ctx.background}")
 
-        traits = []
-        if ctx.personality_traits:
-            traits.append(f"Personality: {ctx.personality_traits}")
-        if ctx.ideals:
-            traits.append(f"Ideals: {ctx.ideals}")
-        if ctx.bonds:
-            traits.append(f"Bonds: {ctx.bonds}")
-        if ctx.flaws:
-            traits.append(f"Flaws: {ctx.flaws}")
-        lines.extend(traits)
+        if ctx.personality_prompt:
+            # Phase 8: use the rich LLM-generated persona description
+            lines.append("")
+            lines.append("== CHARACTER PERSONA ==")
+            lines.append(ctx.personality_prompt)
+        else:
+            # Legacy fallback: use sparse D&D trait fields
+            traits = []
+            if ctx.personality_traits:
+                traits.append(f"Personality: {ctx.personality_traits}")
+            if ctx.ideals:
+                traits.append(f"Ideals: {ctx.ideals}")
+            if ctx.bonds:
+                traits.append(f"Bonds: {ctx.bonds}")
+            if ctx.flaws:
+                traits.append(f"Flaws: {ctx.flaws}")
+            lines.extend(traits)
 
         return "\n".join(lines)
 
@@ -200,7 +197,7 @@ class PromptBuilder:
         return ctx.available_actions_text
 
     def _response_rules(self, ctx: AvatarContext) -> str:
-        length_instr = LENGTH_INSTRUCTIONS.get(ctx.context_type, LENGTH_INSTRUCTIONS["default"])
+        length_instr = prompt_loader.get_length_instruction(ctx.context_type)
         lines = [
             "== RESPONSE RULES (CRITICAL) ==",
             "Output ONLY your character's spoken words and/or one attempted action.",

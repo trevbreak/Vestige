@@ -1,0 +1,66 @@
+dm_hotwords:
+  - hold
+  - pause
+  - stop
+  - wait
+  - cut
+
+combat_triggers:
+  - roll initiative
+  - what do you do
+  - your turn
+  - roll for
+  - make a
+  - saving throw
+  - attack roll
+  - damage roll
+
+directed_fragments:
+  - what do you
+  - what does
+  - your character
+  - what about you
+  - how do you
+  - what would
+  - what will you
+
+claude_keywords:
+  - backstory
+  - trauma
+  - betray
+  - forgive
+  - sacrifice
+  - regret
+  - childhood
+  - died
+  - loved
+  - swore
+  - oath
+  - memory
+  - dream
+  - fear
+  - family
+  - vow
+  - alone
+  - promised
+
+moral_keywords:
+  - sacrific
+  - betray
+  - swore
+  - oath
+  - vow
+
+backstory_keywords:
+  - backstory
+  - childhood
+  - family
+  - died
+  - loved
+
+npc_social_keywords:
+  - persuade
+  - intimidate
+  - deceive
+  - negotiate
+  - convince

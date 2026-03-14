@@ -24,9 +24,19 @@ const SECTIONS = [
     title: 'Audio Input',
     fields: [
       { key: 'vad_threshold', label: 'Voice Activation Sensitivity', type: 'slider', min: 0.05, max: 0.99, step: 0.05, hint: 'How sensitive the mic trigger is. Lower = picks up quieter speech; higher = ignores soft sounds.' },
+      { key: 'vad_trailing_silence_ms', label: 'Trailing Silence (ms)', type: 'slider', min: 100, max: 3000, step: 100, decimals: 0, hint: 'How long silence must persist before cutting off your sentence. Increase if your words are being cut short; decrease for snappier response.' },
       { key: 'whisper_no_speech_threshold', label: 'Noise Rejection', type: 'slider', min: 0.1, max: 1.0, step: 0.05, hint: 'Filters out segments Whisper thinks are silence or noise. Lower = more permissive; higher = stricter.' },
       { key: 'whisper_log_prob_threshold', label: 'Transcription Confidence', type: 'slider', min: -5.0, max: 0.0, step: 0.1, hint: 'Minimum confidence for a transcription to be kept. More negative = accept low-confidence results; closer to 0 = strict.' },
+      { key: 'whisper_beam_size', label: 'Whisper Beam Size', type: 'number', min: 1, max: 10, step: 1, hint: 'Beam search width. Higher = more accurate but slower (1 = fastest, 5 = default).' },
       { key: 'aec_decay_ms', label: 'AEC Decay (ms)', type: 'number', min: 0, max: 2000, step: 50, hint: 'Mic gate time after TTS ends' },
+    ],
+  },
+  {
+    title: 'Whisper Model (requires restart)',
+    fields: [
+      { key: 'whisper_model', label: 'Model Size', type: 'text', hint: 'e.g. tiny, base, small, medium, large-v3. Larger = more accurate, slower. Restart server to apply.' },
+      { key: 'whisper_device', label: 'Device', type: 'text', hint: '"cuda" or "cpu". Restart server to apply.' },
+      { key: 'whisper_compute_type', label: 'Compute Type', type: 'text', hint: '"float16" (GPU), "int8" (fast/CPU), "float32" (CPU). Restart server to apply.' },
     ],
   },
   {
@@ -495,7 +505,7 @@ export default function SettingsPage() {
         <section key={section.title} className={`card ${styles.section}`}>
           <h2 className={styles.sectionTitle}>{section.title}</h2>
           <div className={styles.grid}>
-            {section.fields.map(({ key, label, type, min, max, step, hint }) => {
+            {section.fields.map(({ key, label, type, min, max, step, hint, decimals }) => {
               const current = dirty[key] !== undefined ? dirty[key] : values[key]
               const isDirty = dirty[key] !== undefined
               return (
@@ -516,7 +526,7 @@ export default function SettingsPage() {
                         onChange={(e) => handleChange(key, e.target.value, 'number')}
                         className={styles.slider}
                       />
-                      <span className={styles.sliderValue}>{(current ?? min).toFixed(2)}</span>
+                      <span className={styles.sliderValue}>{(current ?? min).toFixed(decimals ?? 2)}</span>
                     </div>
                   ) : (
                     <input

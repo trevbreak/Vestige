@@ -188,6 +188,25 @@ def _check_ollama() -> dict:
         return {"ok": False, "model_present": False, "error": str(e), "latency_ms": ms}
 
 
+def _check_phoenix() -> dict:
+    t0 = time.monotonic()
+    try:
+        import phoenix as px  # noqa: F401
+        ms = round((time.monotonic() - t0) * 1000)
+        log.info("startup.phoenix_ok", ui="http://localhost:6006", latency_ms=ms)
+        return {"ok": True, "installed": True, "ui": "http://localhost:6006", "latency_ms": ms}
+    except ImportError:
+        ms = round((time.monotonic() - t0) * 1000)
+        log.info("startup.phoenix_not_installed",
+                 note="Install arize-phoenix for LLM tracing: pip install arize-phoenix")
+        return {"ok": False, "installed": False,
+                "error": "arize-phoenix not installed", "latency_ms": ms}
+    except Exception as e:
+        ms = round((time.monotonic() - t0) * 1000)
+        log.warning("startup.phoenix_check_failed", error=str(e))
+        return {"ok": False, "installed": False, "error": str(e), "latency_ms": ms}
+
+
 def _check_claude() -> dict:
     from app.config import get_settings
     s = get_settings()
@@ -233,10 +252,13 @@ async def run_startup_checks() -> None:
     ]:
         _results[name] = await loop.run_in_executor(None, fn)
 
-    # Network-only checks — safe to run concurrently
-    ollama_fut = loop.run_in_executor(None, _check_ollama)
-    claude_fut = loop.run_in_executor(None, _check_claude)
-    _results["ollama"], _results["claude"] = await asyncio.gather(ollama_fut, claude_fut)
+    # Network-only / lightweight checks — safe to run concurrently
+    ollama_fut  = loop.run_in_executor(None, _check_ollama)
+    claude_fut  = loop.run_in_executor(None, _check_claude)
+    phoenix_fut = loop.run_in_executor(None, _check_phoenix)
+    _results["ollama"], _results["claude"], _results["phoenix"] = await asyncio.gather(
+        ollama_fut, claude_fut, phoenix_fut
+    )
 
     # Summary banner
     ok  = [k for k, v in _results.items() if v.get("ok")]

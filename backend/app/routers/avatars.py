@@ -10,6 +10,11 @@ import os
 import json
 import asyncio
 
+import structlog
+from app.llm.avatar_generator import generate_personality_data, VOICE_CATALOGUE
+
+log = structlog.get_logger()
+
 router = APIRouter(prefix="/avatars", tags=["avatars"])
 
 UPLOAD_DIR = "data/uploads"
@@ -159,6 +164,15 @@ async def randomise_avatar():
     data["mode"] = data.get("mode", "active")
     data["player_name"] = data.get("player_name") or "Randomised"
 
+    # Phase 8: generate personality prompt + voice selection
+    try:
+        personality = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: generate_personality_data(data)
+        )
+        data.update(personality)
+    except Exception as exc:
+        log.warning("avatars.personality_gen_failed", error=str(exc))
+
     try:
         return AvatarCreate(**data)
     except Exception as exc:
@@ -170,7 +184,21 @@ async def create_avatar(
     avatar_in: AvatarCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    avatar = Avatar(**avatar_in.model_dump())
+    data = avatar_in.model_dump()
+
+    # Phase 8: generate personality + voice if not already provided
+    if not data.get("personality_prompt"):
+        try:
+            personality = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: generate_personality_data(data)
+            )
+            for key, val in personality.items():
+                if val is not None:
+                    data[key] = val
+        except Exception as exc:
+            log.warning("avatars.create_personality_gen_failed", error=str(exc))
+
+    avatar = Avatar(**data)
     avatar.hit_points_current = avatar.hit_points_max
     db.add(avatar)
     await db.commit()
@@ -203,6 +231,79 @@ async def update_avatar(
     await db.commit()
     await db.refresh(avatar)
     return avatar
+
+
+@router.get("/voices")
+def list_voices():
+    """Return the available Edge-TTS voice catalogue for avatar voice selection."""
+    return {
+        "voices": [
+            {"voice_id": vid, **info}
+            for vid, info in VOICE_CATALOGUE["en"].items()
+        ],
+        "note": "Voice IDs are Edge-TTS neural voices. Set tts_engine_preference='edge' to use them.",
+    }
+
+
+@router.post("/generate-personality", status_code=status.HTTP_200_OK)
+async def generate_personality_backfill(
+    avatar_id: int | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Backfill personality_prompt and voice_id for existing avatars.
+
+    If avatar_id is provided, regenerates only that avatar.
+    Otherwise regenerates all active avatars missing personality_prompt.
+
+    Returns a summary of how many avatars were updated.
+    """
+    if avatar_id is not None:
+        avatars = []
+        av = await db.get(Avatar, avatar_id)
+        if not av:
+            raise HTTPException(status_code=404, detail="Avatar not found")
+        avatars = [av]
+    else:
+        stmt = select(Avatar).where(
+            Avatar.is_active == True,  # noqa: E712
+            Avatar.personality_prompt == None,  # noqa: E711
+        )
+        result = await db.execute(stmt)
+        avatars = list(result.scalars().all())
+
+    updated = 0
+    for av in avatars:
+        avatar_data = {
+            "name": av.name,
+            "race": av.race,
+            "char_class": av.char_class,
+            "alignment": av.alignment or "",
+            "personality_traits": av.personality_traits or "",
+            "ideals": av.ideals or "",
+            "bonds": av.bonds or "",
+            "flaws": av.flaws or "",
+            "backstory": av.backstory or "",
+            "sentence_style": av.sentence_style or "",
+            "verbal_tics": av.verbal_tics or "",
+        }
+        try:
+            personality = await asyncio.get_event_loop().run_in_executor(
+                None, lambda d=avatar_data: generate_personality_data(d)
+            )
+            av.personality_prompt = personality.get("personality_prompt")
+            av.personality_archetype = personality.get("personality_archetype", "extrovert")
+            av.verbosity = personality.get("verbosity", 0.5)
+            av.interrupts_often = personality.get("interrupts_often", False)
+            if not av.voice_id:
+                av.voice_id = personality.get("voice_id")
+            updated += 1
+            log.info("avatars.backfill_done", avatar_id=av.id, name=av.name)
+        except Exception as exc:
+            log.error("avatars.backfill_failed", avatar_id=av.id, error=str(exc))
+
+    await db.commit()
+    return {"updated": updated, "total": len(avatars)}
 
 
 @router.delete("/{avatar_id}", status_code=status.HTTP_204_NO_CONTENT)
