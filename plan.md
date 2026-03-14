@@ -1,13 +1,13 @@
 # 🐉 DnD AI Avatar System — Master Build Plan
 
-> A locally-hosted web application that creates AI avatars to stand in for absent D&D players.
-> Avatars listen passively to the table, chime in naturally with in-character voice responses,
-> maintain persistent session memory, and play by 5e rules. All audio processing runs locally
+> A locally-hosted web application that creates AI avatars to stand in for absent D&D players.  
+> Avatars listen passively to the table, chime in naturally with in-character voice responses,  
+> maintain persistent session memory, and play by 5e rules. All audio processing runs locally  
 > on a 24GB NVIDIA GPU. The LLM brain is a hybrid: local Ollama for speed, Claude API for depth.
 
 ---
 
-## 1. Core Design Philosophy
+## 1\. Core Design Philosophy
 
 ### Why Cascade Pipelines Feel Robotic
 
@@ -17,21 +17,21 @@ A naive voice AI pipeline looks like this:
 Mic → STT → wait for silence → LLM → TTS → Speaker
 ```
 
-This is how Alexa and Siri work, and it is why they feel robotic even when fast. The problem
-is not latency — it is the complete absence of duplex conversational behaviour. The system must
-wait for a speaker to fully stop before it can react at all. It never says "mm" or "right" while
-you're talking. It never starts forming a thought before you finish. Even at sub-1-second response
+This is how Alexa and Siri work, and it is why they feel robotic even when fast. The problem  
+is not latency — it is the complete absence of duplex conversational behaviour. The system must  
+wait for a speaker to fully stop before it can react at all. It never says "mm" or "right" while  
+you're talking. It never starts forming a thought before you finish. Even at sub-1-second response  
 time, the rhythm is mechanical because it is turn-based.
 
-Real people at a D&D table do not behave this way. They murmur agreement while someone else is
-speaking. They half-start a sentence and trail off. They react mid-story with "wait, seriously?"
+Real people at a D&D table do not behave this way. They murmur agreement while someone else is  
+speaking. They half-start a sentence and trail off. They react mid-story with "wait, seriously?"  
 They speak in fragments. They have opinions about each other.
 
 This system is designed to replicate that behaviour, not merely respond to text.
 
 ### The Two-Layer Architecture
 
-Rather than replacing the cascade entirely (which would sacrifice reasoning quality — full-duplex
+Rather than replacing the cascade entirely (which would sacrifice reasoning quality — full-duplex  
 7B models are not strong enough for complex D&D roleplay), this system uses two layers:
 
 ```
@@ -55,10 +55,10 @@ Rather than replacing the cascade entirely (which would sacrifice reasoning qual
 
 ---
 
-## 2. Tech Stack
+## 2\. Tech Stack
 
 | Layer | Technology | Rationale |
-|---|---|---|
+| --- | --- | --- |
 | **Frontend** | React + Vite | Component-driven, fast HMR, single shared browser tab |
 | **Backend** | Python 3.12 + FastAPI | GPU model integration, async WebSocket support |
 | **Transcription** | `faster-whisper` (large-v3, CUDA) | Best WER/speed on GPU; fully local |
@@ -75,7 +75,7 @@ Rather than replacing the cascade entirely (which would sacrifice reasoning qual
 ### GPU Memory Budget (24GB VRAM)
 
 | Model | VRAM | Notes |
-|---|---|---|
+| --- | --- | --- |
 | faster-whisper large-v3 | ~3 GB | Loaded persistently |
 | Coqui XTTS-v2 | ~3–4 GB | Loaded persistently |
 | Ollama llama3.1:8b Q4 | ~5–6 GB | Loaded persistently via Ollama |
@@ -83,18 +83,18 @@ Rather than replacing the cascade entirely (which would sacrifice reasoning qual
 
 ### Hardware Recommendation
 
-The single highest-impact addition is a dedicated table microphone. A good room mic
-eliminates the majority of multi-speaker audio problems that software solutions can only
+The single highest-impact addition is a dedicated table microphone. A good room mic  
+eliminates the majority of multi-speaker audio problems that software solutions can only  
 partially address.
 
 | Item | Purpose | Approx. Cost |
-|---|---|---|
+| --- | --- | --- |
 | **USB conference mic** (e.g. Jabra Speak 510) | Omnidirectional table pickup, built-in echo cancellation | $100–$150 |
 | OR **Boundary/PZM mic** | Flat on table surface; excellent clarity for tabletop use | $50–$120 |
 
 ---
 
-## 3. Full System Architecture
+## 3\. Full System Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -161,32 +161,34 @@ partially address.
 
 ---
 
-## 4. Feature Specifications
+## 4\. Feature Specifications
 
 ### 4.1 Avatar Management
 
-Each AI avatar represents one absent player's D&D character. Avatars are configured once and
+Each AI avatar represents one absent player's D&D character. Avatars are configured once and  
 persist across sessions.
 
 **Avatar Profile:**
-- Character name, race, class, subclass, level, background
-- Ability scores (STR, DEX, CON, INT, WIS, CHA) + modifiers
-- Saving throws, skill proficiencies
-- Spell slots, known spells, prepared spells
-- Equipment and inventory
-- Backstory (free text, seeded into system prompt)
-- Alignment (constrains all moral decisions)
-- Personality traits, ideals, bonds, flaws (D&D 5e fields)
-- **Sentence style descriptor** (e.g. "short declarative bursts", "trails off with ellipses")
-- **Verbal tics** (e.g. "often invokes their deity", "deflects with dark humor under stress")
-- **Never-say list** (phrases that break character for this avatar)
-- Voice profile: 30–60s audio sample → cloned XTTS-v2 speaker embedding
-- Avatar portrait image (displayed on shared table screen)
+
+*   Character name, race, class, subclass, level, background
+*   Ability scores (STR, DEX, CON, INT, WIS, CHA) + modifiers
+*   Saving throws, skill proficiencies
+*   Spell slots, known spells, prepared spells
+*   Equipment and inventory
+*   Backstory (free text, seeded into system prompt)
+*   Alignment (constrains all moral decisions)
+*   Personality traits, ideals, bonds, flaws (D&D 5e fields)
+*   **Sentence style descriptor** (e.g. "short declarative bursts", "trails off with ellipses")
+*   **Verbal tics** (e.g. "often invokes their deity", "deflects with dark humor under stress")
+*   **Never-say list** (phrases that break character for this avatar)
+*   Voice profile: 30–60s audio sample → cloned XTTS-v2 speaker embedding
+*   Avatar portrait image (displayed on shared table screen)
 
 **Avatar Modes (DM-toggleable per session):**
-- **Active** — AI is listening and will chime in naturally
-- **Passive** — Character present but AI only responds to direct name address
-- **Absent** — Written out; AI fully suppressed for this session
+
+*   **Active** — AI is listening and will chime in naturally
+*   **Passive** — Character present but AI only responds to direct name address
+*   **Absent** — Written out; AI fully suppressed for this session
 
 ---
 
@@ -194,17 +196,17 @@ persist across sessions.
 
 **Flow:**
 
-1. `sounddevice` streams audio from the USB conference mic
-2. **AEC Gate**: mic input is blocked while any avatar TTS is playing, plus 200ms acoustic
-   decay, preventing the AI from hearing and transcribing its own voice
-3. **Silero VAD**: detects speech onset/offset; segments audio on silence boundaries
-4. **Overlap detection**: if two speakers are detected simultaneously, buffer the segment and
-   transcribe the louder stream; mark mixed segments as `[overlap]`
-5. **faster-whisper (CUDA)**: transcribes each VAD segment with timestamps
-6. **Backchannel Classifier**: short utterances (≤4 words matching a backchannel vocabulary)
-   are tagged `type: backchannel` — they are logged but do NOT trigger the context engine
-7. Transcript pushed via WebSocket to the frontend (live caption display)
-8. Transcript appended to the Session Context Buffer
+1.  `sounddevice` streams audio from the USB conference mic
+2.  **AEC Gate**: mic input is blocked while any avatar TTS is playing, plus 200ms acoustic  
+    decay, preventing the AI from hearing and transcribing its own voice
+3.  **Silero VAD**: detects speech onset/offset; segments audio on silence boundaries
+4.  **Overlap detection**: if two speakers are detected simultaneously, buffer the segment and  
+    transcribe the louder stream; mark mixed segments as `[overlap]`
+5.  **faster-whisper (CUDA)**: transcribes each VAD segment with timestamps
+6.  **Backchannel Classifier**: short utterances (≤4 words matching a backchannel vocabulary)  
+    are tagged `type: backchannel` — they are logged but do NOT trigger the context engine
+7.  Transcript pushed via WebSocket to the frontend (live caption display)
+8.  Transcript appended to the Session Context Buffer
 
 **AEC Gate:**
 
@@ -242,7 +244,7 @@ def classify_utterance(text: str) -> str:
 
 ### 4.3 Context Engine
 
-The Context Engine decides *when* and *whether* an avatar should respond, and what kind
+The Context Engine decides _when_ and _whether_ an avatar should respond, and what kind  
 of response is appropriate.
 
 **Step 1 — Interrupt Confidence Scoring**
@@ -269,9 +271,10 @@ def interrupt_confidence(transcript: str, avatar_name: str) -> float:
 **Step 2 — Additional Triggers**
 
 Even at low confidence, these independently elevate to a full response:
-- Avatar's name spoken within the last 60 seconds
-- Combat round detected (DM says "roll initiative", "what do you do", "your turn")
-- Silence gap: > `SILENCE_GAP_TRIGGER` seconds of no speech AND avatar is Active
+
+*   Avatar's name spoken within the last 60 seconds
+*   Combat round detected (DM says "roll initiative", "what do you do", "your turn")
+*   Silence gap: > `SILENCE_GAP_TRIGGER` seconds of no speech AND avatar is Active
 
 **Step 3 — Context Type Classification**
 
@@ -291,12 +294,13 @@ CONTEXT_TYPES = {
 **Step 4 — Suppression Logic**
 
 An avatar will NOT generate a response if:
-- A human player is currently speaking (VAD active)
-- Another avatar is currently speaking or within `AVATAR_COOLDOWN_SECONDS`
-- The same avatar spoke within `SELF_COOLDOWN_SECONDS`
-- The DM has said the hotword ("Hold", "Pause") in the last 30 seconds
-- The transcript is tagged `[overlap]` or `[inaudible]`
-- The AEC Gate is active
+
+*   A human player is currently speaking (VAD active)
+*   Another avatar is currently speaking or within `AVATAR_COOLDOWN_SECONDS`
+*   The same avatar spoke within `SELF_COOLDOWN_SECONDS`
+*   The DM has said the hotword ("Hold", "Pause") in the last 30 seconds
+*   The transcript is tagged `[overlap]` or `[inaudible]`
+*   The AEC Gate is active
 
 **Step 5 — Response Queue Priority**
 
@@ -309,14 +313,15 @@ PRIORITY 5: Passive silence reaction
 ```
 
 Only 1 avatar speaks at a time. If Avatar A is speaking and a Priority 2+ arrives for Avatar B:
-- A is in first 20% of audio → cut off A, yield to B
-- A is past 20% → let A finish, then B speaks immediately after
+
+*   A is in first 20% of audio → cut off A, yield to B
+*   A is past 20% → let A finish, then B speaks immediately after
 
 ---
 
 ### 4.4 Presence Layer — Making Avatars Feel Alive
 
-This is what separates the system from a chatbot. When an avatar is Active and listening,
+This is what separates the system from a chatbot. When an avatar is Active and listening,  
 it produces real-time audio that does not require an LLM call.
 
 **Backchannels (while a human is speaking):**
@@ -338,12 +343,12 @@ def should_produce_backchannel(seconds_since_last: float) -> bool:
     return random.random() < 0.35  # 35% chance when eligible
 ```
 
-Backchannels are pre-generated during avatar setup (`generate_backchannels.py`) and cached
+Backchannels are pre-generated during avatar setup (`generate_backchannels.py`) and cached  
 as audio clips — zero generation latency at playback time.
 
 **Ambient Reactions (during dead air):**
 
-When `SILENCE_GAP_TRIGGER` passes and the LLM has not yet responded, a holding phrase plays
+When `SILENCE_GAP_TRIGGER` passes and the LLM has not yet responded, a holding phrase plays  
 to eliminate dead air and signal that the avatar is thinking:
 
 ```python
@@ -364,8 +369,8 @@ The full LLM response follows 1–3 seconds later as a continuation of this hold
 **Routing table:**
 
 | Situation | Route | Target Latency |
-|---|---|---|
-| Ambient reaction / backchannel | Template only (no LLM) | < 300ms |
+| --- | --- | --- |
+| Ambient reaction / backchannel | Template only (no LLM) | \< 300ms |
 | Combat action selection | Ollama (llama3.1:8b) | ~800ms–1.5s |
 | Short in-character quips | Ollama | ~800ms–1.5s |
 | Skill check decisions | Ollama | ~800ms–1.5s |
@@ -440,13 +445,13 @@ CONTEXT TYPE: {CONTEXT_TYPE}
 RESPONSE LENGTH: {LENGTH_INSTRUCTION}
 ```
 
-**Why explicit NEVER rules matter:** Without hard prohibitions and negative examples, LLMs
-will routinely try to narrate world events, speak as the DM, or play other characters — confirmed
+**Why explicit NEVER rules matter:** Without hard prohibitions and negative examples, LLMs  
+will routinely try to narrate world events, speak as the DM, or play other characters — confirmed  
 by independent D&D AI builder experience and documented in multiple similar projects.
 
 **Character voice differentiation — example personas:**
 
-The goal is for each avatar to sound structurally different, not just have different traits.
+The goal is for each avatar to sound structurally different, not just have different traits.  
 These are sentence structure templates:
 
 ```
@@ -484,8 +489,8 @@ class ResponsePostProcessor:
         return ProcessedResponse(text=text, emotion=emotion_tag, delay_seconds=delay)
 ```
 
-**Why response jitter matters:** avatars that respond at a perfectly consistent speed after an
-identical pause are immediately identifiable as AI. A 1.5–4s random delay is the simplest
+**Why response jitter matters:** avatars that respond at a perfectly consistent speed after an  
+identical pause are immediately identifiable as AI. A 1.5–4s random delay is the simplest  
 technique for simulating natural thinking variation.
 
 ---
@@ -496,7 +501,7 @@ Real party members have opinions about each other. This is built in at two level
 
 **Cross-avatar reference injection (25% probability):**
 
-When Avatar B generates a response, if Avatar A spoke in the last 2 transcript exchanges,
+When Avatar B generates a response, if Avatar A spoke in the last 2 transcript exchanges,  
 this optional line is appended to Avatar B's prompt:
 
 ```
@@ -521,22 +526,23 @@ Short (2–3 sentences per party member), updated by Claude's post-session summa
 
 ### 4.9 D&D 5e Rules Engine
 
-A lightweight Python rules engine feeds legal action options to the LLM during combat,
-preventing mechanical hallucinations. Without tool-grounding, LLMs invent spells they
+A lightweight Python rules engine feeds legal action options to the LLM during combat,  
+preventing mechanical hallucinations. Without tool-grounding, LLMs invent spells they  
 don't have, use spent slots, and ignore conditions — confirmed by UCSD NeurIPS 2025 research.
 
 **Covers:**
-- Action economy (Action, Bonus Action, Reaction, Movement per turn)
-- Spell slot tracking and recovery (short/long rest)
-- Concentration tracking (break on new concentration spell)
-- Available actions JSON — structured object fed to LLM during combat turns
-- Condition tracking (frightened, poisoned, stunned, incapacitated, etc.)
-- Death saving throw state
-- Advantage/disadvantage awareness
+
+*   Action economy (Action, Bonus Action, Reaction, Movement per turn)
+*   Spell slot tracking and recovery (short/long rest)
+*   Concentration tracking (break on new concentration spell)
+*   Available actions JSON — structured object fed to LLM during combat turns
+*   Condition tracking (frightened, poisoned, stunned, incapacitated, etc.)
+*   Death saving throw state
+*   Advantage/disadvantage awareness
 
 **Combat prompt injection:**
 
-```json
+```
 {
   "available_actions": {
     "action": ["Attack (longsword)", "Cast Spell", "Help", "Dodge", "Disengage"],
@@ -558,7 +564,7 @@ don't have, use spent slots, and ignore conditions — confirmed by UCSD NeurIPS
 **Memory categories:**
 
 | Category | Examples |
-|---|---|
+| --- | --- |
 | Story events | "The party discovered the lich's phylactery in Session 4" |
 | NPC relationships | "Tharindel distrusts Guildmaster Voryn after the betrayal" |
 | Items & resources | "Riven used her last 3rd-level slot", "Party has the Amulet of Proof" |
@@ -569,17 +575,17 @@ don't have, use spent slots, and ignore conditions — confirmed by UCSD NeurIPS
 
 **Memory pipeline:**
 
-1. Raw session transcripts stored in full in SQLite
-2. **Mid-session compression**: every 60 minutes, Claude rolls up older transcript into a
-   compact summary — keeps the active context window lean and accurate
-3. **Post-session summarisation**: after DM clicks "End Session", Claude generates a
-   structured JSON update covering events, NPC attitudes, relationship changes, item changes
-4. DM reviews and approves/edits via `MemoryReview.jsx` before committing
-5. All entries embedded with `sentence-transformers` and stored with `sqlite-vec`
-6. Top-K relevant chunks retrieved per avatar response via cosine similarity
+1.  Raw session transcripts stored in full in SQLite
+2.  **Mid-session compression**: every 60 minutes, Claude rolls up older transcript into a  
+    compact summary — keeps the active context window lean and accurate
+3.  **Post-session summarisation**: after DM clicks "End Session", Claude generates a  
+    structured JSON update covering events, NPC attitudes, relationship changes, item changes
+4.  DM reviews and approves/edits via `MemoryReview.jsx` before committing
+5.  All entries embedded with `sentence-transformers` and stored with `sqlite-vec`
+6.  Top-K relevant chunks retrieved per avatar response via cosine similarity
 
-**Why mid-session compression is not optional:** LLM accuracy drops significantly as context
-grows. For 3+ hour sessions the raw transcript will exceed useful context by hour two.
+**Why mid-session compression is not optional:** LLM accuracy drops significantly as context  
+grows. For 3+ hour sessions the raw transcript will exceed useful context by hour two.  
 Validated by UCSD NeurIPS 2025 research on AI agents in extended D&D campaigns.
 
 ---
@@ -620,24 +626,26 @@ A single browser tab on a shared screen. Accessible from any LAN device.
 ```
 
 **Visual theme:**
-- Dark parchment background texture
-- Cinzel (headings) + IM Fell English (body) fonts
-- Amber/gold accents, deep crimson highlights
-- Avatar portraits in ornate SVG frame style
-- Animated candleflame pulse on the active/speaking avatar
-- Scroll-style session log panel with collapsible sections
-- Subtle floating ember particle effect background
+
+*   Dark parchment background texture
+*   Cinzel (headings) + IM Fell English (body) fonts
+*   Amber/gold accents, deep crimson highlights
+*   Avatar portraits in ornate SVG frame style
+*   Animated candleflame pulse on the active/speaking avatar
+*   Scroll-style session log panel with collapsible sections
+*   Subtle floating ember particle effect background
 
 **Avatar card status badges:**
-- 🎙 Speaking — TTS audio playing
-- ⏳ Thinking — LLM generating (shows after holding phrase plays)
-- 💬 Listening — Presence layer active; backchannel eligible
-- 💤 Passive — DM has set to passive mode
-- ⬜ Absent — DM has set to absent mode
+
+*   🎙 Speaking — TTS audio playing
+*   ⏳ Thinking — LLM generating (shows after holding phrase plays)
+*   💬 Listening — Presence layer active; backchannel eligible
+*   💤 Passive — DM has set to passive mode
+*   ⬜ Absent — DM has set to absent mode
 
 ---
 
-## 5. Project File Structure
+## 5\. Project File Structure
 
 ```
 dnd-avatar-system/
@@ -713,7 +721,7 @@ dnd-avatar-system/
 
 ---
 
-## 6. Configuration Reference
+## 6\. Configuration Reference
 
 ```python
 # backend/config.py
@@ -756,112 +764,119 @@ PORT = 8000
 
 ---
 
-## 7. Build Phases
+## 7\. Build Phases
 
 ### Phase 1 — Foundation (Week 1–2)
-- [ ] FastAPI server scaffolding with WebSocket support
-- [ ] React + Vite frontend scaffolding
-- [ ] SQLite schema + SQLAlchemy models (avatar, session, transcript, memory)
-- [ ] Alembic migrations setup
-- [ ] Avatar CRUD UI (create/edit/delete with full character sheet fields)
-- [ ] Basic D&D-themed UI layout (static, no live audio)
-- [ ] Local network access verified (bind `0.0.0.0`, confirm from another LAN device)
-- [ ] `.env` config loading + settings panel stub
+
+*   FastAPI server scaffolding with WebSocket support
+*   React + Vite frontend scaffolding
+*   SQLite schema + SQLAlchemy models (avatar, session, transcript, memory)
+*   Alembic migrations setup
+*   Avatar CRUD UI (create/edit/delete with full character sheet fields)
+*   Basic D&D-themed UI layout (static, no live audio)
+*   Local network access verified (bind `0.0.0.0`, confirm from another LAN device)
+*   `.env` config loading + settings panel stub
 
 ### Phase 2 — Voice Input Pipeline (Week 3–4)
-- [ ] `sounddevice` mic capture streaming to backend
-- [ ] `silero-vad` real-time voice activity detection
-- [ ] `faster-whisper` CUDA integration + transcript streaming to frontend
-- [ ] Live transcript display, color-coded by speaker
-- [ ] AEC Gate: mic blocking during TTS playback + 200ms decay
-- [ ] Backchannel Classifier: distinguish listening sounds from statements
-- [ ] Overlap detector: buffer + louder-speaker selection for simultaneous speech
-- [ ] `[overlap]` and `[inaudible]` transcript tagging
+
+*   `sounddevice` mic capture streaming to backend
+*   `silero-vad` real-time voice activity detection
+*   `faster-whisper` CUDA integration + transcript streaming to frontend
+*   Live transcript display, color-coded by speaker
+*   AEC Gate: mic blocking during TTS playback + 200ms decay
+*   Backchannel Classifier: distinguish listening sounds from statements
+*   Overlap detector: buffer + louder-speaker selection for simultaneous speech
+*   `[overlap]` and `[inaudible]` transcript tagging
 
 ### Phase 3 — Voice Output Pipeline (Week 4–5)
-- [ ] Coqui XTTS-v2 CUDA integration
-- [ ] `clone_voice.py`: generate speaker embedding from 30–60s voice sample
-- [ ] Per-avatar voice profile storage (embedding + metadata in SQLite)
-- [ ] TTS audio streaming via WebSocket to browser
-- [ ] Web Audio API playback queue in frontend (`useAudioPlayer.js`)
-- [ ] Audio Output Manager: 1-at-a-time enforcement, priority cutoff
-- [ ] `generate_backchannels.py`: pre-generate 20–30 backchannel clips per avatar
-- [ ] Backchannel playback at 60% volume during human speech (Presence Layer)
-- [ ] Avatar card animated speaking indicator (candleflame pulse)
-- [ ] ⏳ Thinking badge + animated state during LLM generation
+
+*   Coqui XTTS-v2 CUDA integration
+*   `clone_voice.py`: generate speaker embedding from 30–60s voice sample
+*   Per-avatar voice profile storage (embedding + metadata in SQLite)
+*   TTS audio streaming via WebSocket to browser
+*   Web Audio API playback queue in frontend (`useAudioPlayer.js`)
+*   Audio Output Manager: 1-at-a-time enforcement, priority cutoff
+*   `generate_backchannels.py`: pre-generate 20–30 backchannel clips per avatar
+*   Backchannel playback at 60% volume during human speech (Presence Layer)
+*   Avatar card animated speaking indicator (candleflame pulse)
+*   ⏳ Thinking badge + animated state during LLM generation
 
 ### Phase 4 — AI Brain (Week 5–6)
-- [ ] Ollama integration (llama3.1:8b)
-- [ ] Claude API integration
-- [ ] Context Engine: trigger detection + interrupt confidence scoring
-- [ ] Context Engine: suppression logic + cooldown timers
-- [ ] Context type classifier
-- [ ] LLM router (template / Ollama / Claude)
-- [ ] Modular prompt builder (all sections assembled at runtime)
-- [ ] Response Post-Processor (length, markdown strip, first-person, jitter)
-- [ ] Ambient reaction system (holding phrases on silence gap, no LLM)
-- [ ] Response queue with priority levels and cutoff logic
-- [ ] End-to-end: transcript → context engine → LLM → post-process → TTS → audio out
+
+*   Ollama integration (llama3.1:8b)
+*   Claude API integration
+*   Context Engine: trigger detection + interrupt confidence scoring
+*   Context Engine: suppression logic + cooldown timers
+*   Context type classifier
+*   LLM router (template / Ollama / Claude)
+*   Modular prompt builder (all sections assembled at runtime)
+*   Response Post-Processor (length, markdown strip, first-person, jitter)
+*   Ambient reaction system (holding phrases on silence gap, no LLM)
+*   Response queue with priority levels and cutoff logic
+*   End-to-end: transcript → context engine → LLM → post-process → TTS → audio out
 
 ### Phase 5 — Memory System (Week 7–8)
-- [ ] Session transcript persistence (full text in SQLite)
-- [ ] Post-session Claude summarisation (structured JSON: events, NPCs, items, relationships)
-- [ ] `sentence-transformers` embedding pipeline
-- [ ] `sqlite-vec` vector similarity search
-- [ ] Top-K memory retrieval integrated into prompt builder
-- [ ] Mid-session context compression (rolling 60-minute Claude summaries)
-- [ ] `MemoryReview.jsx`: DM review/edit UI before memory commits
-- [ ] Relationship delta notes: updated post-session, injected into every prompt
-- [ ] Character sheet auto-update from session (HP, spell slots, items, level-ups)
-- [ ] Speaker attribution UI: tag "Speaker 0" → player name post-session
+
+*   Session transcript persistence (full text in SQLite)
+*   Post-session Claude summarisation (structured JSON: events, NPCs, items, relationships)
+*   `sentence-transformers` embedding pipeline
+*   `sqlite-vec` vector similarity search
+*   Top-K memory retrieval integrated into prompt builder
+*   Mid-session context compression (rolling 60-minute Claude summaries)
+*   `MemoryReview.jsx`: DM review/edit UI before memory commits
+*   Relationship delta notes: updated post-session, injected into every prompt
+*   Character sheet auto-update from session (HP, spell slots, items, level-ups)
+*   Speaker attribution UI: tag "Speaker 0" → player name post-session
 
 ### Phase 6 — Rules Engine & Combat (Week 9–10)
-- [ ] D&D 5e action economy tracker (Action, Bonus Action, Reaction, Movement)
-- [ ] Spell slot tracking + short/long rest recovery
-- [ ] Concentration tracking (break on new concentration spell)
-- [ ] Condition tracker (frightened, poisoned, stunned, incapacitated, etc.)
-- [ ] Available actions JSON builder, fed to LLM during combat turns
-- [ ] Combat turn detection from transcript (DM speech pattern matching)
-- [ ] Initiative tracker UI component
-- [ ] Death saving throw state
-- [ ] Combat log in session log panel
+
+*   D&D 5e action economy tracker (Action, Bonus Action, Reaction, Movement)
+*   Spell slot tracking + short/long rest recovery
+*   Concentration tracking (break on new concentration spell)
+*   Condition tracker (frightened, poisoned, stunned, incapacitated, etc.)
+*   Available actions JSON builder, fed to LLM during combat turns
+*   Combat turn detection from transcript (DM speech pattern matching)
+*   Initiative tracker UI component
+*   Death saving throw state
+*   Combat log in session log panel
 
 ### Phase 7 — Inter-Avatar Dynamics & Polish (Week 11–12)
-- [ ] Cross-avatar reference injection (25% chance on recent party speech)
-- [ ] Full D&D aesthetic: parchment texture, Cinzel/IM Fell fonts, candleflame animation
-- [ ] Avatar portrait upload + ornate SVG frame display
-- [ ] Floating ember particle effect background
-- [ ] DM hotword suppression ("Hold", "Pause")
-- [ ] Settings panel (all config values editable in UI, no restart needed)
-- [ ] End-to-end multi-avatar session test with 3 active avatars
-- [ ] GPU utilisation + latency profiling
-- [ ] README + setup guide
+
+*   Cross-avatar reference injection (25% chance on recent party speech)
+*   Full D&D aesthetic: parchment texture, Cinzel/IM Fell fonts, candleflame animation
+*   Avatar portrait upload + ornate SVG frame display
+*   Floating ember particle effect background
+*   DM hotword suppression ("Hold", "Pause")
+*   Settings panel (all config values editable in UI, no restart needed)
+*   End-to-end multi-avatar session test with 3 active avatars
+*   GPU utilisation + latency profiling
+*   README + setup guide
 
 ---
 
-## 8. Setup Instructions
+## 8\. Setup Instructions
 
-1. **Verify GPU**: `nvidia-smi` — confirm 24GB VRAM and CUDA 12.x
-2. **Clone repo**: `git clone <repo-url> && cd dnd-avatar-system`
-3. **Python environment**: `python -m venv venv && venv\Scripts\activate`
-4. **Install Python deps**: `pip install -r requirements.txt`
-5. **Install Ollama**: download from [ollama.com](https://ollama.com), then `ollama pull llama3.1:8b`
-6. **Download AI models**: `python scripts/setup_gpu.py`
-   _(downloads faster-whisper large-v3 and XTTS-v2 model weights)_
-7. **Configure**: copy `.env.example` → `.env`, set `ANTHROPIC_API_KEY` and `MIC_DEVICE_INDEX`
-8. **Install frontend deps**: `cd frontend && npm install`
-9. **Create avatars**: `python scripts/import_character.py` or via the web UI
-10. **Clone avatar voice**: `python scripts/clone_voice.py --avatar "Tharindel" --sample voice_samples/tharindel.wav`
-11. **Pre-generate backchannels**: `python scripts/generate_backchannels.py --avatar "Tharindel"`
-12. **Start server**: `python backend/main.py`
-13. **Access**: navigate to `http://<PC_LAN_IP>:8000` from any device on the local network
+1.  **Verify GPU**: `nvidia-smi` — confirm 24GB VRAM and CUDA 12.x
+2.  **Clone repo**: `git clone <repo-url> && cd dnd-avatar-system`
+3.  **Python environment**: `python -m venv venv && venv\Scripts\activate`
+4.  **Install Python deps**: `pip install -r requirements.txt`
+5.  **Install Ollama**: download from [ollama.com](https://ollama.com), then `ollama pull llama3.1:8b`
+6.  **Download AI models**: `python scripts/setup_gpu.py`  
+    _(downloads faster-whisper large-v3 and XTTS-v2 model weights)_
+7.  **Configure**: copy `.env.example` → `.env`, set `ANTHROPIC_API_KEY` and `MIC_DEVICE_INDEX`
+8.  **Install frontend deps**: `cd frontend && npm install`
+9.  **Create avatars**: `python scripts/import_character.py` or via the web UI
+10.  **Clone avatar voice**: `python scripts/clone_voice.py --avatar "Tharindel" --sample voice_samples/tharindel.wav`
+11.  **Pre-generate backchannels**: `python scripts/generate_backchannels.py --avatar "Tharindel"`
+12.  **Start server**: `python backend/main.py`
+13.  **Access**: navigate to `http://<PC_LAN_IP>:8000` from any device on the local network
 
 ---
 
-## 9. Key Design Decisions
+## 9\. Key Design Decisions
 
 | Decision | Rationale |
-|---|---|
+| --- | --- |
 | Two-layer architecture (Presence + Reasoning) | Full-duplex models lack the reasoning quality for D&D; cascade models lack listening behaviour. The two layers solve both problems independently. |
 | Backchannel pre-generation | XTTS-v2 takes ~500ms even for short clips — too slow for real-time listening sounds. Pre-generation gives zero-latency playback. |
 | Response jitter (1.5–4s random) | Fixed timing is immediately identifiable as AI. Jitter simulates natural thinking variation. |
@@ -876,43 +891,43 @@ PORT = 8000
 
 ---
 
-## 10. Future Enhancements (Post-MVP)
+## 10\. Future Enhancements (Post-MVP)
 
-- **D&D Beyond import**: pull character sheets via D&D Beyond API or JSON export
-- **Pyannote diarization**: label individual speakers without per-person mics (V1.5 upgrade)
-- **PersonaPlex integration**: NVIDIA's open-source full-duplex model as a richer Presence Layer
-- **Per-speaker mics + USB mixer**: hardware solution for clean speaker separation
-- **Dice roll integration**: physical dice reader that feeds roll results to the context engine
-- **Campaign map overlay**: simple SVG map with avatar position markers on the shared screen
-- **Multi-campaign support**: separate SQLite databases with independent memory stores
-- **Mobile DM companion**: phone-optimised companion UI for DM session control
-- **Avatar emotional state tracking**: track avatar emotional state across the session and
-  modulate XTTS voice characteristics (rate, pitch) based on current emotional state
-- **Session replay**: play back a session with full audio + transcript in sync
+*   **D&D Beyond import**: pull character sheets via D&D Beyond API or JSON export
+*   **Pyannote diarization**: label individual speakers without per-person mics (V1.5 upgrade)
+*   **PersonaPlex integration**: NVIDIA's open-source full-duplex model as a richer Presence Layer
+*   **Per-speaker mics + USB mixer**: hardware solution for clean speaker separation
+*   **Dice roll integration**: physical dice reader that feeds roll results to the context engine
+*   **Campaign map overlay**: simple SVG map with avatar position markers on the shared screen
+*   **Multi-campaign support**: separate SQLite databases with independent memory stores
+*   **Mobile DM companion**: phone-optimised companion UI for DM session control
+*   **Avatar emotional state tracking**: track avatar emotional state across the session and  
+    modulate XTTS voice characteristics (rate, pitch) based on current emotional state
+*   **Session replay**: play back a session with full audio + transcript in sync
 
 ---
 
-## 11. The Ten Most Important Lessons From Prior Art
+## 11\. The Ten Most Important Lessons From Prior Art
 
-Consolidated from: voice AI research (2024–2026), UCSD NeurIPS 2025 D&D research, NVIDIA
+Consolidated from: voice AI research (2024–2026), UCSD NeurIPS 2025 D&D research, NVIDIA  
 PersonaPlex, Infobip D&D agentic engine, and independent D&D AI builder documentation.
 
-1. **Cascade pipelines feel robotic regardless of speed** — the absence of listening behaviour is the core problem, not latency.
+**Cascade pipelines feel robotic regardless of speed** — the absence of listening behaviour is the core problem, not latency.
 
-2. **Backchannelling while others speak is not optional** — "uh huh" and "hmm" are the primary signals that make an AI feel present rather than periodic.
+**Backchannelling while others speak is not optional** — "uh huh" and "hmm" are the primary signals that make an AI feel present rather than periodic.
 
-3. **Without hard role boundaries, the AI will try to be the DM** — explicit NEVER rules with negative examples must be in every prompt.
+**Without hard role boundaries, the AI will try to be the DM** — explicit NEVER rules with negative examples must be in every prompt.
 
-4. **Brief responses always beat elaborate ones** — real players speak in fragments and trailing thoughts, not structured paragraphs.
+**Brief responses always beat elaborate ones** — real players speak in fragments and trailing thoughts, not structured paragraphs.
 
-5. **LLM accuracy degrades significantly over long sessions** — mid-session context compression is essential, not optional.
+**LLM accuracy degrades significantly over long sessions** — mid-session context compression is essential, not optional.
 
-6. **Claude outperforms other models at in-character D&D consistency** — validated by NeurIPS 2025 research comparing Claude 3.5 Haiku, GPT-4, and DeepSeek-V3.
+**Claude outperforms other models at in-character D&D consistency** — validated by NeurIPS 2025 research comparing Claude 3.5 Haiku, GPT-4, and DeepSeek-V3.
 
-7. **Tool-grounding the rules engine prevents mechanical hallucinations** — the LLM must be fed legal options, not asked to generate them from memory.
+**Tool-grounding the rules engine prevents mechanical hallucinations** — the LLM must be fed legal options, not asked to generate them from memory.
 
-8. **Echo cancellation is mandatory** — without it, the AI transcribes its own TTS audio and can respond to itself in a feedback loop.
+**Echo cancellation is mandatory** — without it, the AI transcribes its own TTS audio and can respond to itself in a feedback loop.
 
-9. **Plain text output must be explicitly required** — markdown produces audible noise in TTS ("asterisk asterisk I draw my asterisk asterisk sword").
+**Plain text output must be explicitly required** — markdown produces audible noise in TTS ("asterisk asterisk I draw my asterisk asterisk sword").
 
-10. **The table microphone matters more than any software feature** — good audio capture is the foundation everything else is built on.
+**The table microphone matters more than any software feature** — good audio capture is the foundation everything else is built on.
