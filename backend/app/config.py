@@ -1,14 +1,19 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from pathlib import Path
+
+# Resolve .env relative to this file's location (backend/app/), going up to project root
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=str(_ENV_FILE), env_file_encoding="utf-8", extra="ignore")
 
     # ── Server ────────────────────────────────────────────────────────────
     host: str = "0.0.0.0"
     port: int = 8000
     cors_origins: str = "http://localhost:5173,http://localhost:4173"
+    debug_mode: bool = False
 
     # ── Database ──────────────────────────────────────────────────────────
     database_url: str = "sqlite+aiosqlite:///./data/campaign.db"
@@ -25,11 +30,13 @@ class Settings(BaseSettings):
     mic_device_index: int = 0
     sample_rate: int = 16000        # Hz — required by silero-vad and faster-whisper
     chunk_ms: int = 30              # VAD chunk size in ms (silero needs 30ms @ 16 kHz)
-    vad_threshold: float = 0.5      # Silero VAD sensitivity (0.0–1.0)
+    vad_threshold: float = 0.30     # Silero VAD sensitivity (0.0–1.0)
     aec_decay_ms: int = 200         # ms to gate mic after TTS ends
     whisper_model: str = "large-v3" # faster-whisper model size
     whisper_device: str = "cuda"    # "cuda" | "cpu"
     whisper_compute_type: str = "float16"  # "float16" | "int8" | "float32"
+    whisper_no_speech_threshold: float = 0.80  # drop Whisper segments where no_speech_prob exceeds this
+    whisper_log_prob_threshold: float = -2.0   # drop Whisper segments below this avg log-prob
 
     # ── Trigger Timing ────────────────────────────────────────────────────
     silence_gap_trigger: float = 4.0    # seconds of silence before passive response

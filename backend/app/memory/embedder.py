@@ -50,10 +50,12 @@ class Embedder:
         if self._available is not None:
             return self._available
         try:
+            import torch
             from sentence_transformers import SentenceTransformer  # type: ignore
-            self._model = SentenceTransformer(self.MODEL_NAME)
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            self._model = SentenceTransformer(self.MODEL_NAME, device=device)
             self._available = True
-            log.info("memory.embedder_ready", model=self.MODEL_NAME)
+            log.info("memory.embedder_ready", model=self.MODEL_NAME, device=device)
         except Exception as e:
             log.warning("memory.embedder_unavailable", error=str(e))
             self._available = False
@@ -90,16 +92,17 @@ class Embedder:
         Cosine similarity between two packed float32 vectors.
         Used as fallback when sqlite-vec is unavailable.
         """
-        va = _unpack(a)
-        vb = _unpack(b)
-        if len(va) != len(vb):
+        import numpy as np
+        n = len(a) // 4
+        if len(a) != len(b) or n == 0:
             return 0.0
-        dot = sum(x * y for x, y in zip(va, vb))
-        mag_a = sum(x * x for x in va) ** 0.5
-        mag_b = sum(x * x for x in vb) ** 0.5
+        va = np.frombuffer(a, dtype=np.float32)
+        vb = np.frombuffer(b, dtype=np.float32)
+        mag_a = np.linalg.norm(va)
+        mag_b = np.linalg.norm(vb)
         if mag_a == 0 or mag_b == 0:
             return 0.0
-        return dot / (mag_a * mag_b)
+        return float(np.dot(va, vb) / (mag_a * mag_b))
 
     @property
     def dim(self) -> int:

@@ -7,6 +7,8 @@ from app.models.avatar import Avatar
 from app.schemas.avatar import AvatarCreate, AvatarUpdate, AvatarResponse
 import shutil
 import os
+import json
+import asyncio
 
 router = APIRouter(prefix="/avatars", tags=["avatars"])
 
@@ -24,6 +26,143 @@ async def list_avatars(
         stmt = stmt.where(Avatar.is_active == True)  # noqa: E712
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+_RANDOMISE_SYSTEM = """You are a D&D 5e character generator. Output ONLY a valid JSON object — no markdown, no explanation.
+
+Rules:
+- Level must be 1.
+- Ability scores: roll 4d6 drop lowest for each, values between 3 and 18.
+- Hit points: class hit die + CON modifier (minimum 1). Fighter d10, Barbarian d12, Paladin d10, Ranger d10, Cleric d8, Druid d8, Monk d8, Rogue d8, Bard d8, Warlock d8, Wizard d6, Sorcerer d6.
+- Armor class: 10 + DEX modifier (unarmored), or class-appropriate starting AC.
+- Speed: 30 ft (25 ft for Dwarf and Halfling).
+- Proficiency bonus: 2 (always at level 1).
+- Background must be a valid 5e background (Acolyte, Criminal, Folk Hero, Noble, Outlander, Sage, Soldier, Charlatan, Entertainer, Guild Artisan, Hermit, Sailor, Urchin).
+- Alignment must be one of: Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, True Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil.
+- Race must be a standard 5e race.
+- Class must be a standard 5e class.
+- name: a fantasy name fitting the race.
+- player_name: leave as "Randomised".
+- personality_traits, ideals, bonds, flaws: short evocative sentences from the background table.
+- backstory: 2-3 sentences of flavourful backstory.
+- sentence_style: brief description of how this character speaks (e.g. "clipped military commands, never uses contractions").
+- verbal_tics: one or two speech habits (e.g. "invokes Moradin, calls everyone 'friend'").
+- never_say: comma-separated list of 3 words this character would never use.
+- equipment: list of 3-5 starting items as strings.
+- mode: "active".
+
+Return this exact JSON shape and nothing else:
+{
+  "name": "...",
+  "player_name": "Randomised",
+  "race": "...",
+  "char_class": "...",
+  "level": 1,
+  "background": "...",
+  "alignment": "...",
+  "strength": 0,
+  "dexterity": 0,
+  "constitution": 0,
+  "intelligence": 0,
+  "wisdom": 0,
+  "charisma": 0,
+  "hit_points_max": 0,
+  "hit_points_current": 0,
+  "armor_class": 0,
+  "speed": 30,
+  "proficiency_bonus": 2,
+  "backstory": "...",
+  "personality_traits": "...",
+  "ideals": "...",
+  "bonds": "...",
+  "flaws": "...",
+  "sentence_style": "...",
+  "verbal_tics": "...",
+  "never_say": "...",
+  "equipment": [],
+  "skill_proficiencies": [],
+  "spells_known": {},
+  "spell_slots": {},
+  "relationships": {},
+  "mode": "active"
+}"""
+
+_RANDOMISE_USER = "Generate a random valid D&D 5e starting character. Output only the JSON."
+
+
+@router.post("/randomise", response_model=AvatarCreate)
+async def randomise_avatar():
+    """
+    Use Ollama to generate a random valid D&D 5e starting character.
+    Returns a populated AvatarCreate payload — does NOT save to the database.
+    """
+    from app.llm.router import call_ollama
+    from app.config import get_settings
+
+    settings = get_settings()
+
+    resp = await asyncio.get_event_loop().run_in_executor(
+        None,
+        lambda: call_ollama(
+            system_prompt=_RANDOMISE_SYSTEM,
+            user_message=_RANDOMISE_USER,
+            model=settings.ollama_model,
+            num_predict=2000,
+        ),
+    )
+
+    if resp.route == "stub" or not resp.text:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Ollama unavailable or returned empty response: {resp.error}",
+        )
+
+    # Strip think-blocks emitted by reasoning models (e.g. deepseek-r1)
+    raw = resp.text.strip()
+    if "<think>" in raw:
+        raw = raw.split("</think>", 1)[-1].strip()
+
+    # Strip markdown fences (```json ... ``` or ``` ... ```)
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1]           # drop the opening ```[lang] line
+        raw = raw.rsplit("```", 1)[0]          # drop everything from the closing ``` onward
+
+    # Extract the first JSON object in the response (in case of extra prose)
+    start = raw.find("{")
+    end = raw.rfind("}") + 1
+    if start == -1 or end == 0:
+        raise HTTPException(status_code=502, detail="Ollama response contained no JSON object")
+    raw = raw[start:end]
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Ollama returned invalid JSON: {exc}",
+        )
+
+    # Clamp / coerce values that Ollama occasionally gets wrong
+    data["level"] = 1
+    data["proficiency_bonus"] = 2
+    for stat in ("strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"):
+        data[stat] = max(3, min(int(data.get(stat, 10)), 18))
+    data["hit_points_max"] = max(1, int(data.get("hit_points_max", 8)))
+    data["hit_points_current"] = data["hit_points_max"]
+    data["armor_class"] = max(1, int(data.get("armor_class", 10)))
+    data["speed"] = max(0, int(data.get("speed", 30)))
+    data.setdefault("equipment", [])
+    data.setdefault("skill_proficiencies", [])
+    data.setdefault("spells_known", {})
+    data.setdefault("spell_slots", {})
+    data.setdefault("relationships", {})
+    data["mode"] = data.get("mode", "active")
+    data["player_name"] = data.get("player_name") or "Randomised"
+
+    try:
+        return AvatarCreate(**data)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Character validation failed: {exc}")
 
 
 @router.post("/", response_model=AvatarResponse, status_code=status.HTTP_201_CREATED)

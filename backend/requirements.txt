@@ -17,18 +17,21 @@ pydantic-settings==2.6.1
 anthropic==0.40.0
 httpx==0.28.1
 
-# Audio (Phase 2+) — numpy always required; sounddevice/whisper/silero need GPU
+# Audio (Phase 2+)
+# PyTorch must be installed separately with the CUDA wheel — see install.bat
+# pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124
 numpy>=2.0
-# sounddevice==0.5.1
-# faster-whisper==1.1.0
-# silero-vad @ git+https://github.com/snakers4/silero-vad.git
+sounddevice>=0.5.0
+faster-whisper==1.1.0
+silero-vad>=6.0
 
 # TTS (Phase 3+)
-# TTS==0.22.0
+coqui-tts>=0.27.0
+transformers>=4.57,<5.0
 
 # Embeddings (Phase 5+)
-# sentence-transformers==3.3.1
-# sqlite-vec==0.1.6
+sentence-transformers>=3.0
+sqlite-vec==0.1.6
 
 # Utilities
 python-dotenv==1.0.1

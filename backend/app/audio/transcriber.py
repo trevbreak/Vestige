@@ -64,6 +64,8 @@ class Transcriber:
             )
         except Exception as e:
             log.error("transcriber.load_failed", error=str(e))
+            log.warning("transcriber.will_retry_on_next_segment",
+                        note="Model load failed — will retry on first transcription call")
 
     @property
     def available(self) -> bool:
@@ -90,6 +92,11 @@ class Transcriber:
         Empty list on failure.
         """
         if not self.available:
+            # Try loading again — a transient CUDA error on startup may have cleared
+            log.info("transcriber.retry_load")
+            self._load()
+
+        if not self.available:
             # Stub: return placeholder so tests and dev can proceed without GPU
             return [TranscriptSegment(
                 text="[transcription unavailable — faster-whisper not installed]",
@@ -102,24 +109,51 @@ class Transcriber:
         # faster-whisper expects float32 normalised [-1, 1]
         float_audio = audio.astype(np.float32) / 32768.0
 
+        from app.config import get_settings
+        cfg = get_settings()
         try:
             segments_iter, info = self._model.transcribe(
                 float_audio,
                 language=language,
                 beam_size=5,
-                vad_filter=False,   # We do our own VAD upstream
+                vad_filter=False,           # We do our own VAD upstream
                 word_timestamps=False,
+                condition_on_previous_text=False,  # prevents hallucination loops
+                no_speech_threshold=cfg.whisper_no_speech_threshold,
+                compression_ratio_threshold=2.4,
+                log_prob_threshold=cfg.whisper_log_prob_threshold,
             )
         except Exception as e:
             log.error("transcriber.transcribe_failed", error=str(e))
             return []
 
+        # Known Whisper hallucination phrases on silence/noise
+        _HALLUCINATIONS = {
+            "thank you", "thanks for watching", "thanks for watching!", "thank you.",
+            "thank you!", "thanks!", "thanks.", "you", ".",  "[music]", "[applause]",
+            "[silence]", "[ silence ]", "[music playing]", "subtitles by",
+            "www.", ".com", "yo.", "yo", "i don't know", "i don't know.",
+        }
+
         results: list[TranscriptSegment] = []
         for seg in segments_iter:
             text = seg.text.strip()
+            if not text:
+                continue
+
+            # Drop known hallucination phrases
+            if text.lower() in _HALLUCINATIONS:
+                log.info("transcriber.hallucination_dropped", text=text)
+                continue
+
+            # Drop low-confidence segments (likely silence/noise)
             avg_logprob = getattr(seg, "avg_logprob", -0.5)
-            # Map log-prob to a rough 0–1 confidence: -0.0 → 1.0, -1.0 → ~0.37
+            no_speech_prob = getattr(seg, "no_speech_prob", 0.0)
             confidence = float(min(1.0, max(0.0, 1.0 + avg_logprob)))
+
+            if no_speech_prob > cfg.whisper_no_speech_threshold:
+                log.info("transcriber.no_speech_dropped", text=text, no_speech_prob=round(no_speech_prob, 3))
+                continue
 
             from app.audio.backchannel_classifier import is_inaudible
             results.append(TranscriptSegment(

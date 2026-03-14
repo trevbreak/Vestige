@@ -20,6 +20,7 @@ export const api = {
     request(`/avatars/?include_inactive=${includeInactive}`),
   getAvatar: (id) => request(`/avatars/${id}`),
   createAvatar: (data) => request('/avatars/', { method: 'POST', body: data }),
+  randomiseAvatar: () => request('/avatars/randomise', { method: 'POST' }),
   updateAvatar: (id, data) => request(`/avatars/${id}`, { method: 'PATCH', body: data }),
   deleteAvatar: (id) => request(`/avatars/${id}`, { method: 'DELETE' }),
   setAvatarMode: (id, mode) =>
@@ -101,6 +102,12 @@ export const api = {
       method: 'DELETE',
       body: { avatar_id: avatarId, condition },
     }),
+  // System status
+  getSystemStatus: () => request('/system/status'),
+  getAudioDevices: () => request('/system/devices'),
+  runMicTest: () => request('/system/mic-test', { method: 'POST' }),
+  getLogs: (n = 100, level = '') => request('/system/logs?n=' + n + (level ? '&level=' + level : '')),
+
   // Settings (Phase 7)
   getSettings: () => request('/settings'),
   updateSettings: (data) => request('/settings', { method: 'PATCH', body: data }),

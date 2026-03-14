@@ -134,12 +134,23 @@ class AudioPipeline:
 
     async def run(self) -> None:
         """
-        Main pipeline coroutine. Captures mic in a thread and processes
-        VAD segments asynchronously.
+        Main pipeline coroutine.
+
+        Audio arrives via the browser mic WebSocket (/ws/audio/{session_id}),
+        which calls _flush_buffer() directly. This coroutine just keeps the
+        pipeline alive until stop() is called.
         """
         self._running = True
         log.info("pipeline.start", session_id=self.session_id)
 
+        # Keep running until stop() is called; audio arrives via audio_ws.
+        while self._running:
+            await asyncio.sleep(0.5)
+
+        log.info("pipeline.stopped", session_id=self.session_id)
+        return
+
+        # ── Legacy sounddevice path (server-side mic) — kept for reference ──
         try:
             import sounddevice as sd
         except ImportError:
@@ -230,12 +241,15 @@ class AudioPipeline:
             audio = select_dominant_half(audio)
 
         # Transcription (blocking — run in thread pool)
+        log.info("pipeline.transcribing", session_id=self.session_id,
+                 audio_ms=end_ms - start_ms, samples=len(audio))
         segments: list[TranscriptSegment] = await loop.run_in_executor(
             None,
             self._transcriber.transcribe,
             audio,
             settings.sample_rate,
         )
+        log.info("pipeline.transcribed", session_id=self.session_id, n_segments=len(segments))
 
         for seg in segments:
             utterance_type = "overlap" if overlapped else "speech"

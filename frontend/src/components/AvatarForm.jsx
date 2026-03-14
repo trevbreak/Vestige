@@ -20,6 +20,7 @@ export default function AvatarForm({ initial, onClose }) {
   const { addAvatar, updateAvatar } = useAvatarStore()
   const [form, setForm] = useState({ ...DEFAULTS, ...initial })
   const [saving, setSaving] = useState(false)
+  const [rolling, setRolling] = useState(false)
   const [error, setError] = useState(null)
   const [portrait, setPortrait] = useState(null)
 
@@ -27,6 +28,19 @@ export default function AvatarForm({ initial, onClose }) {
 
   const set = (field) => (e) =>
     setForm((f) => ({ ...f, [field]: e.target.type === 'number' ? Number(e.target.value) : e.target.value }))
+
+  const handleRandomise = async () => {
+    setRolling(true)
+    setError(null)
+    try {
+      const data = await api.randomiseAvatar()
+      setForm((f) => ({ ...f, ...data }))
+    } catch (err) {
+      setError(`Randomise failed: ${err.message}`)
+    } finally {
+      setRolling(false)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -58,7 +72,21 @@ export default function AvatarForm({ initial, onClose }) {
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.formHeader}>
           <h2>{isEdit ? `Edit ${initial.name}` : 'New Avatar'}</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose}>✕</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {!isEdit && (
+              <button
+                type="button"
+                className={`btn ${styles.randomiseBtn}${rolling ? ` ${styles.rolling}` : ''}`}
+                onClick={handleRandomise}
+                disabled={rolling}
+                title="Let Ollama roll a random valid D&D 5e character"
+              >
+                <span className={styles.diceIcon}>⚄</span>{' '}
+                {rolling ? 'Rolling…' : 'Randomise'}
+              </button>
+            )}
+            <button type="button" className={styles.closeBtn} onClick={onClose}>✕</button>
+          </div>
         </div>
 
         <div className={styles.scrollBody}>

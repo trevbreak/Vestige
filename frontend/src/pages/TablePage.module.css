@@ -50,6 +50,17 @@
   font-family: var(--font-heading);
   font-size: 1.2rem;
   color: var(--gold-dim);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.apPortraitSpeaking {
+  border-color: #e8b84b;
+  animation: speakingRing 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes speakingRing {
+  from { box-shadow: 0 0 0 2px rgba(232,184,75,0.5), 0 0 8px 2px rgba(232,184,75,0.3); }
+  to   { box-shadow: 0 0 0 3px rgba(232,184,75,0.9), 0 0 16px 6px rgba(232,184,75,0.6); }
 }
 
 .apPortrait img { width: 100%; height: 100%; object-fit: cover; }
@@ -148,4 +159,60 @@
   font-size: 0.75rem;
   margin-right: 0.35rem;
   opacity: 0.7;
+}
+
+/* ── Mic level indicator ──────────────────────────────────────── */
+
+.micLevelRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.micDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--status-active);
+  flex-shrink: 0;
+  animation: micPulse 1s ease-in-out infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.micLevelBar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-deep);
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.micLevelFill {
+  height: 100%;
+  background: var(--status-active);
+  transition: width 0.08s linear;
+  min-width: 2px;
+}
+
+/* ── Loading spinner for mic startup ─────────────────────────── */
+
+.spinnerDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 0.35rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

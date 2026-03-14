@@ -6,6 +6,8 @@ POST /api/pipeline/{session_id}/stop   — stop mic capture
 GET  /api/pipeline/{session_id}/status — check if pipeline is running
 """
 
+import traceback
+import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -15,6 +17,8 @@ from app.models.session import Session
 from app.models.avatar import Avatar
 from app.services.pipeline_manager import pipeline_manager
 from app.routers.websocket import manager as ws_manager
+
+log = structlog.get_logger()
 
 router = APIRouter(prefix="/pipeline", tags=["pipeline"])
 
@@ -78,16 +82,20 @@ async def start_pipeline(session_id: int, db: AsyncSession = Depends(get_db)):
         """Broadcast a raw dict (from AudioOutputManager / PresenceLayer)."""
         await ws_manager.broadcast(msg)
 
-    await pipeline_manager.start(
-        session_id=session_id,
-        avatar_ids=avatar_ids,
-        avatar_names=avatar_names,
-        avatar_modes=avatar_modes,
-        broadcast_fn=broadcast_entry,
-        broadcast_dict_fn=broadcast_dict,
-        avatar_embeddings=avatar_embeddings,
-        avatar_profiles=avatar_profiles,
-    )
+    try:
+        await pipeline_manager.start(
+            session_id=session_id,
+            avatar_ids=avatar_ids,
+            avatar_names=avatar_names,
+            avatar_modes=avatar_modes,
+            broadcast_fn=broadcast_entry,
+            broadcast_dict_fn=broadcast_dict,
+            avatar_embeddings=avatar_embeddings,
+            avatar_profiles=avatar_profiles,
+        )
+    except Exception as e:
+        log.error("pipeline.start_failed", session_id=session_id, error=str(e), traceback=traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Pipeline start failed: {e}")
 
     await ws_manager.broadcast_pipeline_status(session_id, "started")
     return {"status": "started", "session_id": session_id}

@@ -53,6 +53,44 @@
   padding: 0.6rem 1.25rem;
 }
 
+@keyframes diceRoll {
+  0%   { transform: rotate(0deg)   scale(1);    }
+  25%  { transform: rotate(90deg)  scale(1.15); }
+  50%  { transform: rotate(180deg) scale(1);    }
+  75%  { transform: rotate(270deg) scale(1.15); }
+  100% { transform: rotate(360deg) scale(1);    }
+}
+
+.randomiseBtn {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--gold-dim);
+  color: var(--gold-dim);
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.randomiseBtn:hover:not(:disabled) {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.randomiseBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.randomiseBtn.rolling {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.randomiseBtn.rolling .diceIcon {
+  display: inline-block;
+  animation: diceRoll 0.6s linear infinite;
+}
+.diceIcon {
+  display: inline-block;
+}
+
 .footer {
   display: flex;
   justify-content: flex-end;

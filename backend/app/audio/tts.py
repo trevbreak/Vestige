@@ -141,17 +141,16 @@ class TTSEngine:
         speaker = self._speakers.get(avatar_id)
 
         try:
-            import torch
+            import torch  # noqa: F401 — needed for tensor ops
             buf = io.BytesIO()
 
             if speaker:
                 # Cloned voice via speaker conditioning tensors
-                import torch
                 audio_array = self._model.tts(
                     text=text,
                     language=language,
-                    gpt_cond_latent=torch.tensor(speaker["gpt_cond_latent"]),
-                    speaker_embedding=torch.tensor(speaker["speaker_embedding"]),
+                    gpt_cond_latent=torch.tensor(speaker["gpt_cond_latent"]).to(self.device),
+                    speaker_embedding=torch.tensor(speaker["speaker_embedding"]).to(self.device),
                     speed=EMOTION_SPEEDS.get(emotion, 1.0),
                 )
             else:

@@ -25,7 +25,6 @@ from dataclasses import dataclass
 from app.config import get_settings
 
 log = structlog.get_logger()
-settings = get_settings()
 
 # ── Routing table ─────────────────────────────────────────────────────────────
 
@@ -76,13 +75,15 @@ def call_ollama(
     system_prompt: str,
     user_message: str,
     model: str | None = None,
+    num_predict: int = 120,
 ) -> LLMResponse:
     """
     Synchronous Ollama chat call.
     Returns a stub response if Ollama is unreachable.
     """
     import time
-    model = model or settings.ollama_model
+    _settings = get_settings()
+    model = model or _settings.ollama_model
     t0 = time.monotonic()
 
     try:
@@ -99,17 +100,17 @@ def call_ollama(
             "options": {
                 "temperature": 0.85,
                 "top_p": 0.9,
-                "num_predict": 120,
+                "num_predict": num_predict,
             },
         }).encode()
 
         req = urllib.request.Request(
-            f"{settings.ollama_base_url}/api/chat",
+            f"{_settings.ollama_base_url}/api/chat",
             data=payload,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=settings.ollama_timeout_s) as resp:
+        with urllib.request.urlopen(req, timeout=_settings.ollama_timeout_s) as resp:
             body = json.loads(resp.read())
 
         text = body.get("message", {}).get("content", "").strip()
@@ -156,10 +157,11 @@ def call_claude(
     Returns a stub response if API key is missing or call fails.
     """
     import time
-    model = model or settings.claude_model
+    _settings = get_settings()
+    model = model or _settings.claude_model
     t0 = time.monotonic()
 
-    if not settings.anthropic_api_key:
+    if not _settings.anthropic_api_key:
         log.warning("llm.claude_no_api_key")
         return LLMResponse(
             text="",
@@ -170,11 +172,11 @@ def call_claude(
 
     try:
         import anthropic
-        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        client = anthropic.Anthropic(api_key=_settings.anthropic_api_key)
 
         msg = client.messages.create(
             model=model,
-            max_tokens=settings.claude_max_tokens,
+            max_tokens=_settings.claude_max_tokens,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}],
         )

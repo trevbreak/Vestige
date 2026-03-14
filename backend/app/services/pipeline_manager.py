@@ -88,12 +88,18 @@ class PipelineManager:
                     log.info("pipeline_manager.embedding_loaded", avatar_id=aid, ok=ok)
 
         # ── AudioPipeline (owns the EchoGate we'll share) ─────────────────
-        pipeline = AudioPipeline(
-            session_id=session_id,
-            active_avatar_ids=avatar_ids,
-            broadcast_fn=broadcast_fn,
-            avatar_names=avatar_names,
-            avatar_modes=avatar_modes,
+        # AudioPipeline.__init__ loads the Whisper model (blocking, up to 30s).
+        # Run it in a thread executor so the event loop stays responsive.
+        loop = asyncio.get_running_loop()
+        pipeline = await loop.run_in_executor(
+            None,
+            lambda: AudioPipeline(
+                session_id=session_id,
+                active_avatar_ids=avatar_ids,
+                broadcast_fn=broadcast_fn,
+                avatar_names=avatar_names,
+                avatar_modes=avatar_modes,
+            ),
         )
 
         # ── AudioOutputManager (shares the pipeline's EchoGate) ───────────

@@ -204,9 +204,10 @@ class TestLLMRouter:
         """Claude call returns stub when no API key is configured."""
         from app.llm.router import call_claude
         import unittest.mock
-        with unittest.mock.patch("app.llm.router.settings") as mock_settings:
-            mock_settings.anthropic_api_key = ""
-            mock_settings.claude_model = "claude-haiku-4-5-20251001"
+        mock_settings = unittest.mock.MagicMock()
+        mock_settings.anthropic_api_key = ""
+        mock_settings.claude_model = "claude-haiku-4-5-20251001"
+        with unittest.mock.patch("app.llm.router.get_settings", return_value=mock_settings):
             result = call_claude("System.", "User.")
         assert result.route == "stub"
         assert result.error == "no_api_key"

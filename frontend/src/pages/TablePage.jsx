@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useAvatarStore } from '../stores/avatarStore'
 import { useSessionStore } from '../stores/sessionStore'
 import { useAudioPlayer } from '../hooks/useAudioPlayer'
+import { useMicStream } from '../hooks/useMicStream'
 import { api } from '../api/client'
 import InitiativeTracker from '../components/InitiativeTracker'
 import EmberParticles from '../components/EmberParticles'
@@ -24,12 +25,17 @@ export default function TablePage() {
   const [transcripts, setTranscripts] = useState([])
   const [wsStatus, setWsStatus] = useState('disconnected')
   const [pipelineRunning, setPipelineRunning] = useState(false)
+  const [pipelineLoading, setPipelineLoading] = useState(false)
+  const [pipelineError, setPipelineError] = useState(null)
   const [avatarStatuses, setAvatarStatuses] = useState({}) // {avatarId: 'thinking'|'speaking'|null}
   const wsRef = useRef(null)
   const transcriptEndRef = useRef(null)
 
   // Audio playback via Web Audio API
-  const { handleWsMessage: handleAudio, speaking, cancelAll } = useAudioPlayer()
+  const { handleWsMessage: handleAudio, speaking, cancelAll, primeAudioContext } = useAudioPlayer()
+
+  // Browser mic streaming
+  const { micActive, micLoading, micError, startMic, stopMic, micLevel } = useMicStream(selectedSessionId)
 
   useEffect(() => {
     fetchAvatars()
@@ -49,7 +55,13 @@ export default function TablePage() {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [transcripts])
 
-  // WebSocket — reconnect whenever session changes
+  // Keep stable refs to callbacks so the WS effect doesn't reconnect on every render
+  const handleAudioRef = useRef(handleAudio)
+  const cancelAllRef = useRef(cancelAll)
+  useEffect(() => { handleAudioRef.current = handleAudio }, [handleAudio])
+  useEffect(() => { cancelAllRef.current = cancelAll }, [cancelAll])
+
+  // WebSocket — reconnect only when session changes
   useEffect(() => {
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const ws = new WebSocket(`${proto}://${window.location.host}/ws`)
@@ -66,7 +78,7 @@ export default function TablePage() {
 
       // ── Audio messages → audio player hook ──────────────────────────
       if (['audio_start', 'audio_chunk', 'audio_end', 'avatar_speaking'].includes(msg.type)) {
-        handleAudio(msg)
+        handleAudioRef.current(msg)
       }
 
       // ── Transcript message ───────────────────────────────────────────
@@ -104,23 +116,47 @@ export default function TablePage() {
       // ── Pipeline status ──────────────────────────────────────────────
       if (msg.type === 'pipeline_status' && msg.session_id === selectedSessionId) {
         setPipelineRunning(msg.status === 'started')
-        if (msg.status === 'stopped') cancelAll()
+        if (msg.status === 'stopped') cancelAllRef.current()
       }
     }
 
     ws.onclose = () => setWsStatus('disconnected')
     ws.onerror = () => setWsStatus('error')
 
-    return () => ws.close()
-  }, [selectedSessionId, handleAudio, cancelAll])
+    return () => {
+      if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+        ws.close()
+      }
+    }
+  }, [selectedSessionId])
 
   const togglePipeline = async () => {
     if (!selectedSessionId) return
-    const action = pipelineRunning ? 'stop' : 'start'
-    try {
-      await fetch(`/api/pipeline/${selectedSessionId}/${action}`, { method: 'POST' })
-    } catch (err) {
-      console.error('Pipeline toggle failed:', err)
+    setPipelineError(null)
+    if (pipelineRunning) {
+      try { await api.stopPipeline(selectedSessionId) } catch {}
+      setPipelineRunning(false)
+      stopMic()
+    } else {
+      setPipelineLoading(true)
+      // Unlock AudioContext synchronously in this user-gesture handler
+      await primeAudioContext()
+      try {
+        await api.startPipeline(selectedSessionId)
+        setPipelineRunning(true)
+      } catch (err) {
+        setPipelineError(err.message)
+        setPipelineLoading(false)
+        return
+      }
+      try {
+        await startMic()
+      } catch (err) {
+        setPipelineError(`Mic error: ${err.message}`)
+        await api.stopPipeline(selectedSessionId).catch(() => {})
+        setPipelineRunning(false)
+      }
+      setPipelineLoading(false)
     }
   }
 
@@ -157,12 +193,38 @@ export default function TablePage() {
         </div>
 
         {selectedSessionId && (
-          <button
-            className={`btn btn-sm ${pipelineRunning ? 'btn-danger' : 'btn-primary'}`}
-            onClick={togglePipeline}
-          >
-            {pipelineRunning ? '⏹ Stop Listening' : '🎙 Start Listening'}
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <button
+              className={`btn btn-sm ${pipelineRunning ? 'btn-danger' : 'btn-primary'}`}
+              onClick={togglePipeline}
+              disabled={pipelineLoading}
+            >
+              {pipelineLoading
+                ? <><span className={styles.spinnerDot} /> Loading…</>
+                : pipelineRunning ? '⏹ Stop Listening' : '🎙 Start Listening'}
+            </button>
+            {micActive && (
+              <div className={styles.micLevelRow}>
+                <span className={styles.micDot} />
+                <div className={styles.micLevelBar}>
+                  <div
+                    className={styles.micLevelFill}
+                    style={{ width: `${Math.min(100, micLevel * 400)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {pipelineError && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--crimson-light)' }}>
+                Pipeline: {pipelineError}
+              </span>
+            )}
+            {micError && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--crimson-light)' }}>
+                Mic: {micError}
+              </span>
+            )}
+          </div>
         )}
 
         <div className={styles.avatarPanels}>
@@ -236,7 +298,7 @@ function AvatarPanel({ avatar, status }) {
 
   return (
     <div className={`${styles.avatarPanel} card ${isSpeaking ? 'speaking' : ''}`}>
-      <div className={styles.apPortrait}>
+      <div className={`${styles.apPortrait} ${isSpeaking ? styles.apPortraitSpeaking : ''}`}>
         {avatar.portrait_path ? (
           <img src={`/${avatar.portrait_path}`} alt={avatar.name} />
         ) : (

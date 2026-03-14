@@ -29,6 +29,13 @@ export function useAudioPlayer() {
     return ctxRef.current
   }, [])
 
+  // Call this directly from a user gesture (button click) to unlock audio.
+  // Browsers block AudioContext.resume() unless triggered synchronously by a gesture.
+  const primeAudioContext = useCallback(async () => {
+    const ctx = getCtx()
+    if (ctx.state === 'suspended') await ctx.resume()
+  }, [getCtx])
+
   const cancelAll = useCallback(() => {
     queueRef.current = []
     if (sourceRef.current) {
@@ -76,7 +83,7 @@ export function useAudioPlayer() {
       case 'audio_start': {
         // Initialise accumulation buffer for this avatar
         bufferMapRef.current[msg.avatar_id] = {
-          chunks: [],
+          chunks: [],    // Uint8Array binary chunks (decoded per-chunk to avoid padding issues)
           totalBytes: msg.total_bytes,
           avatarName: msg.avatar_name,
           utteranceType: msg.utterance_type,
@@ -87,7 +94,11 @@ export function useAudioPlayer() {
       case 'audio_chunk': {
         const acc = bufferMapRef.current[msg.avatar_id]
         if (acc) {
-          acc.chunks.push(msg.data)  // base64 string
+          // Decode each base64 chunk individually — concatenating padded b64 strings breaks atob
+          const binary = atob(msg.data)
+          const bytes = new Uint8Array(binary.length)
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+          acc.chunks.push(bytes)
         }
         break
       }
@@ -99,16 +110,14 @@ export function useAudioPlayer() {
           break
         }
 
-        // Decode accumulated base64 → ArrayBuffer → AudioBuffer
+        // Concatenate binary Uint8Arrays → ArrayBuffer → AudioBuffer
         try {
           const ctx = getCtx()
-          const b64 = acc.chunks.join('')
-          const binary = atob(b64)
-          const arrayBuf = new ArrayBuffer(binary.length)
+          const totalLen = acc.chunks.reduce((s, c) => s + c.length, 0)
+          const arrayBuf = new ArrayBuffer(totalLen)
           const view = new Uint8Array(arrayBuf)
-          for (let i = 0; i < binary.length; i++) {
-            view[i] = binary.charCodeAt(i)
-          }
+          let pos = 0
+          for (const chunk of acc.chunks) { view.set(chunk, pos); pos += chunk.length }
           const audioBuffer = await ctx.decodeAudioData(arrayBuf)
 
           queueRef.current.push({
@@ -150,5 +159,5 @@ export function useAudioPlayer() {
     }
   }, [])
 
-  return { handleWsMessage, speaking, cancelAll }
+  return { handleWsMessage, speaking, cancelAll, primeAudioContext }
 }
