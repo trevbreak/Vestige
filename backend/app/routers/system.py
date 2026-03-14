@@ -22,6 +22,19 @@ router = APIRouter(prefix="/system", tags=["system"])
 
 # ── /status ───────────────────────────────────────────────────────────────────
 
+@router.post("/recheck")
+async def recheck_system():
+    """Re-run all startup checks and return fresh results."""
+    from app.startup_checks import run_startup_checks, get_status, all_critical_ok
+    import asyncio
+    await run_startup_checks()
+    checks = get_status()
+    return {
+        "ok": all_critical_ok(),
+        "results": checks,
+    }
+
+
 @router.get("/status")
 def get_system_status():
     """

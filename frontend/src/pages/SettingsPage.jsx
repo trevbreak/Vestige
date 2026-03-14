@@ -93,13 +93,14 @@ function SystemStatusSection({ refreshTrigger }) {
   const [selectedDevice, setSelectedDevice] = useState(null)
   const [deviceSaving, setDeviceSaving] = useState(false)
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async ({ recheck = false } = {}) => {
     setLoading(true)
     try {
+      if (recheck) await api.recheckSystem()
       const [s, d] = await Promise.all([api.getSystemStatus(), api.getAudioDevices()])
       setStatus(s)
       setDevices(d)
-      setSelectedDevice(null) // reset pending selection on refresh
+      setSelectedDevice(null)
     } catch (e) {
       console.error('Status check failed:', e)
     } finally {
@@ -107,7 +108,7 @@ function SystemStatusSection({ refreshTrigger }) {
     }
   }, [])
 
-  useEffect(() => { refresh() }, [refresh, refreshTrigger])
+  useEffect(() => { refresh({ recheck: false }) }, [refresh, refreshTrigger])
 
   const handleMicTest = async () => {
     setMicTesting(true)
@@ -137,13 +138,18 @@ function SystemStatusSection({ refreshTrigger }) {
 
   const cfg = status?.config ?? {}
   const ollama = status?.services?.ollama ?? {}
-  const whisper = status?.models?.faster_whisper ?? {}
-  const silero = status?.models?.silero_vad ?? {}
-  const torchInfo = status?.models?.torch ?? {}
+  const whisper = status?.models?.whisper ?? {}
+  const silero = status?.models?.vad ?? {}
   const sd = status?.audio?.sounddevice ?? {}
-  const ollamaModels = ollama.models ?? []
+  // CUDA info comes from the whisper check (device field) or vad (both use torch)
+  const torchInfo = whisper.ok
+    ? { ok: true, cuda: whisper.device === 'cuda', device: whisper.device }
+    : silero.ok
+      ? { ok: true, cuda: false, device: 'cpu' }
+      : { ok: false, cuda: false, error: silero.error ?? whisper.error }
+  const ollamaModels = ollama.available_models ?? []
   const configuredModel = cfg.ollama_model ?? ''
-  const modelInstalled = ollamaModels.some(
+  const modelInstalled = ollama.model_present ?? ollamaModels.some(
     (m) => m === configuredModel || m.startsWith(configuredModel.split(':')[0])
   )
   const activeDeviceIndex = cfg.mic_device_index ?? 0
@@ -153,8 +159,8 @@ function SystemStatusSection({ refreshTrigger }) {
     <section className={`card ${styles.section}`}>
       <div className={styles.sectionTitleRow}>
         <h2 className={styles.sectionTitle}>System Status</h2>
-        <button className="btn btn-sm" onClick={refresh} disabled={loading}>
-          {loading ? 'Checking...' : 'Refresh'}
+        <button className="btn btn-sm" onClick={() => refresh({ recheck: true })} disabled={loading}>
+          {loading ? 'Checking...' : 'Recheck'}
         </button>
       </div>
 

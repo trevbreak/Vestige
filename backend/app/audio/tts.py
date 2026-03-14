@@ -11,6 +11,7 @@ and causes device-side asserts in subsequently loaded models (Whisper).
 from __future__ import annotations
 
 import io
+import threading
 import wave
 import struct
 import numpy as np
@@ -66,6 +67,7 @@ class TTSEngine:
         self.device: str = "cuda"
         self._model = None
         self._speakers: dict[int, dict] = {}
+        self._lock = threading.Lock()
 
     def load(self, device: str = "cuda") -> bool:
         """
@@ -132,55 +134,62 @@ class TTSEngine:
 
         speaker = self._speakers.get(avatar_id)
 
-        try:
-            import torch
-            buf = io.BytesIO()
+        with self._lock:
+            try:
+                import torch
+                buf = io.BytesIO()
 
-            if speaker:
-                audio_array = self._model.tts(
+                if speaker:
+                    audio_array = self._model.tts(
+                        text=text,
+                        language=language,
+                        gpt_cond_latent=torch.tensor(speaker["gpt_cond_latent"]).to(self.device),
+                        speaker_embedding=torch.tensor(speaker["speaker_embedding"]).to(self.device),
+                        speed=EMOTION_SPEEDS.get(emotion, 1.0),
+                    )
+                else:
+                    audio_array = self._model.tts(
+                        text=text,
+                        language=language,
+                        speaker="Claribel Dervla",
+                        speed=EMOTION_SPEEDS.get(emotion, 1.0),
+                    )
+
+                samples = np.array(audio_array, dtype=np.float32)
+                if volume != 1.0:
+                    samples = samples * volume
+                samples_i16 = np.clip(samples * 32767, -32768, 32767).astype(np.int16)
+                duration_s = len(samples_i16) / self.SAMPLE_RATE
+
+                with wave.open(buf, "wb") as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(self.SAMPLE_RATE)
+                    wf.writeframes(samples_i16.tobytes())
+
+                return SynthesisResult(
+                    audio_bytes=buf.getvalue(),
+                    sample_rate=self.SAMPLE_RATE,
+                    duration_s=duration_s,
+                    emotion=emotion,
                     text=text,
-                    language=language,
-                    gpt_cond_latent=torch.tensor(speaker["gpt_cond_latent"]).to(self.device),
-                    speaker_embedding=torch.tensor(speaker["speaker_embedding"]).to(self.device),
-                    speed=EMOTION_SPEEDS.get(emotion, 1.0),
                 )
-            else:
-                audio_array = self._model.tts(
+
+            except Exception as e:
+                err_str = str(e)
+                log.error("tts.synthesis_failed", error=err_str, text=text[:60])
+                # CUDA context corruption — mark engine unavailable so future calls
+                # return silent stubs instead of looping into more CUDA errors.
+                if "CUDA error" in err_str or "device-side assert" in err_str:
+                    log.warning("tts.cuda_context_corrupted", action="disabling_gpu_tts")
+                    self._model = None
+                return SynthesisResult(
+                    audio_bytes=_silent_wav(0.5),
+                    sample_rate=self.SAMPLE_RATE,
+                    duration_s=0.5,
+                    emotion=emotion,
                     text=text,
-                    language=language,
-                    speaker="Claribel Dervla",
-                    speed=EMOTION_SPEEDS.get(emotion, 1.0),
                 )
-
-            samples = np.array(audio_array, dtype=np.float32)
-            if volume != 1.0:
-                samples = samples * volume
-            samples_i16 = np.clip(samples * 32767, -32768, 32767).astype(np.int16)
-            duration_s = len(samples_i16) / self.SAMPLE_RATE
-
-            with wave.open(buf, "wb") as wf:
-                wf.setnchannels(1)
-                wf.setsampwidth(2)
-                wf.setframerate(self.SAMPLE_RATE)
-                wf.writeframes(samples_i16.tobytes())
-
-            return SynthesisResult(
-                audio_bytes=buf.getvalue(),
-                sample_rate=self.SAMPLE_RATE,
-                duration_s=duration_s,
-                emotion=emotion,
-                text=text,
-            )
-
-        except Exception as e:
-            log.error("tts.synthesis_failed", error=str(e), text=text[:60])
-            return SynthesisResult(
-                audio_bytes=_silent_wav(0.5),
-                sample_rate=self.SAMPLE_RATE,
-                duration_s=0.5,
-                emotion=emotion,
-                text=text,
-            )
 
 
 # Module-level singleton — loaded once at startup, shared across all sessions

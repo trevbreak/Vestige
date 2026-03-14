@@ -34,30 +34,47 @@ echo.
 REM ── Cleanup old processes ──────────────────────────────────────────────────
 echo [2/3] Cleaning up old processes...
 
-REM Kill any process using port 8000 (backend)
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":8000 " ^| findstr LISTENING') do (
-    echo   Killing backend process PID %%p on port 8000
-    taskkill /PID %%p /F >nul 2>&1
-)
-
-REM Kill any process using port 5173 (frontend)
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":5173 " ^| findstr LISTENING') do (
-    echo   Killing frontend process PID %%p on port 5173
-    taskkill /PID %%p /F >nul 2>&1
-)
-
-REM Close any existing Vestige console windows by title
+REM Kill by window title first
 taskkill /FI "WINDOWTITLE eq Vestige Backend" /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq Vestige Frontend" /F >nul 2>&1
 
-timeout /t 1 /nobreak >nul
+REM Kill every process on port 8000 — catches stale uvicorn --reload child workers
+REM that survive a window-title kill because the reloader spawns children with different titles
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":8000 " ^| findstr LISTENING') do (
+    echo   Killing process PID %%p on port 8000
+    taskkill /PID %%p /F >nul 2>&1
+)
+
+REM Kill port 5173 (Vite dev server)
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":5173 " ^| findstr LISTENING') do (
+    echo   Killing process PID %%p on port 5173
+    taskkill /PID %%p /F >nul 2>&1
+)
+
+REM Wait for OS to release ports and for dying processes to free CUDA memory
+timeout /t 3 /nobreak >nul
+
+REM Warn if port 8000 is still occupied
+netstat -ano | findstr ":8000 " | findstr LISTENING >nul 2>&1
+if not errorlevel 1 (
+    echo   WARNING: port 8000 still in use — a stale process may interfere. Consider rebooting.
+)
 echo.
 
 REM ── Backend + Frontend ────────────────────────────────────────────────────
 echo [3/3] Starting services...
 
 start "Vestige Backend" cmd /k "cd /d "%~dp0..\backend" && .venv\Scripts\uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+REM Wait for backend to accept connections before starting frontend.
+REM Model loading (Whisper/TTS/VAD) can take 30-60s on first run.
+echo   Waiting for backend to be ready on port 8000...
+:wait_backend
 timeout /t 2 /nobreak >nul
+curl -s http://localhost:8000/api/settings >nul 2>&1
+if errorlevel 1 goto :wait_backend
+echo   Backend ready.
+
 start "Vestige Frontend" cmd /k "cd /d "%~dp0..\frontend" && npm run dev"
 
 echo.

@@ -6,4 +6,4 @@ if not exist ".venv" (
     .venv\Scripts\pip install -r requirements.txt
 )
 set PYTHONPATH=.
-.venv\Scripts\uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+.venv\Scripts\uvicorn app.main:app --host 0.0.0.0 --port 8000

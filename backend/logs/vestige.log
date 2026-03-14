@@ -2031,97 +2031,129 @@ INFO:     connection open
 INFO:     connection closed
 2026-03-14T02:14:49.853745Z [info     ] audio_ws.disconnected          [app.routers.audio_ws] session_id=2
 INFO:     connection closed
-her", "timestamp": "2026-03-14T11:52:55.642267+10:00"}
-{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.653424+10:00"}
-{"avatar": "Aldric", "route": "ollama", "latency_ms": 0, "text_preview": "I draw my sword and step forward.", "emotion": "default", "delay_s": 0.0, "event": "dispatcher.llm_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.656155+10:00"}
-{"avatar": "Aldric", "bytes": 104, "event": "dispatcher.dispatch_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.656701+10:00"}
-{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.667630+10:00"}
-{"avatar": "Aldric", "route": "ollama", "latency_ms": 0, "text_preview": "I draw my sword and step forward.", "emotion": "default", "delay_s": 0.0, "event": "dispatcher.llm_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.668173+10:00"}
-{"avatar": "Aldric", "bytes": 104, "event": "dispatcher.dispatch_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.668638+10:00"}
-{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.700711+10:00"}
-{"avatar": "Aldric", "route": "ollama", "latency_ms": 0, "text_preview": "I draw my sword and step forward.", "emotion": "default", "delay_s": 0.0, "event": "dispatcher.llm_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.701298+10:00"}
-{"avatar": "Aldric", "bytes": 104, "event": "dispatcher.dispatch_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.701766+10:00"}
-{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.713347+10:00"}
-{"avatar": "Aldric", "route": "ollama", "latency_ms": 0, "text_preview": "I draw my sword and step forward.", "emotion": "default", "delay_s": 0.0, "event": "dispatcher.llm_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.713894+10:00"}
-{"avatar": "Aldric", "bytes": 104, "event": "dispatcher.dispatch_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.714325+10:00"}
-{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.725017+10:00"}
-{"avatar": "Aldric", "route": "stub", "error": "timeout", "event": "dispatcher.llm_empty", "level": "warning", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T11:52:55.725692+10:00"}
-{"backend": "sqlite-vec", "event": "memory.store_backend", "level": "info", "logger": "app.memory.store", "timestamp": "2026-03-14T11:52:55.738117+10:00"}
-{"event": "memory.summariser_no_api_key", "level": "warning", "logger": "app.memory.summariser", "timestamp": "2026-03-14T11:52:55.910072+10:00"}
-{"event": "memory.summariser_no_api_key", "level": "warning", "logger": "app.memory.summariser", "timestamp": "2026-03-14T11:52:55.921008+10:00"}
-{"session_id": 2, "peak_prob": 0.0, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:52:57.430005Z"}
-{"event": "Load pretrained SentenceTransformer: all-MiniLM-L6-v2"}
-{"session_id": 2, "peak_prob": 0.0, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:00.630574Z"}
-{"model": "all-MiniLM-L6-v2", "device": "cuda", "event": "memory.embedder_ready", "level": "info", "logger": "app.memory.embedder", "timestamp": "2026-03-14T11:53:03.621896+10:00"}
-{"session_id": 2, "peak_prob": 0.006, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:03.830540Z"}
-{"model": "claude-haiku-4-5-20251001", "latency_ms": 1093, "event": "memory.summariser_call_ok", "level": "info", "logger": "app.memory.summariser", "timestamp": "2026-03-14T11:53:05.117252+10:00"}
-{"session_id": 2, "peak_prob": 0.001, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:07.039996Z"}
-{"model": "claude-haiku-4-5-20251001", "latency_ms": 2054, "event": "memory.summariser_call_ok", "level": "info", "logger": "app.memory.summariser", "timestamp": "2026-03-14T11:53:07.190931+10:00"}
-{"model": "claude-haiku-4-5-20251001", "latency_ms": 2009, "event": "memory.summariser_call_ok", "level": "info", "logger": "app.memory.summariser", "timestamp": "2026-03-14T11:53:09.204023+10:00"}
-{"session_id": 2, "peak_prob": 0.0, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:10.240407Z"}
-{"session_id": 2, "peak_prob": 0.001, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:13.440497Z"}
-{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:53:14.431264+10:00"}
-{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
-{"event": "Using model: xtts"}
-{"session_id": 2, "peak_prob": 0.0, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:16.640827Z"}
-{"session_id": 2, "peak_prob": 0.006, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:19.840618Z"}
-{"session_id": 2, "peak_prob": 0.016, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:23.041011Z"}
-{"session_id": 2, "peak_prob": 0.131, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:26.240775Z"}
-{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:53:27.121585+10:00"}
-{"event": "Text split into sentences."}
-{"event": "Input: ['Hello there, adventurer.']"}
-{"event": "Processing time: 1.001"}
-{"event": "Real-time factor: 0.484"}
-{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:53:28.187967+10:00"}
-{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
-{"event": "Using model: xtts"}
-{"session_id": 2, "peak_prob": 0.044, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:29.450025Z"}
-{"session_id": 2, "peak_prob": 0.088, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:32.650478Z"}
-{"session_id": 2, "peak_prob": 0.079, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:35.850182Z"}
-{"session_id": 2, "peak_prob": 0.268, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:39.050188Z"}
-{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:53:40.779778+10:00"}
-{"event": "Text split into sentences."}
-{"event": "Input: ['Test.']"}
-{"event": "Processing time: 0.349"}
-{"event": "Real-time factor: 0.278"}
-{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:53:41.196290+10:00"}
-{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
-{"event": "Using model: xtts"}
-{"session_id": 2, "peak_prob": 0.138, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:42.251088Z"}
-{"session_id": 2, "peak_prob": 0.06, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:45.450040Z"}
-{"session_id": 2, "peak_prob": 0.022, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:48.659951Z"}
-{"session_id": 2, "peak_prob": 0.033, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:51.860424Z"}
-{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:53:53.852648+10:00"}
-{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:53:53.868035+10:00"}
-{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
-{"event": "Using model: xtts"}
-{"session_id": 2, "peak_prob": 0.099, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:55.060500Z"}
-{"session_id": 2, "peak_prob": 0.133, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:53:58.260614Z"}
-{"session_id": 2, "peak_prob": 0.072, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:01.460900Z"}
-{"session_id": 2, "peak_prob": 0.038, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:04.660441Z"}
-{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:54:06.624487+10:00"}
-{"avatar_id": 1, "error": "[Errno 2] No such file or directory: '/nonexistent/path.npz'", "event": "tts.speaker_load_failed", "level": "error", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:54:06.624851+10:00"}
-{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:54:06.640821+10:00"}
-{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
-{"event": "Using model: xtts"}
-{"session_id": 2, "peak_prob": 0.063, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:07.860324Z"}
-{"session_id": 2, "peak_prob": 0.11, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:11.070609Z"}
-{"session_id": 2, "peak_prob": 0.135, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:14.270835Z"}
-{"session_id": 2, "peak_prob": 0.009, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:17.471062Z"}
-{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:54:19.229802+10:00"}
-{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:54:19.268204+10:00"}
-{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
-{"event": "Using model: xtts"}
-{"session_id": 2, "peak_prob": 0.103, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:20.670250Z"}
-{"session_id": 2, "peak_prob": 0.073, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:23.870400Z"}
-{"session_id": 2, "peak_prob": 0.051, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:27.070599Z"}
-{"session_id": 2, "peak_prob": 0.045, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:30.280721Z"}
-{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T11:54:31.827185+10:00"}
-{"event": "Text split into sentences."}
-{"event": "Input: ['I draw my sword.']"}
-{"event": "Processing time: 0.480"}
-{"event": "Real-time factor: 0.281"}
-{"session_id": 1, "event": "output_manager.start", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T11:54:32.762632+10:00"}
+INFO:     ('127.0.0.1', 54663) - "WebSocket /ws" [accepted]
+2026-03-14T02:15:01.915769Z [info     ] ws.connected                   [app.routers.websocket] total=1
+INFO:     connection open
+2026-03-14T02:15:01.917699Z [info     ] ws.disconnected                [app.routers.websocket] total=0
+INFO:     connection closed
+INFO:     ('127.0.0.1', 65407) - "WebSocket /ws" [accepted]
+2026-03-14T02:15:01.929203Z [info     ] ws.connected                   [app.routers.websocket] total=1
+INFO:     connection open
+2026-03-14T02:15:04.879524Z [info     ] ws.disconnected                [app.routers.websocket] total=0
+INFO:     connection closed
+INFO:     ('127.0.0.1', 52159) - "WebSocket /ws" [accepted]
+2026-03-14T02:15:05.930910Z [info     ] ws.connected                   [app.routers.websocket] total=1
+INFO:     connection open
+2026-03-14T02:15:16.397470Z [info     ] ws.disconnected                [app.routers.websocket] total=0
+INFO:     connection closed
+INFO:     ('127.0.0.1', 65072) - "WebSocket /ws" [accepted]
+2026-03-14T02:15:16.401695Z [info     ] ws.connected                   [app.routers.websocket] total=1
+INFO:     connection open
+2026-03-14T02:15:26.956618Z [info     ] output_manager.cancelled_all   [app.audio.output_manager]
+2026-03-14T02:15:27.090569Z [info     ] output_manager.stopped         [app.audio.output_manager] session_id=2
+2026-03-14T02:15:27.337576Z [info     ] pipeline.stopped               [app.audio.pipeline] session_id=2
+2026-03-14T02:15:27.337832Z [info     ] pipeline_manager.stopped       [app.services.pipeline_manager] session_id=2
+2026-03-14T02:15:30.369066Z [info     ] vad.loaded                     [app.audio.vad]
+2026-03-14T02:15:30.369352Z [info     ] transcriber.loading            [app.audio.transcriber] device=cuda model=large-v3
+2026-03-14T02:15:32.545751Z [error    ] transcriber.load_failed        [app.audio.transcriber] error=CUDA failed with error device-side assert triggered
+2026-03-14T02:15:32.546171Z [info     ] pipeline_manager.started       [app.services.pipeline_manager] avatars=[1, 2, 3, 4] session_id=2
+2026-03-14T02:15:32.546609Z [info     ] pipeline.start                 [app.audio.pipeline] session_id=2
+2026-03-14T02:15:32.546818Z [info     ] output_manager.start           [app.audio.output_manager] session_id=2
+INFO:     ('127.0.0.1', 50631) - "WebSocket /ws/audio/2" [accepted]
+2026-03-14T02:15:32.602475Z [info     ] audio_ws.connected             [app.routers.audio_ws] session_id=2
+INFO:     connection open
+2026-03-14T02:15:33.383948Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.899
+2026-03-14T02:15:35.784220Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=1.0 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:15:37.924242Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.753
+2026-03-14T02:15:38.984251Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=1.0 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:15:42.184237Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.028 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:15:44.674541Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.279
+2026-03-14T02:15:44.774332Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.267
+2026-03-14T02:15:45.384376Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.279 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:15:48.584596Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.233 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:15:51.784607Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.014 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:15:54.984835Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.248 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:15:58.184864Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.013 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:15:58.664825Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.307
+2026-03-14T02:16:01.384914Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.371 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:16:02.184977Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.392
+2026-03-14T02:16:04.575691Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.617 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:16:07.775542Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.043 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:16:10.975644Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.017 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:16:11.185836Z [info     ] output_manager.cancelled_all   [app.audio.output_manager]
+2026-03-14T02:16:11.411058Z [info     ] pipeline.stopped               [app.audio.pipeline] session_id=2
+2026-03-14T02:16:11.846835Z [info     ] output_manager.stopped         [app.audio.output_manager] session_id=2
+2026-03-14T02:16:11.847123Z [info     ] pipeline_manager.stopped       [app.services.pipeline_manager] session_id=2
+2026-03-14T02:16:11.850610Z [info     ] audio_ws.disconnected          [app.routers.audio_ws] session_id=2
+INFO:     connection closed
+2026-03-14T02:19:00.591689Z [info     ] ws.disconnected                [app.routers.websocket] total=0
+INFO:     connection closed
+INFO:     ('127.0.0.1', 57740) - "WebSocket /ws" [accepted]
+2026-03-14T02:19:40.418032Z [info     ] ws.connected                   [app.routers.websocket] total=1
+INFO:     connection open
+2026-03-14T02:19:40.420086Z [info     ] ws.disconnected                [app.routers.websocket] total=0
+INFO:     connection closed
+INFO:     ('127.0.0.1', 63599) - "WebSocket /ws" [accepted]
+2026-03-14T02:19:40.442152Z [info     ] ws.connected                   [app.routers.websocket] total=1
+INFO:     connection open
+2026-03-14T02:19:41.586267Z [info     ] ws.disconnected                [app.routers.websocket] total=0
+INFO:     connection closed
+INFO:     ('127.0.0.1', 53647) - "WebSocket /ws" [accepted]
+2026-03-14T02:19:41.589800Z [info     ] ws.connected                   [app.routers.websocket] total=1
+INFO:     connection open
+2026-03-14T02:19:42.685118Z [info     ] vad.loaded                     [app.audio.vad]
+2026-03-14T02:19:42.685299Z [info     ] transcriber.loading            [app.audio.transcriber] device=cuda model=large-v3
+2026-03-14T02:19:44.868593Z [error    ] transcriber.load_failed        [app.audio.transcriber] error=CUDA failed with error device-side assert triggered
+2026-03-14T02:19:44.869001Z [info     ] pipeline_manager.started       [app.services.pipeline_manager] avatars=[1, 2, 3, 4] session_id=2
+2026-03-14T02:19:44.869438Z [info     ] pipeline.start                 [app.audio.pipeline] session_id=2
+2026-03-14T02:19:44.869627Z [info     ] output_manager.start           [app.audio.output_manager] session_id=2
+INFO:     ('127.0.0.1', 54652) - "WebSocket /ws/audio/2" [accepted]
+2026-03-14T02:19:44.966027Z [info     ] audio_ws.connected             [app.routers.audio_ws] session_id=2
+INFO:     connection open
+2026-03-14T02:19:46.865855Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.97
+2026-03-14T02:19:48.146064Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=1.0 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:19:48.205956Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.527
+2026-03-14T02:19:51.345908Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=1.0 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:19:54.546210Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=1.0 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:19:55.376132Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.564
+2026-03-14T02:19:55.566185Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.281
+2026-03-14T02:19:55.636232Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.29
+2026-03-14T02:19:57.746264Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.564 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:20:00.946646Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.235 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:04.146489Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.008 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:05.616492Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.396
+2026-03-14T02:20:07.346650Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.396 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:20:08.626593Z [info     ] audio_ws.speech_start          [app.routers.audio_ws] session_id=2 speech_prob=0.265
+2026-03-14T02:20:10.546737Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.265 session_id=2 threshold=0.25 triggered=True
+2026-03-14T02:20:13.747035Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.076 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:16.937645Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.216 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:20.137463Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.026 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:23.338189Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.004 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:26.537383Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.002 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:29.737449Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.001 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:32.938173Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.0 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:36.137296Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.003 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:39.337514Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.0 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:42.537436Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.001 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:45.737656Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.0 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:48.937817Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.017 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:52.137297Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.025 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:55.347893Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.001 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:20:58.547303Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.182 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:21:01.747311Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.227 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:21:04.947018Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.123 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:21:08.147829Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.163 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:21:11.357573Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.005 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:21:14.083309Z [info     ] output_manager.cancelled_all   [app.audio.output_manager]
+2026-03-14T02:21:14.360854Z [info     ] pipeline.stopped               [app.audio.pipeline] session_id=2
+2026-03-14T02:21:14.557276Z [info     ] audio_ws.vad_probe             [app.routers.audio_ws] peak_prob=0.06 session_id=2 threshold=0.25 triggered=False
+2026-03-14T02:21:14.587132Z [info     ] output_manager.stopped         [app.audio.output_manager] session_id=2
+2026-03-14T02:21:14.587388Z [info     ] pipeline_manager.stopped       [app.services.pipeline_manager] session_id=2
+2026-03-14T02:21:14.591381Z [info     ] audio_ws.disconnected          [app.routers.audio_ws] session_id=2
+INFO:     connection closed
+2026-03-14T02:21:15.159877Z [info     ] ws.disconnected                [app.routers.websocket] total=0
+INFO:     connection closed
+": "2026-03-14T11:54:32.762632+10:00"}
 {"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T11:54:32.963997+10:00"}
 {"session_id": 2, "peak_prob": 0.219, "threshold": 0.45, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T01:54:33.479761Z"}
 {"session_id": 1, "event": "output_manager.stopped", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T11:54:33.773516+10:00"}
@@ -2626,3 +2658,337 @@ her", "timestamp": "2026-03-14T11:52:55.642267+10:00"}
 {"session_id": 2, "peak_prob": 0.059, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:14:40.917120Z"}
 {"session_id": 2, "peak_prob": 0.017, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:14:44.117426Z"}
 {"session_id": 2, "peak_prob": 0.012, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:14:47.317353Z"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:14:49.853041Z"}
+{"session_id": 2, "event": "audio_ws.disconnected", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:14:49.853745Z"}
+{"event": "startup.begin", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:14:55.054882+10:00"}
+{"event": "startup.debug_mode_enabled \u2014 verbose logging is ON", "level": "warning", "logger": "app.main", "timestamp": "2026-03-14T12:14:55.055154+10:00"}
+{"event": "startup.db_ready", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:14:55.059220+10:00"}
+{"event": "startup.checks_begin", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:14:55.059463+10:00"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:15:01.915769Z"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:15:01.917699Z"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:15:01.929203Z"}
+{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:15:02.199982+10:00"}
+{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
+{"event": "Using model: xtts"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:15:04.879524Z"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:15:05.930910Z"}
+{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:15:12.381343+10:00"}
+{"latency_ms": 17316, "event": "startup.tts_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:15:12.381648+10:00"}
+{"prob": 0.0017, "latency_ms": 92, "event": "startup.vad_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:15:12.474131+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "event": "transcriber.loading", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:15:12.495059+10:00"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:15:16.397470Z"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:15:16.401695Z"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "event": "transcriber.ready", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:15:17.482814+10:00"}
+{"event": "Processing audio with duration 00:00.100"}
+{"text": "Thank you.", "event": "transcriber.hallucination_dropped", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:15:17.812150+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "latency_ms": 5337, "event": "startup.whisper_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:15:17.814049+10:00"}
+{"event": "Load pretrained SentenceTransformer: all-MiniLM-L6-v2"}
+{"dim": 384, "device": "cuda", "latency_ms": 3628, "event": "startup.embedder_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:15:21.442619+10:00"}
+{"model": "claude-haiku-4-5-20251001", "latency_ms": 119, "event": "startup.claude_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:15:21.563168+10:00"}
+{"model": "llama3.1:8b", "available_models": ["llama3.1:8b", "gpt-oss:20b", "deepseek-r1:8b"], "latency_ms": 2080, "event": "startup.ollama_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:15:23.523081+10:00"}
+{"ok": ["tts", "vad", "whisper", "embedder", "ollama", "claude"], "failed": [], "critical_ready": true, "event": "startup.checks_done", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:15:23.523480+10:00"}
+{"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T02:15:26.956618Z"}
+{"session_id": 2, "event": "output_manager.stopped", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T02:15:27.090569Z"}
+{"session_id": 2, "event": "pipeline.stopped", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T02:15:27.337576Z"}
+{"session_id": 2, "event": "pipeline_manager.stopped", "level": "info", "logger": "app.services.pipeline_manager", "timestamp": "2026-03-14T02:15:27.337832Z"}
+{"event": "vad.loaded", "level": "info", "logger": "app.audio.vad", "timestamp": "2026-03-14T02:15:30.369066Z"}
+{"model": "large-v3", "device": "cuda", "event": "transcriber.loading", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T02:15:30.369352Z"}
+{"error": "CUDA failed with error device-side assert triggered", "event": "transcriber.load_failed", "level": "error", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T02:15:32.545751Z"}
+{"session_id": 2, "avatars": [1, 2, 3, 4], "event": "pipeline_manager.started", "level": "info", "logger": "app.services.pipeline_manager", "timestamp": "2026-03-14T02:15:32.546171Z"}
+{"session_id": 2, "event": "pipeline.start", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T02:15:32.546609Z"}
+{"session_id": 2, "event": "output_manager.start", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T02:15:32.546818Z"}
+{"session_id": 2, "event": "audio_ws.connected", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:32.602475Z"}
+{"session_id": 2, "speech_prob": 0.899, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:33.383948Z"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:35.784220Z"}
+{"session_id": 2, "speech_prob": 0.753, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:37.924242Z"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:38.984251Z"}
+{"session_id": 2, "peak_prob": 0.028, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:42.184237Z"}
+{"session_id": 2, "speech_prob": 0.279, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:44.674541Z"}
+{"session_id": 2, "speech_prob": 0.267, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:44.774332Z"}
+{"session_id": 2, "peak_prob": 0.279, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:45.384376Z"}
+{"session_id": 2, "peak_prob": 0.233, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:48.584596Z"}
+{"session_id": 2, "peak_prob": 0.014, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:51.784607Z"}
+{"session_id": 2, "peak_prob": 0.248, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:54.984835Z"}
+{"session_id": 2, "peak_prob": 0.013, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:58.184864Z"}
+{"session_id": 2, "speech_prob": 0.307, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:15:58.664825Z"}
+{"session_id": 2, "peak_prob": 0.371, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:16:01.384914Z"}
+{"session_id": 2, "speech_prob": 0.392, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:16:02.184977Z"}
+{"session_id": 2, "peak_prob": 0.617, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:16:04.575691Z"}
+{"session_id": 2, "peak_prob": 0.043, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:16:07.775542Z"}
+{"session_id": 2, "peak_prob": 0.017, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:16:10.975644Z"}
+{"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T02:16:11.185836Z"}
+{"session_id": 2, "event": "pipeline.stopped", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T02:16:11.411058Z"}
+{"session_id": 2, "event": "output_manager.stopped", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T02:16:11.846835Z"}
+{"session_id": 2, "event": "pipeline_manager.stopped", "level": "info", "logger": "app.services.pipeline_manager", "timestamp": "2026-03-14T02:16:11.847123Z"}
+{"session_id": 2, "event": "audio_ws.disconnected", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:16:11.850610Z"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.897859+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.910402+10:00"}
+{"session_id": 1, "event": "combat.ended", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.910616+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.920354+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.930291+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.939983+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.950327+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.960258+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.971075+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.980846+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:53.991835+10:00"}
+{"session_id": 1, "event": "combat.detected_start", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:54.010776+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:54.030309+10:00"}
+{"session_id": 1, "combatants": 3, "event": "combat.started", "level": "info", "logger": "app.services.combat_manager", "timestamp": "2026-03-14T12:16:54.050400+10:00"}
+{"event": "llm.claude_no_api_key", "level": "warning", "logger": "app.llm.router", "timestamp": "2026-03-14T12:16:56.938713+10:00"}
+{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:56.961833+10:00"}
+{"avatar": "Aldric", "route": "ollama", "latency_ms": 0, "text_preview": "I draw my sword and step forward.", "emotion": "default", "delay_s": 0.0, "event": "dispatcher.llm_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:56.964056+10:00"}
+{"avatar": "Aldric", "bytes": 104, "event": "dispatcher.dispatch_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:56.964731+10:00"}
+{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:56.975922+10:00"}
+{"avatar": "Aldric", "route": "ollama", "latency_ms": 0, "text_preview": "I draw my sword and step forward.", "emotion": "default", "delay_s": 0.0, "event": "dispatcher.llm_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:56.978449+10:00"}
+{"avatar": "Aldric", "bytes": 104, "event": "dispatcher.dispatch_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:56.978927+10:00"}
+{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:56.989235+10:00"}
+{"avatar": "Aldric", "route": "ollama", "latency_ms": 0, "text_preview": "I draw my sword and step forward.", "emotion": "default", "delay_s": 0.0, "event": "dispatcher.llm_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:56.989754+10:00"}
+{"avatar": "Aldric", "bytes": 104, "event": "dispatcher.dispatch_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:56.990218+10:00"}
+{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:57.019688+10:00"}
+{"avatar": "Aldric", "route": "ollama", "latency_ms": 0, "text_preview": "I draw my sword and step forward.", "emotion": "default", "delay_s": 0.0, "event": "dispatcher.llm_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:57.020329+10:00"}
+{"avatar": "Aldric", "bytes": 104, "event": "dispatcher.dispatch_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:57.020768+10:00"}
+{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:57.031349+10:00"}
+{"avatar": "Aldric", "route": "ollama", "latency_ms": 0, "text_preview": "I draw my sword and step forward.", "emotion": "default", "delay_s": 0.0, "event": "dispatcher.llm_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:57.031878+10:00"}
+{"avatar": "Aldric", "bytes": 104, "event": "dispatcher.dispatch_done", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:57.032582+10:00"}
+{"avatar": "Aldric", "context": "combat_turn", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:57.043212+10:00"}
+{"avatar": "Aldric", "route": "stub", "error": "timeout", "event": "dispatcher.llm_empty", "level": "warning", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:16:57.043861+10:00"}
+{"backend": "sqlite-vec", "event": "memory.store_backend", "level": "info", "logger": "app.memory.store", "timestamp": "2026-03-14T12:16:57.056380+10:00"}
+{"event": "memory.summariser_no_api_key", "level": "warning", "logger": "app.memory.summariser", "timestamp": "2026-03-14T12:16:57.222281+10:00"}
+{"event": "memory.summariser_no_api_key", "level": "warning", "logger": "app.memory.summariser", "timestamp": "2026-03-14T12:16:57.231606+10:00"}
+{"event": "Load pretrained SentenceTransformer: all-MiniLM-L6-v2"}
+{"model": "all-MiniLM-L6-v2", "device": "cuda", "event": "memory.embedder_ready", "level": "info", "logger": "app.memory.embedder", "timestamp": "2026-03-14T12:17:04.320894+10:00"}
+{"model": "claude-haiku-4-5-20251001", "latency_ms": 1117, "event": "memory.summariser_call_ok", "level": "info", "logger": "app.memory.summariser", "timestamp": "2026-03-14T12:17:05.763279+10:00"}
+{"model": "claude-haiku-4-5-20251001", "latency_ms": 2079, "event": "memory.summariser_call_ok", "level": "info", "logger": "app.memory.summariser", "timestamp": "2026-03-14T12:17:07.860400+10:00"}
+{"model": "claude-haiku-4-5-20251001", "latency_ms": 1658, "event": "memory.summariser_call_ok", "level": "info", "logger": "app.memory.summariser", "timestamp": "2026-03-14T12:17:09.521284+10:00"}
+{"avatar_id": 1, "error": "[Errno 2] No such file or directory: '/nonexistent/path.npz'", "event": "tts.speaker_load_failed", "level": "error", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:17:10.325557+10:00"}
+{"session_id": 1, "event": "output_manager.start", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:10.857136+10:00"}
+{"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:11.059223+10:00"}
+{"session_id": 1, "event": "output_manager.stopped", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:11.861676+10:00"}
+{"session_id": 1, "event": "output_manager.start", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:11.875711+10:00"}
+{"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:12.077741+10:00"}
+{"session_id": 1, "event": "output_manager.stopped", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:12.880966+10:00"}
+{"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:12.895165+10:00"}
+{"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:12.895321+10:00"}
+{"session_id": 1, "event": "output_manager.start", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:12.895451+10:00"}
+{"session_id": 1, "event": "output_manager.stopped", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:14.903136+10:00"}
+{"session_id": 1, "event": "output_manager.start", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:14.917742+10:00"}
+{"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:15.428723+10:00"}
+{"session_id": 1, "event": "output_manager.stopped", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:17:15.922422+10:00"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:19:00.591689Z"}
+{"event": "startup.begin", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:19:02.080171+10:00"}
+{"event": "startup.debug_mode_enabled \u2014 verbose logging is ON", "level": "warning", "logger": "app.main", "timestamp": "2026-03-14T12:19:02.080469+10:00"}
+{"event": "startup.db_ready", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:19:02.084613+10:00"}
+{"event": "startup.checks_begin", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:19:02.084805+10:00"}
+{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:19:08.848516+10:00"}
+{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
+{"event": "Using model: xtts"}
+{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:19:18.483116+10:00"}
+{"latency_ms": 16393, "event": "startup.tts_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:19:18.483453+10:00"}
+{"prob": 0.0017, "latency_ms": 181, "event": "startup.vad_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:19:18.665320+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "event": "transcriber.loading", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:19:18.700196+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "event": "transcriber.ready", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:19:24.347418+10:00"}
+{"event": "Processing audio with duration 00:00.100"}
+{"text": "Thank you.", "event": "transcriber.hallucination_dropped", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:19:24.685630+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "latency_ms": 6015, "event": "startup.whisper_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:19:24.685992+10:00"}
+{"event": "Load pretrained SentenceTransformer: all-MiniLM-L6-v2"}
+{"dim": 384, "device": "cuda", "latency_ms": 3716, "event": "startup.embedder_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:19:28.402181+10:00"}
+{"model": "claude-haiku-4-5-20251001", "latency_ms": 152, "event": "startup.claude_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:19:28.566322+10:00"}
+{"model": "llama3.1:8b", "available_models": ["llama3.1:8b", "gpt-oss:20b", "deepseek-r1:8b"], "latency_ms": 2066, "event": "startup.ollama_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:19:30.468627+10:00"}
+{"ok": ["tts", "vad", "whisper", "embedder", "ollama", "claude"], "failed": [], "critical_ready": true, "event": "startup.checks_done", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:19:30.469194+10:00"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:19:40.418032Z"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:19:40.420086Z"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:19:40.442152Z"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:19:41.586267Z"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:19:41.589800Z"}
+{"event": "vad.loaded", "level": "info", "logger": "app.audio.vad", "timestamp": "2026-03-14T02:19:42.685118Z"}
+{"model": "large-v3", "device": "cuda", "event": "transcriber.loading", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T02:19:42.685299Z"}
+{"error": "CUDA failed with error device-side assert triggered", "event": "transcriber.load_failed", "level": "error", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T02:19:44.868593Z"}
+{"session_id": 2, "avatars": [1, 2, 3, 4], "event": "pipeline_manager.started", "level": "info", "logger": "app.services.pipeline_manager", "timestamp": "2026-03-14T02:19:44.869001Z"}
+{"session_id": 2, "event": "pipeline.start", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T02:19:44.869438Z"}
+{"session_id": 2, "event": "output_manager.start", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T02:19:44.869627Z"}
+{"session_id": 2, "event": "audio_ws.connected", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:44.966027Z"}
+{"session_id": 2, "speech_prob": 0.97, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:46.865855Z"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:48.146064Z"}
+{"session_id": 2, "speech_prob": 0.527, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:48.205956Z"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:51.345908Z"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:54.546210Z"}
+{"session_id": 2, "speech_prob": 0.564, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:55.376132Z"}
+{"session_id": 2, "speech_prob": 0.281, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:55.566185Z"}
+{"session_id": 2, "speech_prob": 0.29, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:55.636232Z"}
+{"session_id": 2, "peak_prob": 0.564, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:19:57.746264Z"}
+{"session_id": 2, "peak_prob": 0.235, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:00.946646Z"}
+{"session_id": 2, "peak_prob": 0.008, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:04.146489Z"}
+{"session_id": 2, "speech_prob": 0.396, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:05.616492Z"}
+{"session_id": 2, "peak_prob": 0.396, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:07.346650Z"}
+{"session_id": 2, "speech_prob": 0.265, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:08.626593Z"}
+{"session_id": 2, "peak_prob": 0.265, "threshold": 0.25, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:10.546737Z"}
+{"session_id": 2, "peak_prob": 0.076, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:13.747035Z"}
+{"session_id": 2, "peak_prob": 0.216, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:16.937645Z"}
+{"session_id": 2, "peak_prob": 0.026, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:20.137463Z"}
+{"session_id": 2, "peak_prob": 0.004, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:23.338189Z"}
+{"session_id": 2, "peak_prob": 0.002, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:26.537383Z"}
+{"session_id": 2, "peak_prob": 0.001, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:29.737449Z"}
+{"session_id": 2, "peak_prob": 0.0, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:32.938173Z"}
+{"session_id": 2, "peak_prob": 0.003, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:36.137296Z"}
+{"session_id": 2, "peak_prob": 0.0, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:39.337514Z"}
+{"session_id": 2, "peak_prob": 0.001, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:42.537436Z"}
+{"session_id": 2, "peak_prob": 0.0, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:45.737656Z"}
+{"session_id": 2, "peak_prob": 0.017, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:48.937817Z"}
+{"session_id": 2, "peak_prob": 0.025, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:52.137297Z"}
+{"session_id": 2, "peak_prob": 0.001, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:55.347893Z"}
+{"session_id": 2, "peak_prob": 0.182, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:20:58.547303Z"}
+{"session_id": 2, "peak_prob": 0.227, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:21:01.747311Z"}
+{"session_id": 2, "peak_prob": 0.123, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:21:04.947018Z"}
+{"session_id": 2, "peak_prob": 0.163, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:21:08.147829Z"}
+{"session_id": 2, "peak_prob": 0.005, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:21:11.357573Z"}
+{"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T02:21:14.083309Z"}
+{"session_id": 2, "event": "pipeline.stopped", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T02:21:14.360854Z"}
+{"session_id": 2, "peak_prob": 0.06, "threshold": 0.25, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:21:14.557276Z"}
+{"session_id": 2, "event": "output_manager.stopped", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T02:21:14.587132Z"}
+{"session_id": 2, "event": "pipeline_manager.stopped", "level": "info", "logger": "app.services.pipeline_manager", "timestamp": "2026-03-14T02:21:14.587388Z"}
+{"session_id": 2, "event": "audio_ws.disconnected", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T02:21:14.591381Z"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T02:21:15.159877Z"}
+{"event": "startup.begin", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:22:05.097639+10:00"}
+{"event": "startup.debug_mode_enabled \u2014 verbose logging is ON", "level": "warning", "logger": "app.main", "timestamp": "2026-03-14T12:22:05.097915+10:00"}
+{"event": "startup.db_ready", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:22:05.101494+10:00"}
+{"event": "startup.checks_begin", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:22:05.101721+10:00"}
+{"event": "startup.begin", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:22:48.147234+10:00"}
+{"event": "startup.debug_mode_enabled \u2014 verbose logging is ON", "level": "warning", "logger": "app.main", "timestamp": "2026-03-14T12:22:48.147557+10:00"}
+{"event": "startup.db_ready", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:22:48.151425+10:00"}
+{"event": "startup.checks_begin", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:22:48.151698+10:00"}
+{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:22:54.937038+10:00"}
+{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
+{"event": "Using model: xtts"}
+{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:23:05.367665+10:00"}
+{"latency_ms": 17211, "event": "startup.tts_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:23:05.368459+10:00"}
+{"prob": 0.0017, "latency_ms": 104, "event": "startup.vad_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:23:05.473438+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "event": "transcriber.loading", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:23:05.497540+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "event": "transcriber.ready", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:23:10.315217+10:00"}
+{"event": "Processing audio with duration 00:00.100"}
+{"text": "Thank you.", "event": "transcriber.hallucination_dropped", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:23:10.643200+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "latency_ms": 5169, "event": "startup.whisper_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:23:10.645446+10:00"}
+{"event": "Load pretrained SentenceTransformer: all-MiniLM-L6-v2"}
+{"dim": 384, "device": "cuda", "latency_ms": 3634, "event": "startup.embedder_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:23:14.279370+10:00"}
+{"model": "claude-haiku-4-5-20251001", "latency_ms": 123, "event": "startup.claude_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:23:14.403119+10:00"}
+{"model": "llama3.1:8b", "available_models": ["llama3.1:8b", "gpt-oss:20b", "deepseek-r1:8b"], "latency_ms": 2064, "event": "startup.ollama_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:23:16.344180+10:00"}
+{"ok": ["tts", "vad", "whisper", "embedder", "ollama", "claude"], "failed": [], "critical_ready": true, "event": "startup.checks_done", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:23:16.344693+10:00"}
+{"event": "startup.begin", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:23:53.135866+10:00"}
+{"event": "startup.debug_mode_enabled \u2014 verbose logging is ON", "level": "warning", "logger": "app.main", "timestamp": "2026-03-14T12:23:53.136221+10:00"}
+{"event": "startup.db_ready", "level": "info", "logger": "app.main", "timestamp": "2026-03-14T12:23:53.139918+10:00"}
+{"event": "startup.checks_begin", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:23:53.140141+10:00"}
+{"device": "cuda", "event": "tts.loading_xtts2", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:23:59.542392+10:00"}
+{"event": "tts_models/multilingual/multi-dataset/xtts_v2 is already downloaded."}
+{"event": "Using model: xtts"}
+{"event": "tts.ready", "level": "info", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:24:09.067799+10:00"}
+{"latency_ms": 15922, "event": "startup.tts_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:24:09.068114+10:00"}
+{"prob": 0.0017, "latency_ms": 92, "event": "startup.vad_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:24:09.160785+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "event": "transcriber.loading", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:24:09.186459+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "event": "transcriber.ready", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:24:14.155584+10:00"}
+{"event": "Processing audio with duration 00:00.100"}
+{"text": "Thank you.", "event": "transcriber.hallucination_dropped", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:24:14.493862+10:00"}
+{"model": "large-v3", "device": "cuda", "compute_type": "int8_float16", "latency_ms": 5333, "event": "startup.whisper_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:24:14.495873+10:00"}
+{"event": "Load pretrained SentenceTransformer: all-MiniLM-L6-v2"}
+{"dim": 384, "device": "cuda", "latency_ms": 3906, "event": "startup.embedder_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:24:18.402251+10:00"}
+{"model": "claude-haiku-4-5-20251001", "latency_ms": 134, "event": "startup.claude_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:24:18.536677+10:00"}
+{"model": "llama3.1:8b", "available_models": ["llama3.1:8b", "gpt-oss:20b", "deepseek-r1:8b"], "latency_ms": 2084, "event": "startup.ollama_ok", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:24:20.486726+10:00"}
+{"ok": ["tts", "vad", "whisper", "embedder", "ollama", "claude"], "failed": [], "critical_ready": true, "event": "startup.checks_done", "level": "info", "logger": "app.startup_checks", "timestamp": "2026-03-14T12:24:20.487189+10:00"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:24:30.736813+10:00"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:24:30.743516+10:00"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:24:30.746537+10:00"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:24:31.490616+10:00"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:28:20.111416+10:00"}
+{"total": 0, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:28:21.155265+10:00"}
+{"total": 1, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:28:21.159160+10:00"}
+{"event": "vad.loaded", "level": "info", "logger": "app.audio.vad", "timestamp": "2026-03-14T12:28:22.452256+10:00"}
+{"session_id": 2, "avatars": [1, 2, 3, 4], "event": "pipeline_manager.started", "level": "info", "logger": "app.services.pipeline_manager", "timestamp": "2026-03-14T12:28:22.452614+10:00"}
+{"session_id": 2, "event": "pipeline.start", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:28:22.453032+10:00"}
+{"session_id": 2, "event": "output_manager.start", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:28:22.453236+10:00"}
+{"session_id": 2, "event": "audio_ws.connected", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:22.495672+10:00"}
+{"session_id": 2, "speech_prob": 0.344, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:24.618306+10:00"}
+{"session_id": 2, "peak_prob": 0.999, "threshold": 0.3, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:25.678101+10:00"}
+{"session_id": 2, "chunks": 75, "duration_ms": 2430, "event": "audio_ws.speech_end", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:27.018255+10:00"}
+{"session_id": 2, "audio_ms": 2430, "samples": 19200, "event": "pipeline.transcribing", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:28:27.018891+10:00"}
+{"event": "Processing audio with duration 00:01.200"}
+{"session_id": 2, "n_segments": 1, "event": "pipeline.transcribed", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:28:27.572117+10:00"}
+{"session_id": 2, "speech_prob": 0.994, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:27.576655+10:00"}
+{"session_id": 2, "chunks": 7, "duration_ms": 254, "event": "audio_ws.speech_end", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:27.580182+10:00"}
+{"session_id": 2, "audio_ms": 254, "samples": 3584, "event": "pipeline.transcribing", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:28:27.580449+10:00"}
+{"event": "Processing audio with duration 00:00.224"}
+{"text": "talk.", "no_speech_prob": 0.844, "event": "transcriber.no_speech_dropped", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:28:27.818551+10:00"}
+{"session_id": 2, "n_segments": 0, "event": "pipeline.transcribed", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:28:27.819005+10:00"}
+{"session_id": 2, "speech_prob": 0.569, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:27.820097+10:00"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.3, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:28.878482+10:00"}
+{"session_id": 2, "chunks": 56, "duration_ms": 1822, "event": "audio_ws.speech_end", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:29.258451+10:00"}
+{"session_id": 2, "audio_ms": 1822, "samples": 14336, "event": "pipeline.transcribing", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:28:29.258950+10:00"}
+{"event": "Processing audio with duration 00:00.896"}
+{"session_id": 2, "n_segments": 1, "event": "pipeline.transcribed", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:28:29.519688+10:00"}
+{"session_id": 2, "speech_prob": 0.406, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:30.798377+10:00"}
+{"session_id": 2, "chunks": 1, "duration_ms": 62, "event": "audio_ws.speech_end", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:30.828496+10:00"}
+{"session_id": 2, "audio_ms": 62, "samples": 512, "event": "pipeline.transcribing", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:28:30.828739+10:00"}
+{"event": "Processing audio with duration 00:00.032"}
+{"text": "Thank you.", "event": "transcriber.hallucination_dropped", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:28:31.038363+10:00"}
+{"session_id": 2, "n_segments": 0, "event": "pipeline.transcribed", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:28:31.040430+10:00"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.3, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:32.078475+10:00"}
+{"session_id": 2, "event": "audio_ws.disconnected", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:28:32.154803+10:00"}
+{"total": 2, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:29:12.786527+10:00"}
+{"total": 1, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:29:12.787856+10:00"}
+{"total": 2, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:29:12.798838+10:00"}
+{"total": 1, "event": "ws.disconnected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:29:14.717953+10:00"}
+{"total": 2, "event": "ws.connected", "level": "info", "logger": "app.routers.websocket", "timestamp": "2026-03-14T12:29:14.721615+10:00"}
+{"event": "output_manager.cancelled_all", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:29:15.514177+10:00"}
+{"session_id": 2, "event": "output_manager.stopped", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:29:15.649334+10:00"}
+{"session_id": 2, "event": "pipeline.stopped", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:15.926813+10:00"}
+{"session_id": 2, "event": "pipeline_manager.stopped", "level": "info", "logger": "app.services.pipeline_manager", "timestamp": "2026-03-14T12:29:15.927125+10:00"}
+{"event": "vad.loaded", "level": "info", "logger": "app.audio.vad", "timestamp": "2026-03-14T12:29:17.359051+10:00"}
+{"session_id": 2, "avatars": [1, 2, 3, 4], "event": "pipeline_manager.started", "level": "info", "logger": "app.services.pipeline_manager", "timestamp": "2026-03-14T12:29:17.359476+10:00"}
+{"session_id": 2, "event": "pipeline.start", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:17.360034+10:00"}
+{"session_id": 2, "event": "output_manager.start", "level": "info", "logger": "app.audio.output_manager", "timestamp": "2026-03-14T12:29:17.360274+10:00"}
+{"session_id": 2, "event": "audio_ws.connected", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:17.412555+10:00"}
+{"session_id": 2, "speech_prob": 0.319, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:18.485128+10:00"}
+{"session_id": 2, "chunks": 50, "duration_ms": 1630, "event": "audio_ws.speech_end", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:20.085107+10:00"}
+{"session_id": 2, "audio_ms": 1630, "samples": 12800, "event": "pipeline.transcribing", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:20.085617+10:00"}
+{"event": "Processing audio with duration 00:00.800"}
+{"session_id": 2, "n_segments": 1, "event": "pipeline.transcribed", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:20.635929+10:00"}
+{"session_id": 2, "speech_prob": 0.248, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:20.638133+10:00"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.2, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:20.643837+10:00"}
+{"session_id": 2, "chunks": 53, "duration_ms": 1726, "event": "audio_ws.speech_end", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:21.875118+10:00"}
+{"session_id": 2, "audio_ms": 1726, "samples": 13568, "event": "pipeline.transcribing", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:21.875662+10:00"}
+{"event": "Processing audio with duration 00:00.848"}
+{"session_id": 2, "n_segments": 1, "event": "pipeline.transcribed", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:22.085476+10:00"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.2, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:23.795193+10:00"}
+{"session_id": 2, "peak_prob": 0.148, "threshold": 0.2, "triggered": false, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:26.995501+10:00"}
+{"session_id": 2, "speech_prob": 0.374, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:27.725572+10:00"}
+{"session_id": 2, "chunks": 4, "duration_ms": 158, "event": "audio_ws.speech_end", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:27.855352+10:00"}
+{"session_id": 2, "audio_ms": 158, "samples": 2048, "event": "pipeline.transcribing", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:27.855583+10:00"}
+{"event": "Processing audio with duration 00:00.128"}
+{"text": "Thank you.", "event": "transcriber.hallucination_dropped", "level": "info", "logger": "app.audio.transcriber", "timestamp": "2026-03-14T12:29:28.342029+10:00"}
+{"session_id": 2, "n_segments": 0, "event": "pipeline.transcribed", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:28.344005+10:00"}
+{"session_id": 2, "speech_prob": 0.472, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:29.525484+10:00"}
+{"session_id": 2, "peak_prob": 1.0, "threshold": 0.2, "triggered": true, "event": "audio_ws.vad_probe", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:30.195371+10:00"}
+{"session_id": 2, "chunks": 49, "duration_ms": 1598, "event": "audio_ws.speech_end", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:31.085482+10:00"}
+{"session_id": 2, "audio_ms": 1598, "samples": 12544, "event": "pipeline.transcribing", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:31.085963+10:00"}
+{"event": "Processing audio with duration 00:00.784"}
+{"session_id": 2, "n_segments": 1, "event": "pipeline.transcribed", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:31.668957+10:00"}
+{"backend": "sqlite-vec", "event": "memory.store_backend", "level": "info", "logger": "app.memory.store", "timestamp": "2026-03-14T12:29:31.671477+10:00"}
+{"event": "Load pretrained SentenceTransformer: all-MiniLM-L6-v2"}
+{"model": "all-MiniLM-L6-v2", "device": "cuda", "event": "memory.embedder_ready", "level": "info", "logger": "app.memory.embedder", "timestamp": "2026-03-14T12:29:35.049733+10:00"}
+{"avatar": "Smorth Gluub", "context": "direct_question", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:29:35.082027+10:00"}
+{"event": "Text split into sentences."}
+{"event": "Input: ['Give me a second...']"}
+{"avatar": "Juuurgh", "context": "direct_question", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:29:35.123715+10:00"}
+{"event": "Text split into sentences."}
+{"event": "Input: ['Give me a second...']"}
+{"avatar": "Elara Swiftfoot", "context": "direct_question", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:29:35.149362+10:00"}
+{"event": "Text split into sentences."}
+{"event": "Input: [\"That's... a good question.\"]"}
+{"session_id": 2, "speech_prob": 0.21, "event": "audio_ws.speech_start", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:35.157592+10:00"}
+{"session_id": 2, "chunks": 3, "duration_ms": 126, "event": "audio_ws.speech_end", "level": "info", "logger": "app.routers.audio_ws", "timestamp": "2026-03-14T12:29:35.159643+10:00"}
+{"session_id": 2, "audio_ms": 126, "samples": 1536, "event": "pipeline.transcribing", "level": "info", "logger": "app.audio.pipeline", "timestamp": "2026-03-14T12:29:35.159905+10:00"}
+{"event": "Processing audio with duration 00:00.096"}
+{"avatar": "Thorin Stonehand", "context": "direct_question", "priority": 2, "event": "dispatcher.dispatch_start", "level": "info", "logger": "app.llm.dispatcher", "timestamp": "2026-03-14T12:29:35.160578+10:00"}
+{"event": "Text split into sentences."}
+{"event": "Input: [\"That's... a good question.\"]"}
+{"error": "CUDA error: CUBLAS_STATUS_EXECUTION_FAILED when calling cublasLtMatmul with transpose_mat1 0 transpose_mat2 0 m 4096 n 47 k 1024 mat1_ld 4096 mat2_ld 1024 result_ld 4096 abcType 0 computeType 68 scaleType 0", "text": "Give me a second...", "event": "tts.synthesis_failed", "level": "error", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:29:35.471350+10:00"}
+{"error": "CUDA error: device-side assert triggered\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n", "text": "Give me a second...", "event": "tts.synthesis_failed", "level": "error", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:29:35.471757+10:00"}
+{"error": "CUDA error: CUBLAS_STATUS_EXECUTION_FAILED when calling cublasLtMatmul with transpose_mat1 0 transpose_mat2 0 m 3072 n 51 k 1024 mat1_ld 3072 mat2_ld 1024 result_ld 3072 abcType 0 computeType 68 scaleType 0", "text": "That's... a good question.", "event": "tts.synthesis_failed", "level": "error", "logger": "app.audio.tts", "timestamp": "2026-03-14T12:29:35.472000+10:00"}

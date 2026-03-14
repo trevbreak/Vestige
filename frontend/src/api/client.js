@@ -104,6 +104,7 @@ export const api = {
     }),
   // System status
   getSystemStatus: () => request('/system/status'),
+  recheckSystem: () => request('/system/recheck', { method: 'POST' }),
   getAudioDevices: () => request('/system/devices'),
   runMicTest: () => request('/system/mic-test', { method: 'POST' }),
   getLogs: (n = 100, level = '') => request('/system/logs?n=' + n + (level ? '&level=' + level : '')),
