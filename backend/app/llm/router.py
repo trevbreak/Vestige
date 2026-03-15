@@ -129,11 +129,13 @@ def call_ollama(
             _set_attr("llm.latency_ms", round(latency))
             _set_attr("llm.completion_tokens", completion_tok)
 
-            log.debug(
+            log.info(
                 "llm.ollama_response",
                 model=model,
                 latency_ms=round(latency),
-                tokens=completion_tok,
+                prompt_tokens=prompt_tok,
+                completion_tokens=completion_tok,
+                response_preview=text[:120],
             )
             return LLMResponse(
                 text=text,
@@ -197,11 +199,13 @@ def call_claude(
         prompt_tok = msg.usage.input_tokens
         completion_tok = msg.usage.output_tokens
 
-        log.debug(
+        log.info(
             "llm.claude_response",
             model=model,
             latency_ms=round(latency),
-            tokens=completion_tok,
+            prompt_tokens=prompt_tok,
+            completion_tokens=completion_tok,
+            response_preview=text[:120],
         )
         return LLMResponse(
             text=text,
@@ -237,6 +241,16 @@ def call_llm(
     then call the appropriate backend.
     """
     route = select_route(context_type, recent_transcript)
+    keyword_escalated = (
+        route == "claude"
+        and context_type not in prompt_loader.claude_context_types
+    )
+    log.info(
+        "llm.route_selected",
+        context_type=context_type,
+        route=route,
+        keyword_escalated=keyword_escalated,
+    )
     if route == "claude":
         return call_claude(system_prompt, user_message)
     return call_ollama(system_prompt, user_message)

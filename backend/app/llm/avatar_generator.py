@@ -28,7 +28,6 @@ VOICE_CATALOGUE: dict[str, dict[str, dict]] = {
         "en-GB-RyanNeural":   {"label": "British RP — Male",         "gender": "male"},
         "en-GB-SoniaNeural":  {"label": "British RP — Female",       "gender": "female"},
         "en-GB-LibbyNeural":  {"label": "British — Female (warm)",   "gender": "female"},
-        "en-GB-OliverNeural": {"label": "British — Male (young)",    "gender": "male"},
         "en-IE-ConnorNeural": {"label": "Irish — Male",              "gender": "male"},
         "en-IE-EmilyNeural":  {"label": "Irish — Female",            "gender": "female"},
         "en-GB-MaisieNeural": {"label": "British — Female (bright)", "gender": "female"},

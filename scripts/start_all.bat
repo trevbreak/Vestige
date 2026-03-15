@@ -3,8 +3,39 @@ echo Starting Vestige — AI Avatar System
 echo =====================================
 echo.
 
+REM ── Phoenix ────────────────────────────────────────────────────────────────
+echo [1/4] Starting Arize Phoenix (LLM tracing)...
+
+REM Kill any existing Phoenix on port 6006
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":6006 " ^| findstr LISTENING') do (
+    echo   Killing stale Phoenix PID %%p on port 6006
+    taskkill /PID %%p /F >nul 2>&1
+)
+
+REM Try phoenix on PATH first, then the user-scripts fallback location
+where phoenix >nul 2>&1
+if not errorlevel 1 (
+    start "Vestige Phoenix" cmd /c "phoenix serve"
+    goto :phoenix_started
+)
+
+if exist "%APPDATA%\Python\Python313\Scripts\phoenix.exe" (
+    start "Vestige Phoenix" cmd /c ""%APPDATA%\Python\Python313\Scripts\phoenix.exe" serve"
+    goto :phoenix_started
+)
+
+echo   WARNING: phoenix not found. Install with: pip install arize-phoenix
+echo   LLM tracing will be disabled.
+goto :skip_phoenix
+
+:phoenix_started
+echo   Phoenix starting at http://localhost:6006
+
+:skip_phoenix
+echo.
+
 REM ── Ollama ─────────────────────────────────────────────────────────────────
-echo [1/3] Checking Ollama...
+echo [2/4] Checking Ollama...
 
 REM Check if ollama is on PATH
 where ollama >nul 2>&1
@@ -32,7 +63,7 @@ start "Vestige Ollama Pull" cmd /c "ollama pull llama3.1:8b"
 echo.
 
 REM ── Cleanup old processes ──────────────────────────────────────────────────
-echo [2/3] Cleaning up old processes...
+echo [3/4] Cleaning up old processes...
 
 REM Kill by window title first
 taskkill /FI "WINDOWTITLE eq Vestige Backend" /F >nul 2>&1
@@ -62,7 +93,7 @@ if not errorlevel 1 (
 echo.
 
 REM ── Backend + Frontend ────────────────────────────────────────────────────
-echo [3/3] Starting services...
+echo [4/4] Starting services...
 
 start "Vestige Backend" cmd /k "cd /d "%~dp0..\backend" && .venv\Scripts\uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
@@ -80,6 +111,7 @@ start "Vestige Frontend" cmd /k "cd /d "%~dp0..\frontend" && npm run dev"
 echo.
 echo =====================================
 echo   Ollama:   http://localhost:11434
+echo   Phoenix:  http://localhost:6006
 echo   Backend:  http://localhost:8000
 echo   Frontend: http://localhost:5173
 echo =====================================

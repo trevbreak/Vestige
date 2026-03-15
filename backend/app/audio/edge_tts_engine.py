@@ -5,17 +5,20 @@ Uses the `edge-tts` Python package which calls the Edge browser's TTS endpoint.
 Provides authentic English accents (British RP, Irish, Welsh) suitable for a
 medieval/fantasy D&D atmosphere.
 
-Runs synchronous synthesis by wrapping an asyncio event loop.
-Designed to run in a thread pool executor (blocking I/O).
+MP3 → WAV decoding uses the ffmpeg binary bundled with imageio-ffmpeg, so no
+system-level ffmpeg installation is required.
 
-Requires: edge-tts>=6.1, pydub>=0.25, ffmpeg (system)
+Requires: edge-tts>=6.1, imageio-ffmpeg>=0.4
 """
 
 from __future__ import annotations
 
 import asyncio
 import io
+import struct
+import subprocess
 import threading
+import wave
 import structlog
 from typing import TYPE_CHECKING
 
@@ -33,6 +36,79 @@ _EMOTION_RATES: dict[str, str] = {
     "laughing":   "+12%",
     "default":    "+0%",
 }
+
+
+def _get_ffmpeg() -> str | None:
+    """Return path to the imageio-bundled ffmpeg binary, or None if unavailable."""
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return None
+
+
+def _mp3_to_wav(mp3_bytes: bytes, sample_rate: int = 24000) -> bytes:
+    """
+    Decode MP3 bytes → WAV bytes using the imageio-bundled ffmpeg.
+    Outputs 24 kHz, 16-bit, mono WAV.
+    Raises RuntimeError if ffmpeg is unavailable or decoding fails.
+    """
+    ffmpeg = _get_ffmpeg()
+    if not ffmpeg:
+        raise RuntimeError("imageio-ffmpeg not installed: pip install imageio-ffmpeg")
+
+    result = subprocess.run(
+        [
+            ffmpeg, "-y",
+            "-i", "pipe:0",          # MP3 from stdin
+            "-f", "s16le",           # raw signed 16-bit little-endian PCM
+            "-ar", str(sample_rate), # resample to target rate
+            "-ac", "1",              # mono
+            "pipe:1",                # PCM to stdout
+        ],
+        input=mp3_bytes,
+        capture_output=True,
+    )
+
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"ffmpeg decode failed (exit {result.returncode}): "
+            f"{result.stderr[-200:].decode(errors='replace')}"
+        )
+
+    pcm = result.stdout
+    if not pcm:
+        raise RuntimeError("ffmpeg produced no output")
+
+    # Wrap raw PCM in a proper WAV container
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)        # 16-bit = 2 bytes/sample
+        wf.setframerate(sample_rate)
+        wf.writeframes(pcm)
+    return buf.getvalue()
+
+
+def _apply_volume(wav_bytes: bytes, volume: float) -> bytes:
+    """Scale a WAV file's samples by volume in-place (returns new WAV bytes)."""
+    if volume == 1.0:
+        return wav_bytes
+    buf = io.BytesIO(wav_bytes)
+    with wave.open(buf, "rb") as wf:
+        params = wf.getparams()
+        raw = wf.readframes(wf.getnframes())
+    n = len(raw) // 2
+    samples = struct.unpack(f"<{n}h", raw)
+    scaled = struct.pack(
+        f"<{n}h",
+        *(max(-32768, min(32767, int(s * volume))) for s in samples),
+    )
+    out = io.BytesIO()
+    with wave.open(out, "wb") as wf:
+        wf.setparams(params)
+        wf.writeframes(scaled)
+    return out.getvalue()
 
 
 class EdgeTTSEngine:
@@ -54,8 +130,8 @@ class EdgeTTSEngine:
     def available(self) -> bool:
         if self._available is None:
             try:
-                import edge_tts  # noqa: F401
-                import pydub      # noqa: F401
+                import edge_tts      # noqa: F401
+                import imageio_ffmpeg  # noqa: F401
                 self._available = True
             except ImportError:
                 self._available = False
@@ -73,7 +149,7 @@ class EdgeTTSEngine:
         if not self.available:
             log.warning(
                 "edge_tts.not_available",
-                note="Install edge-tts and pydub: pip install edge-tts pydub",
+                note="Install: pip install edge-tts imageio-ffmpeg",
             )
             return SynthesisResult(
                 audio_bytes=_silent_wav(0.5),
@@ -104,7 +180,6 @@ class EdgeTTSEngine:
         volume: float,
     ) -> "SynthesisResult":
         """Run async synthesis in a dedicated event loop (one per thread)."""
-        # Get or create an event loop for this thread
         loop = getattr(self._thread_local, "loop", None)
         if loop is None or loop.is_closed():
             loop = asyncio.new_event_loop()
@@ -122,7 +197,7 @@ class EdgeTTSEngine:
         volume: float,
     ) -> "SynthesisResult":
         import edge_tts
-        from app.audio.tts import SynthesisResult
+        from app.audio.tts import SynthesisResult, _silent_wav
 
         rate = _EMOTION_RATES.get(emotion, "+0%")
 
@@ -133,7 +208,7 @@ class EdgeTTSEngine:
                 mp3_chunks.append(chunk["data"])
 
         if not mp3_chunks:
-            from app.audio.tts import _silent_wav
+            log.warning("edge_tts.no_audio_returned", voice=voice_id, text=text[:60])
             return SynthesisResult(
                 audio_bytes=_silent_wav(0.5),
                 sample_rate=self.SAMPLE_RATE,
@@ -143,24 +218,15 @@ class EdgeTTSEngine:
             )
 
         mp3_bytes = b"".join(mp3_chunks)
-
-        # Decode MP3 → 24kHz mono WAV via pydub
-        from pydub import AudioSegment
-        audio = AudioSegment.from_mp3(io.BytesIO(mp3_bytes))
-        audio = audio.set_frame_rate(self.SAMPLE_RATE).set_channels(1)
+        wav_bytes = _mp3_to_wav(mp3_bytes, self.SAMPLE_RATE)
 
         if volume != 1.0:
-            # pydub adjusts in dB: +6 ≈ 2x, -6 ≈ 0.5x
-            import math
-            db_adj = 20 * math.log10(max(volume, 0.01))
-            audio = audio + db_adj
+            wav_bytes = _apply_volume(wav_bytes, volume)
 
-        wav_buf = io.BytesIO()
-        audio.export(wav_buf, format="wav")
-        wav_bytes = wav_buf.getvalue()
-        duration_s = len(audio) / 1000.0
+        with wave.open(io.BytesIO(wav_bytes), "rb") as wf:
+            duration_s = wf.getnframes() / wf.getframerate()
 
-        log.debug("edge_tts.synthesized", voice=voice_id, duration_s=round(duration_s, 2))
+        log.info("edge_tts.synthesized", voice=voice_id, duration_s=round(duration_s, 2))
         return SynthesisResult(
             audio_bytes=wav_bytes,
             sample_rate=self.SAMPLE_RATE,

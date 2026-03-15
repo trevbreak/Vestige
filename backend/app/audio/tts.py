@@ -129,8 +129,7 @@ class TTSEngine:
     ) -> None:
         """Register per-avatar TTS engine preference and Edge-TTS voice_id."""
         self._engine_preferences[avatar_id] = engine_preference or "auto"
-        if voice_id:
-            self._voice_ids[avatar_id] = voice_id
+        self._voice_ids[avatar_id] = voice_id or "en-GB-RyanNeural"
 
     # ── Synthesis ─────────────────────────────────────────────────────────
 
@@ -148,7 +147,7 @@ class TTSEngine:
 
         use_edge = (
             pref == "edge"
-            or (pref == "auto" and not self.has_speaker(avatar_id) and bool(voice_id))
+            or (pref == "auto" and bool(voice_id))
         )
 
         if use_edge and voice_id:

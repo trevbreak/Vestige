@@ -17,9 +17,12 @@ from __future__ import annotations
 
 import re
 import random
+import structlog
 from dataclasses import dataclass
 
 from app.config import get_settings
+
+log = structlog.get_logger()
 
 settings = get_settings()
 
@@ -122,6 +125,18 @@ class ResponsePostProcessor:
 
         # 7. Response jitter
         delay = random.uniform(settings.response_jitter_min, settings.response_jitter_max)
+
+        log.info(
+            "post_processor.processed",
+            avatar_name=avatar_name,
+            context_type=context_type,
+            emotion=emotion,
+            truncated=truncated,
+            delay_s=round(delay, 1),
+            original_preview=original[:120],
+            final_preview=text[:120],
+            text_changed=text != original,
+        )
 
         return ProcessedResponse(
             text=text,

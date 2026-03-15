@@ -62,7 +62,8 @@ class MemoryRetriever:
         # Check if embedding is the zero-stub
         if query_embedding == bytes(len(query_embedding)):
             # Embedder is in stub mode — return empty (no false matches)
-            log.debug("memory.retriever_stub", avatar_id=avatar_id)
+            log.info("memory.retriever_stub", avatar_id=avatar_id,
+                     note="embedder not loaded — no memory injected into prompt")
             return []
 
         store = MemoryStore()
@@ -75,11 +76,13 @@ class MemoryRetriever:
         # Filter by minimum score
         relevant = [h for h in hits if h.score >= self._min_score]
 
-        log.debug(
+        log.info(
             "memory.retrieved",
             avatar_id=avatar_id,
             total_hits=len(hits),
             relevant=len(relevant),
+            min_score=self._min_score,
+            chunks=[h.text[:80] for h in relevant],
         )
         return [h.text for h in relevant]
 

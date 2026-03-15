@@ -251,7 +251,8 @@ class AudioPipeline:
             audio,
             settings.sample_rate,
         )
-        log.info("pipeline.transcribed", session_id=self.session_id, n_segments=len(segments))
+        log.info("pipeline.transcribed", session_id=self.session_id, n_segments=len(segments),
+                 texts=[s.text[:80] for s in segments])
 
         for seg in segments:
             utterance_type = "overlap" if overlapped else "speech"
@@ -304,26 +305,50 @@ class AudioPipeline:
             if utterance_type in ("speech", "overlap"):
                 silence_gap = time.monotonic() - self._last_human_speech_at
                 _transcript_lines_snapshot = list(self._recent_lines)
+                from app.tracing import get_tracer
+                _tracer = get_tracer("vestige.pipeline")
                 for avatar_id, state in self._context_engine._avatar_states.items():
-                    decision = self._context_engine.evaluate(
-                        seg.text,
-                        avatar_id,
-                        silence_gap=silence_gap,
-                    )
-                    if decision.should_respond:
-                        log.debug(
-                            "pipeline.avatar_should_respond",
+                    with _tracer.start_as_current_span(
+                        f"context_engine.evaluate/{state.name}",
+                        attributes={
+                            "avatar.id": avatar_id,
+                            "avatar.name": state.name,
+                            "transcript.text": seg.text,
+                            "transcript.utterance_type": utterance_type,
+                            "pipeline.silence_gap_s": round(silence_gap, 2),
+                            "pipeline.recent_lines_count": len(_transcript_lines_snapshot),
+                        },
+                    ) as span:
+                        decision = self._context_engine.evaluate(
+                            seg.text,
+                            avatar_id,
+                            silence_gap=silence_gap,
+                        )
+                        span.set_attribute("decision.should_respond", decision.should_respond)
+                        span.set_attribute("decision.reason", decision.reason)
+                        span.set_attribute("decision.interrupt_score", round(decision.interrupt_score, 3))
+                        span.set_attribute("decision.context_type", decision.context_type)
+                        span.set_attribute("decision.route", decision.route)
+                        span.set_attribute("decision.priority", decision.priority)
+
+                        log.info(
+                            "pipeline.context_decision",
                             avatar=state.name,
-                            context=decision.context_type,
-                            route=decision.route,
-                            priority=decision.priority,
+                            transcript=seg.text[:120],
+                            should_respond=decision.should_respond,
+                            reason=decision.reason,
+                            interrupt_score=round(decision.interrupt_score, 3),
+                            context_type=decision.context_type,
+                            silence_gap=round(silence_gap, 1),
                         )
-                        await self._dispatch_response(
-                            avatar_id=avatar_id,
-                            avatar_name=state.name,
-                            decision=decision,
-                            transcript_lines=_transcript_lines_snapshot,
-                        )
+
+                        if decision.should_respond:
+                            await self._dispatch_response(
+                                avatar_id=avatar_id,
+                                avatar_name=state.name,
+                                decision=decision,
+                                transcript_lines=_transcript_lines_snapshot,
+                            )
 
     async def _dispatch_response(
         self,

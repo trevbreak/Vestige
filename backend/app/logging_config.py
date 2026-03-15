@@ -68,11 +68,16 @@ class _RingHandler(logging.Handler):
 # ── Setup ──────────────────────────────────────────────────────────────────
 
 def configure_logging() -> None:
+    # Priority: DEBUG_MODE env var > LOG_LEVEL from .env/Settings > os env LOG_LEVEL > INFO
     debug_mode = os.environ.get("DEBUG_MODE", "false").lower() in ("true", "1", "yes")
     if debug_mode:
         log_level_name = "DEBUG"
     else:
-        log_level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
+        try:
+            from app.config import get_settings
+            log_level_name = get_settings().log_level.upper()
+        except Exception:
+            log_level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
     log_level = getattr(logging, log_level_name, logging.INFO)
 
     # ── Log file ──────────────────────────────────────────────────────────

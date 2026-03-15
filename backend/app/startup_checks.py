@@ -189,22 +189,28 @@ def _check_ollama() -> dict:
 
 
 def _check_phoenix() -> dict:
+    """
+    Check whether Phoenix is reachable at http://localhost:6006.
+    Phoenix is not managed by Vestige — it must be started separately with
+    `phoenix serve`.  This check is informational; tracing works even if
+    Phoenix is down (spans are buffered and dropped rather than blocking).
+    """
     t0 = time.monotonic()
     try:
-        import phoenix as px  # noqa: F401
+        req = urllib.request.Request("http://localhost:6006/healthz")
+        with urllib.request.urlopen(req, timeout=2.0) as resp:
+            resp.read()
         ms = round((time.monotonic() - t0) * 1000)
         log.info("startup.phoenix_ok", ui="http://localhost:6006", latency_ms=ms)
-        return {"ok": True, "installed": True, "ui": "http://localhost:6006", "latency_ms": ms}
-    except ImportError:
-        ms = round((time.monotonic() - t0) * 1000)
-        log.info("startup.phoenix_not_installed",
-                 note="Install arize-phoenix for LLM tracing: pip install arize-phoenix")
-        return {"ok": False, "installed": False,
-                "error": "arize-phoenix not installed", "latency_ms": ms}
+        return {"ok": True, "running": True, "ui": "http://localhost:6006", "latency_ms": ms}
     except Exception as e:
         ms = round((time.monotonic() - t0) * 1000)
-        log.warning("startup.phoenix_check_failed", error=str(e))
-        return {"ok": False, "installed": False, "error": str(e), "latency_ms": ms}
+        log.info("startup.phoenix_not_running",
+                 note="Phoenix not running — start with: phoenix serve",
+                 error=str(e))
+        return {"ok": False, "running": False,
+                "note": "Start Phoenix with: phoenix serve",
+                "latency_ms": ms}
 
 
 def _check_claude() -> dict:

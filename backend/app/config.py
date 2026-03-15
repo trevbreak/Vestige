@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://localhost:4173"
     debug_mode: bool = False
 
+    # ── Observability ─────────────────────────────────────────────────────
+    # Set LOG_LEVEL=DEBUG in .env to see full LLM prompts, VAD chunks, etc.
+    # "DEBUG" | "INFO" | "WARNING" | "ERROR"
+    log_level: str = "INFO"
+
     # ── Database ──────────────────────────────────────────────────────────
     database_url: str = "sqlite+aiosqlite:///./data/campaign.db"
 

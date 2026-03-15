@@ -69,6 +69,11 @@ class DispatchRequest:
     # Phase 8: personality
     personality_prompt: str = ""
     holding_phrase_chance: float = 0.5
+    verbosity: float = 0.5
+    interrupts_often: bool = False
+    personality_archetype: str = "extrovert"
+    voice_id: str = ""
+    tts_engine_preference: str = "auto"
 
     # Current session context
     transcript_lines: list[str] = None   # ["Speaker: text", ...]
@@ -135,6 +140,23 @@ class LLMDispatcher:
             )
 
         # 2. Build prompt
+        from app.tracing import get_tracer as _get_tracer
+        _tracer = _get_tracer("vestige.dispatcher")
+        _dispatch_span = _tracer.start_as_current_span(
+            f"dispatcher.dispatch/{req.avatar_name}",
+            attributes={
+                "avatar.id": req.avatar_id,
+                "avatar.name": req.avatar_name,
+                "decision.context_type": req.context_type,
+                "decision.interrupt_score": round(req.interrupt_score, 3),
+                "decision.priority": req.priority,
+                "transcript.lines_count": len(req.transcript_lines),
+                "transcript.last_5": "\n".join(req.transcript_lines[-5:]),
+                "memory.chunks_count": len(req.memory_chunks),
+            },
+        )
+        _dispatch_span.__enter__()
+
         ctx = AvatarContext(
             name=req.avatar_name,
             race=req.race,
@@ -164,6 +186,25 @@ class LLMDispatcher:
         )
         system_prompt, user_message = _prompt_builder.build(ctx)
 
+        _dispatch_span.set_attribute("prompt.system_len", len(system_prompt))
+        _dispatch_span.set_attribute("prompt.user_preview", user_message[:500])
+        _dispatch_span.set_attribute("prompt.has_memory", len(req.memory_chunks) > 0)
+        _dispatch_span.set_attribute("prompt.has_transcript", len(req.transcript_lines) > 0)
+        _dispatch_span.set_attribute("prompt.has_personality_prompt", bool(req.personality_prompt))
+        _dispatch_span.set_attribute("prompt.has_cross_avatar_note", bool(req.cross_avatar_note))
+
+        log.info(
+            "dispatcher.prompt_built",
+            avatar=req.avatar_name,
+            context_type=req.context_type,
+            transcript_lines=len(req.transcript_lines),
+            memory_chunks=len(req.memory_chunks),
+            has_personality_prompt=bool(req.personality_prompt),
+            has_cross_avatar_note=bool(req.cross_avatar_note),
+            system_len=len(system_prompt),
+            user_preview=user_message[:200],
+        )
+
         # 3. LLM call in thread pool
         recent_text = " ".join(req.transcript_lines[-5:]) if req.transcript_lines else ""
         loop = asyncio.get_running_loop()
@@ -179,6 +220,7 @@ class LLMDispatcher:
                 route=llm_result.route,
                 error=llm_result.error,
             )
+            _dispatch_span.__exit__(None, None, None)
             return
 
         # 4. Post-process
@@ -259,3 +301,5 @@ class LLMDispatcher:
             avatar=req.avatar_name,
             bytes=len(tts_result.audio_bytes),
         )
+
+        _dispatch_span.__exit__(None, None, None)

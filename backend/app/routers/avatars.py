@@ -186,14 +186,15 @@ async def create_avatar(
 ):
     data = avatar_in.model_dump()
 
-    # Phase 8: generate personality + voice if not already provided
-    if not data.get("personality_prompt"):
+    # Phase 8: generate personality + voice if either is missing
+    if not data.get("personality_prompt") or not data.get("voice_id"):
         try:
             personality = await asyncio.get_event_loop().run_in_executor(
                 None, lambda: generate_personality_data(data)
             )
             for key, val in personality.items():
-                if val is not None:
+                # Never overwrite a value the caller explicitly provided
+                if val is not None and not data.get(key):
                     data[key] = val
         except Exception as exc:
             log.warning("avatars.create_personality_gen_failed", error=str(exc))
