@@ -36,7 +36,7 @@ class RuntimeSettings(BaseModel):
 
     # Audio input
     vad_threshold: Optional[float] = Field(None, ge=0.05, le=0.99)
-    vad_trailing_silence_ms: Optional[int] = Field(None, ge=100, le=3000)
+    vad_trailing_silence_ms: Optional[int] = Field(None, ge=100, le=5000)
     aec_decay_ms: Optional[int] = Field(None, ge=0, le=2000)
     # Whisper transcription (beam_size, thresholds take effect immediately;
     # whisper_model/device/compute_type require server restart)

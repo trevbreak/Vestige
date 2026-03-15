@@ -53,6 +53,19 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* ── Section description ──────────────────────────────────────────── */
+
+.sectionDescription {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  background: var(--bg-deep);
+  border-left: 2px solid var(--border);
+  border-radius: 0 3px 3px 0;
+}
+
 /* ── Field grid ───────────────────────────────────────────────────── */
 
 .grid {

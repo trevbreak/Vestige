@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     sample_rate: int = 16000        # Hz — required by silero-vad and faster-whisper
     chunk_ms: int = 30              # VAD chunk size in ms (silero needs 30ms @ 16 kHz)
     vad_threshold: float = 0.30          # Silero VAD sensitivity (0.0–1.0)
-    vad_trailing_silence_ms: int = 600   # ms of silence required before flushing speech buffer
+    vad_trailing_silence_ms: int = 1500  # ms of silence required before flushing speech buffer
     aec_decay_ms: int = 200              # ms to gate mic after TTS ends
     whisper_model: str = "large-v3"      # faster-whisper model size (requires restart to change)
     whisper_device: str = "cuda"          # "cuda" | "cpu" (requires restart to change)

@@ -92,7 +92,7 @@ Mic → sounddevice → silero-vad → faster-whisper (CUDA)
                           \                         /
                            Response Post-Processor
                                        ↓
-                    XTTS-v2 (CUDA) or Edge-TTS → Speaker
+                    XTTS-v2 (CUDA) or Edge-TTS (imageio-ffmpeg) → Speaker
 
 LLM Tracing UI: http://localhost:6006 (separate Phoenix process)
 ```
@@ -117,7 +117,7 @@ LLM Tracing UI: http://localhost:6006 (separate Phoenix process)
 *   NVIDIA GPU with CUDA (for audio pipeline)
 *   [Ollama](https://ollama.com/download) installed and running locally
 *   Anthropic API key (for Claude routing)
-*   [ffmpeg](https://ffmpeg.org/download.html) on your system PATH (for Edge-TTS MP3 decode)
+*   No system ffmpeg needed — Edge-TTS MP3 decoding uses the `imageio-ffmpeg` bundled binary (installed automatically via `requirements.txt`)
 *   `arize-phoenix` for LLM tracing (optional but recommended): `pip install arize-phoenix`
 
 ### 1\. Install and Start Ollama
@@ -193,7 +193,8 @@ Create and manage your avatar roster. Each avatar has a full D&D 5e character ca
 
 *   **Create Avatar** — opens the avatar form. Fill in the character card fields; the personality prompt will be generated on save.
 *   **Edit Avatar** — revisit any field including the generated personality prompt, which you can freely edit before saving.
-*   **Voice Assignment** — `voice_id` selects the Edge-TTS voice. `tts_engine_preference` switches between Edge-TTS (accent voices) and XTTS-v2 (voice cloning from a reference `.wav`).
+*   **Voice Assignment** — `voice_id` is chosen automatically by Ollama at creation time based on the character's race, class, and personality. Each active avatar is assigned a distinct voice from the catalogue. To reassign all existing avatars, run `scripts/seed_avatar_voices.py`.
+*   **Voice Engine** — `tts_engine_preference` switches between `edge` (accent voices, default) and `xtts` (voice cloning from a reference `.wav`). Leave as `auto` to use Edge-TTS when a `voice_id` is set and fall back to XTTS-v2 if a speaker embedding is loaded.
 *   **Backfill Personality** — for avatars created before Phase 8, call `POST /api/avatars/generate-personality` to generate missing personality data.
 
 ### Sessions Page — `http://localhost:5173/sessions`
