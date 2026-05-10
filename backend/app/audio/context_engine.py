@@ -19,8 +19,6 @@ from dataclasses import dataclass, field
 from app.config import get_settings
 from app.prompts.loader import prompt_loader
 
-settings = get_settings()
-
 # ── Context type → routing + max sentence length ─────────────────────────────
 CONTEXT_TYPES: dict[str, dict] = {
     "combat_turn":     {"max_sentences": 2, "route": "gpt4o"},
@@ -52,6 +50,7 @@ class AvatarState:
     mode: str = "active"               # active | passive | absent
     last_spoke_at: float = 0.0
     last_name_mentioned_at: float = 0.0
+    last_responded_to_avatar_at: float = 0.0   # Phase 4: avatar-to-avatar cooldown
     # Phase 8: personality-driven response gating
     verbosity: float = 0.5             # 0.0=silent, 1.0=talks constantly
     interrupts_often: bool = False     # lowers interrupt confidence threshold
@@ -124,6 +123,7 @@ class ContextEngine:
         avatar_id: int,
         is_combat: bool = False,
         silence_gap: float = 0.0,
+        source: str = "human",          # "human" | "avatar_speech"
     ) -> EngineDecision:
         """
         Evaluate whether `avatar_id` should respond to `transcript`.
@@ -134,6 +134,7 @@ class ContextEngine:
         avatar_id    : avatar to evaluate
         is_combat    : True if we're in an active combat round
         silence_gap  : seconds since last human speech
+        source       : "human" for player speech; "avatar_speech" for chain reactions
         """
         state = self._avatar_states.get(avatar_id)
         if not state:
@@ -141,6 +142,7 @@ class ContextEngine:
 
         # ── 1. Suppression checks ─────────────────────────────────────
         now = time.monotonic()
+        _settings = get_settings()
 
         if state.mode == "absent":
             return EngineDecision(False, 5, reason="mode_absent")
@@ -156,23 +158,45 @@ class ContextEngine:
             return EngineDecision(False, 1, reason="dm_hotword_active")
 
         self_age = now - state.last_spoke_at
-        if self_age < settings.self_cooldown_seconds:
+        if self_age < _settings.self_cooldown_seconds:
             return EngineDecision(False, 5, reason="self_cooldown")
 
         any_avatar_age = now - self._last_any_avatar_spoke
-        if any_avatar_age < settings.avatar_cooldown_seconds:
+        if any_avatar_age < _settings.avatar_cooldown_seconds:
             return EngineDecision(False, 5, reason="avatar_cooldown")
+
+        # ── Phase 4: avatar-speech-specific gates ─────────────────────
+        if source == "avatar_speech":
+            # Stoic avatars never react to other avatars unless named
+            if state.personality_archetype == "stoic":
+                return EngineDecision(False, 5, reason="stoic_ignores_avatar_speech")
+
+            # Introvert: dedicated per-avatar cooldown (60s) for avatar speech reactions
+            if state.personality_archetype == "introvert":
+                introvert_age = now - state.last_responded_to_avatar_at
+                if introvert_age < 60.0:
+                    return EngineDecision(False, 5, reason="introvert_avatar_cooldown")
+
+            # General avatar-speech cooldown (stricter than normal)
+            avatar_speech_age = now - state.last_responded_to_avatar_at
+            if avatar_speech_age < _settings.avatar_speech_cooldown_s:
+                return EngineDecision(False, 5, reason="avatar_speech_cooldown")
 
         # ── 2. Interrupt confidence scoring ───────────────────────────
         score = _interrupt_confidence(transcript, state.name)
 
+        # Phase 4: reduce score by 30% for avatar-speech — avatars respond less
+        # readily to each other than to humans, preventing runaway chatter loops
+        if source == "avatar_speech":
+            score *= 0.7
+
         # ── 3. Additional triggers ────────────────────────────────────
-        is_direct = score >= settings.interrupt_confidence_threshold
+        is_direct = score >= _settings.interrupt_confidence_threshold
         has_question = "?" in transcript
         combat_trigger = is_combat or _is_combat_trigger(transcript)
         silence_trigger = (
             state.mode == "active"
-            and silence_gap >= settings.silence_gap_trigger
+            and silence_gap >= _settings.silence_gap_trigger
         )
         name_recent = (now - state.last_name_mentioned_at) < 60.0
         if _name_in_text(transcript, state.name):
@@ -215,7 +239,7 @@ class ContextEngine:
 
         # interrupts_often: lower the effective threshold so they cut in more
         if state.interrupts_often:
-            effective_threshold = settings.interrupt_confidence_threshold * 0.7
+            effective_threshold = _settings.interrupt_confidence_threshold * 0.7
             is_direct = score >= effective_threshold
 
         # ── 4. Context type & route ───────────────────────────────────
@@ -237,6 +261,10 @@ class ContextEngine:
             priority = 3
         else:
             return EngineDecision(False, 5, interrupt_score=score, reason="below_threshold")
+
+        # Phase 4: track when this avatar last responded to avatar speech
+        if source == "avatar_speech":
+            state.last_responded_to_avatar_at = now
 
         return EngineDecision(
             should_respond=True,

@@ -295,6 +295,13 @@ class LLMDispatcher:
                 name=req.avatar_name,
                 text=processed.text,
             )
+            # Phase 4: evaluate whether other avatars react to this response
+            asyncio.create_task(
+                pipeline._on_avatar_spoke_chain(
+                    req.avatar_id, req.avatar_name, processed.text,
+                ),
+                name=f"avatar-chain-{req.avatar_id}-{self.session_id}",
+            )
 
         log.info(
             "dispatcher.dispatch_done",

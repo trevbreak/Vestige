@@ -64,6 +64,12 @@ class Avatar(Base):
     tts_engine_preference = Column(String(20), nullable=False, default="auto")
     # auto | xtts | edge
 
+    # ElevenLabs voice config (audio revamp)
+    elevenlabs_voice_id = Column(String(100), nullable=True)   # ElevenLabs voice UUID
+    elevenlabs_voice_params = Column(JSON, nullable=True)       # {stability, similarity_boost, style, use_speaker_boost}
+    elevenlabs_model_preference = Column(String(30), nullable=False, default="eleven_v3")
+    # eleven_v3 (emotional, audio tags) | eleven_flash_v2_5 (fast, no tags)
+
     # Skills (JSON list of proficient skills)
     skill_proficiencies = Column(JSON, nullable=True, default=list)
 

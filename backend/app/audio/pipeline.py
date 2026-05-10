@@ -92,8 +92,12 @@ class AudioPipeline:
         # Track silence gap for passive triggers
         self._last_human_speech_at: float = 0.0
 
-        # Rolling transcript lines for LLM prompt context (Phase 4)
+        # Rolling transcript lines for LLM prompt context
         self._recent_lines: list[str] = []
+
+        # Phase 4: avatar-to-avatar chain depth tracking
+        self._session_chain_depth: int = 0
+        self._session_chain_speaker_ids: list[int] = []
 
     # ── Public control API ────────────────────────────────────────────────
 
@@ -173,6 +177,10 @@ class AudioPipeline:
         self._last_human_speech_at = time.monotonic()
         self._context_engine.on_human_speech_start()
         self._context_engine.on_human_speech_end()
+
+        # Phase 4: reset avatar-to-avatar chain when human speaks
+        self._session_chain_depth = 0
+        self._session_chain_speaker_ids = []
 
         # Backchannel classification
         utterance_type = "speech"
@@ -260,6 +268,75 @@ class AudioPipeline:
                 await self._on_transcript_final(seg.text, seg.confidence)
         except Exception as e:
             log.warning("pipeline.flush_buffer_shim_error", error=str(e))
+
+    async def _on_avatar_spoke_chain(
+        self,
+        speaker_avatar_id: int,
+        speaker_avatar_name: str,
+        response_text: str,
+    ) -> None:
+        """
+        Phase 4: After an avatar responds, evaluate whether other avatars react.
+
+        Enforces a maximum chain depth and a per-chain speaker list to prevent
+        A→B→A→B infinite loops. Resets when the next human utterance arrives.
+        """
+        _settings = get_settings()
+        if self._session_chain_depth >= _settings.max_avatar_chain_depth:
+            log.info(
+                "pipeline.chain_depth_limit",
+                depth=self._session_chain_depth,
+                limit=_settings.max_avatar_chain_depth,
+            )
+            return
+
+        self._session_chain_depth += 1
+        self._session_chain_speaker_ids.append(speaker_avatar_id)
+
+        chain_text = f"{speaker_avatar_name} says: {response_text}"
+        _transcript_lines_snapshot = list(self._recent_lines)
+
+        from app.tracing import get_tracer
+        _tracer = get_tracer("vestige.pipeline")
+
+        for other_id, state in self._context_engine._avatar_states.items():
+            if other_id == speaker_avatar_id:
+                continue
+            if other_id in self._session_chain_speaker_ids:
+                continue  # loop prevention
+            if state.mode != "active":
+                continue
+
+            with _tracer.start_as_current_span(
+                f"context_engine.avatar_chain/{state.name}",
+                attributes={
+                    "avatar.id": other_id,
+                    "source.avatar": speaker_avatar_name,
+                    "chain.depth": self._session_chain_depth,
+                },
+            ) as span:
+                decision = self._context_engine.evaluate(
+                    chain_text, other_id, source="avatar_speech",
+                )
+                span.set_attribute("decision.should_respond", decision.should_respond)
+                span.set_attribute("decision.reason", decision.reason)
+
+                log.info(
+                    "pipeline.avatar_chain_decision",
+                    speaker=speaker_avatar_name,
+                    evaluating=state.name,
+                    should_respond=decision.should_respond,
+                    reason=decision.reason,
+                    chain_depth=self._session_chain_depth,
+                )
+
+                if decision.should_respond:
+                    await self._dispatch_response(
+                        avatar_id=other_id,
+                        avatar_name=state.name,
+                        decision=decision,
+                        transcript_lines=_transcript_lines_snapshot,
+                    )
 
     async def _dispatch_response(
         self,
