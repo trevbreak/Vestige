@@ -186,6 +186,24 @@ def update_settings(body: RuntimeSettings):
     if body.summary_method is not None and body.summary_method not in ("facts", "short", "balanced", "long"):
         raise HTTPException(400, "summary_method must be one of: facts, short, balanced, long")
 
+    _VALID_CLAUDE_MODELS = {
+        "claude-sonnet-4-6", "claude-opus-4-7",
+        "claude-haiku-4-5-20251001", "claude-3-5-sonnet-20241022",
+        "claude-3-5-haiku-20241022",
+    }
+    _VALID_GPT4O_MODELS = {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo"}
+    _VALID_ELEVENLABS_MODELS = {
+        "eleven_v3", "eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_multilingual_v2",
+    }
+    if body.claude_model is not None and body.claude_model not in _VALID_CLAUDE_MODELS:
+        raise HTTPException(400, f"claude_model must be one of: {sorted(_VALID_CLAUDE_MODELS)}")
+    if body.gpt4o_model is not None and body.gpt4o_model not in _VALID_GPT4O_MODELS:
+        raise HTTPException(400, f"gpt4o_model must be one of: {sorted(_VALID_GPT4O_MODELS)}")
+    if body.elevenlabs_model_quality is not None and body.elevenlabs_model_quality not in _VALID_ELEVENLABS_MODELS:
+        raise HTTPException(400, f"elevenlabs_model_quality must be one of: {sorted(_VALID_ELEVENLABS_MODELS)}")
+    if body.elevenlabs_model_fast is not None and body.elevenlabs_model_fast not in _VALID_ELEVENLABS_MODELS:
+        raise HTTPException(400, f"elevenlabs_model_fast must be one of: {sorted(_VALID_ELEVENLABS_MODELS)}")
+
     updates = body.model_dump(exclude_none=True)
     for key, val in updates.items():
         if hasattr(s, key):
