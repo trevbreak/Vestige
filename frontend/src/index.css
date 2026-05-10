@@ -1,5 +1,5 @@
-/* === Vestige — DnD AI Avatar System === */
-/* D&D Aesthetic: dark parchment, amber/gold, deep crimson */
+/* === Vestige — TTRPG AI Avatar System === */
+/* Dark fantasy aesthetic: parchment, amber/gold, deep crimson */
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600&display=swap');
 
@@ -154,7 +154,7 @@ textarea { resize: vertical; min-height: 80px; }
 .mt-4  { margin-top: 1rem; }
 .w-full { width: 100%; }
 
-/* === Phase 7 — D&D Aesthetic Enhancements === */
+/* === Phase 7 — Dark Fantasy Aesthetic Enhancements === */
 
 /* Parchment noise texture overlay on body */
 body::before {

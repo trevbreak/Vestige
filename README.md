@@ -53,7 +53,7 @@ _The live table view. Avatar panels on the left track HP, AC, and listening stat
 
 ![Avatar edit modal showing character sheet fields](docs/screenshots/02-avatar-detail.png)
 
-_Character setup — full 5e sheet, backstory, and ElevenLabs voice tuning._
+_Character setup — full character sheet, backstory, and ElevenLabs voice tuning._
 
 | Sessions | Memory Review |
 | --- | --- |

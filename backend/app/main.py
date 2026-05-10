@@ -44,8 +44,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Vestige — DnD AI Avatar System",
-    description="Locally-hosted AI avatars for absent D&D players.",
+    title="Vestige — TTRPG AI Avatar System",
+    description="Locally-hosted AI avatars for absent tabletop RPG players.",
     version="0.1.0",
     lifespan=lifespan,
 )

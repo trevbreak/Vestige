@@ -3,7 +3,7 @@ Edge-TTS wrapper — Microsoft Azure Neural TTS (free, no API key required).
 
 Uses the `edge-tts` Python package which calls the Edge browser's TTS endpoint.
 Provides authentic English accents (British RP, Irish, Welsh) suitable for a
-medieval/fantasy D&D atmosphere.
+medieval/fantasy tabletop atmosphere.
 
 MP3 → WAV decoding uses the ffmpeg binary bundled with imageio-ffmpeg, so no
 system-level ffmpeg installation is required.

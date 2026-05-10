@@ -1,7 +1,7 @@
 """
-D&D 5e Condition Tracker.
+Condition Tracker.
 
-Implements the 14 standard 5e conditions plus exhaustion levels.
+Implements the 14 standard tabletop RPG conditions plus exhaustion levels.
 Each condition carries its mechanical effects as a dict so the LLM and
 available-actions builder can reference them.
 

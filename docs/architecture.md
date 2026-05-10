@@ -8,7 +8,7 @@ System design, data flow, and project structure for Vestige. For feature-level d
 
 Vestige is a locally-hosted web app. The frontend is a React SPA served by Vite. The backend is a FastAPI application that manages the audio pipeline, LLM dispatch, memory storage, and a WebSocket connection to the browser. Everything persists to a local SQLite database.
 
-```
+```text
 Browser (React)  ←──────── HTTP REST + WebSocket ──────────→  FastAPI Backend
                                                                      │
                                                          SQLite (avatars, sessions,
@@ -22,7 +22,7 @@ External API calls go only to Deepgram (STT), ElevenLabs (TTS), OpenAI (GPT-4o),
 
 ## Full System Diagram
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │                    BROWSER  ·  http://localhost:5173                         │
 │                                                                              │
@@ -65,7 +65,7 @@ External API calls go only to Deepgram (STT), ElevenLabs (TTS), OpenAI (GPT-4o),
 │  │     │  Prompt Builder (author framing, actor      │                 │   │
 │  │     │    offset, active traits, YAML-driven)      │                 │   │
 │  │     │  Cross-Avatar Referencer                    │                 │   │
-│  │     │  Rules Engine (D&D 5e)                      │                 │   │
+│  │     │  Rules Engine (tabletop RPG)                │                 │   │
 │  │     │         ↓ route selection                   │                 │   │
 │  │     │  ┌─────────────────┐  ┌──────────────────┐  │                 │   │
 │  │     │  │ GPT-4o          │  │ Claude Sonnet 4.6│  │                 │   │
@@ -125,7 +125,7 @@ External API calls go only to Deepgram (STT), ElevenLabs (TTS), OpenAI (GPT-4o),
 
 ### Per utterance — human speaker
 
-```
+```text
 Browser mic
   → PCM frames over WebSocket
   → AEC Gate (filters frames containing avatar playback)
@@ -166,7 +166,7 @@ The avatar's synthesised speech is broadcast via WebSocket as an `avatar_speakin
 
 ## Project Structure
 
-```
+```text
 vestige/
 ├── backend/
 │   ├── app/
@@ -217,7 +217,7 @@ vestige/
 │   │   │   └── layer.py              # Presence layer orchestration
 │   │   └── services/
 │   │       ├── pipeline_manager.py   # Per-session pipeline lifecycle
-│   │       ├── combat_manager.py     # D&D 5e action economy + initiative
+│   │       ├── combat_manager.py     # Tabletop action economy + initiative
 │   │       └── trait_service.py      # Trait decay + manifestation checks
 │   ├── prompts/                      # Hot-reloadable YAML prompt configuration
 │   │   ├── routing_keywords.yaml     # Claude vs GPT-4o context-type routing

@@ -1,5 +1,5 @@
 /**
- * EmberParticles — Phase 7 D&D aesthetic.
+ * EmberParticles — Phase 7 dark fantasy ambient effect.
  *
  * Renders a small number of floating amber ember particles in the
  * lower portion of the viewport. Very low cost: 4–6 divs with CSS animations.

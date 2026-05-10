@@ -1,5 +1,5 @@
 """
-D&D 5e Action Economy Tracker.
+Action Economy Tracker.
 
 Tracks per-turn resource usage for a single avatar:
   Action, Bonus Action, Reaction, Movement (feet)

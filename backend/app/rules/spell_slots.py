@@ -1,5 +1,5 @@
 """
-D&D 5e Spell Slot Tracker.
+Spell Slot Tracker.
 
 Tracks available spell slots per level (1-9).
 Supports:
@@ -80,7 +80,7 @@ class SpellSlotTracker:
     @classmethod
     def from_class_level(cls, char_class: str, level: int) -> "SpellSlotTracker":
         """
-        Build a fresh tracker from standard 5e slot progression for common classes.
+        Build a fresh tracker from standard slot progression for common classes.
         Covers full casters (Wizard, Sorcerer, Cleric, Druid, Bard) and
         half-casters (Paladin, Ranger at level 2+).
         """

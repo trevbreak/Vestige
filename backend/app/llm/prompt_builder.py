@@ -127,7 +127,7 @@ class PromptBuilder:
         # Phase 6: "author framing" — "You are voicing X" outperforms "You are X"
         # for long-session consistency (avoids character capture and mechanical tone)
         lines = [
-            f"You are voicing {ctx.name}, a Level {ctx.level} {ctx.race} {ctx.char_class} in a D&D 5e campaign.",
+            f"You are voicing {ctx.name}, a Level {ctx.level} {ctx.race} {ctx.char_class} in a tabletop RPG campaign.",
             f"Speak as {ctx.name} would — in first person, from inside their perspective.",
             f"You are a player at the table, not the Dungeon Master.",
         ]
@@ -289,7 +289,7 @@ class PromptBuilder:
             f"REMINDER — {ctx.name}'s response rules:",
             f"• {length}",
             "• First person only. No markdown. No narration of outcomes.",
-            "• Respond as a D&D player at the table, not the narrator.",
+            "• Respond as a tabletop player at the table, not the narrator.",
         ]
 
 

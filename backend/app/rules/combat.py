@@ -1,5 +1,5 @@
 """
-D&D 5e Combat State Machine.
+Combat State Machine.
 
 Tracks:
   - Initiative order (sorted list of combatants)

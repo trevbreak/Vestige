@@ -42,9 +42,9 @@ _VOICE_OPTIONS_TEXT = "\n".join(
     for vid, info in VOICE_CATALOGUE["en"].items()
 )
 
-_GENERATOR_SYSTEM = f"""You are a D&D 5e character personality analyst. Output ONLY a valid JSON object — no markdown, no explanation.
+_GENERATOR_SYSTEM = f"""You are a tabletop RPG character personality analyst. Output ONLY a valid JSON object — no markdown, no explanation.
 
-Given a D&D character's details, produce:
+Given a character's details, produce:
 
 1. personality_prompt: A 150-200 word FIRST-PERSON description written as the character's inner voice.
    Write as "I am..." — describe:
@@ -181,6 +181,6 @@ def _fallback_voice(avatar_data: dict) -> str:
     """Pick a reasonable default voice based on the character's likely gender."""
     name = avatar_data.get("name", "").lower()
     char_class = avatar_data.get("char_class", "").lower()
-    # Heuristic: certain classes skew male/female in default D&D names
+    # Heuristic: certain classes skew male/female in default fantasy names
     # Fall back to British RP male as a safe default
     return "en-GB-RyanNeural"

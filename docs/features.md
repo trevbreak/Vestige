@@ -13,7 +13,7 @@ How each of Vestige's systems works. If you're looking for setup instructions, s
 - [Personality System](#personality-system)
 - [Character Trait Evolution](#character-trait-evolution)
 - [LLM Routing](#llm-routing)
-- [D&D 5e Rules Engine](#dd-5e-rules-engine)
+- [Rules Engine](#rules-engine)
 - [Persistent Memory](#persistent-memory)
 - [Observability with Arize Phoenix](#observability-with-arize-phoenix)
 
@@ -135,6 +135,7 @@ Trait strength decays ~10% per week by default (`trait_decay_weekly_pct`). Witho
 ### Manifestation
 
 When a trigger keyword appears in the transcript, a stochastic check fires proportional to the trait's current strength. On success:
+
 - The trait's emotional signature overrides the TTS emotion tag for this response
 - A note is prepended to the LLM context: "This response is coloured by [trait name]"
 
@@ -161,20 +162,20 @@ The system prompt sent to Claude is split into cacheable and non-cacheable secti
 
 Routing is keyword-driven. The keywords that route to Claude are defined in `backend/prompts/routing_keywords.yaml`. Edit them and reload without restarting:
 
-```
+```http
 POST http://localhost:8000/api/prompts/reload
 ```
 
 ---
 
-## D&D 5e Rules Engine
+## Rules Engine
 
-The rules engine tracks state that the LLM needs to play a character correctly:
+The rules engine tracks tabletop RPG mechanics so the LLM plays characters accurately:
 
 - **Action economy** — actions, bonus actions, and reactions, reset on turn end
 - **Spell slots** — per-level expenditure and recovery on short and long rest
 - **Concentration** — which avatar holds concentration on which spell; new concentration breaks existing
-- **Conditions** — all standard 5e conditions (frightened, poisoned, incapacitated, etc.), with mechanical effects applied to the context
+- **Conditions** — standard conditions (frightened, poisoned, incapacitated, etc.), with mechanical effects applied to the context
 
 This state is injected into the system prompt so the LLM doesn't violate rules — an avatar won't cast a spell already expended this encounter, and a concentrating avatar won't double-concentrate. Combat turn order is tracked via the initiative tracker on the Table page and surfaces to each avatar on their turn.
 

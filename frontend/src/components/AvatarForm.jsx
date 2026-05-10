@@ -100,7 +100,7 @@ export default function AvatarForm({ initial, onClose }) {
                 className={`btn ${styles.randomiseBtn}${rolling ? ` ${styles.rolling}` : ''}`}
                 onClick={handleRandomise}
                 disabled={rolling}
-                title="Let Ollama roll a random valid D&D 5e character"
+                title="Generate a random character using GPT-4o"
               >
                 <span className={styles.diceIcon}>⚄</span>{' '}
                 {rolling ? 'Rolling…' : 'Randomise'}

@@ -1,5 +1,5 @@
 """
-D&D 5e Concentration Tracker.
+Concentration Tracker.
 
 Rules (PHB p.203):
   - Only one concentration spell active at a time.

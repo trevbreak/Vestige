@@ -23,7 +23,7 @@ import structlog
 log = structlog.get_logger()
 
 _SYSTEM = """\
-You inject ElevenLabs audio expression tags into D&D character dialogue.
+You inject ElevenLabs audio expression tags into tabletop RPG character dialogue.
 
 TONE tags go at the start of a sentence and affect all speech that follows:
   [somber] [excited] [resolute] [amused] [whispering] [tense] [playful] [defiant]

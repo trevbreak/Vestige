@@ -33,7 +33,7 @@ async def list_avatars(
     return result.scalars().all()
 
 
-_RANDOMISE_SYSTEM = """You are a D&D 5e character generator. Output ONLY a valid JSON object — no markdown, no explanation.
+_RANDOMISE_SYSTEM = """You are a tabletop fantasy RPG character generator. Output ONLY a valid JSON object — no markdown, no explanation.
 
 Rules:
 - Level must be 1.
@@ -42,10 +42,10 @@ Rules:
 - Armor class: 10 + DEX modifier (unarmored), or class-appropriate starting AC.
 - Speed: 30 ft (25 ft for Dwarf and Halfling).
 - Proficiency bonus: 2 (always at level 1).
-- Background must be a valid 5e background (Acolyte, Criminal, Folk Hero, Noble, Outlander, Sage, Soldier, Charlatan, Entertainer, Guild Artisan, Hermit, Sailor, Urchin).
+- Background must be a classic fantasy background (Acolyte, Criminal, Folk Hero, Noble, Outlander, Sage, Soldier, Charlatan, Entertainer, Guild Artisan, Hermit, Sailor, Urchin).
 - Alignment must be one of: Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, True Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil.
-- Race must be a standard 5e race.
-- Class must be a standard 5e class.
+- Race must be a classic fantasy race.
+- Class must be a classic fantasy class.
 - name: a fantasy name fitting the race.
 - player_name: leave as "Randomised".
 - personality_traits, ideals, bonds, flaws: short evocative sentences from the background table.
@@ -92,13 +92,13 @@ Return this exact JSON shape and nothing else:
   "mode": "active"
 }"""
 
-_RANDOMISE_USER = "Generate a random valid D&D 5e starting character. Output only the JSON."
+_RANDOMISE_USER = "Generate a random tabletop fantasy RPG starting character. Output only the JSON."
 
 
 @router.post("/randomise", response_model=AvatarCreate)
 async def randomise_avatar():
     """
-    Use GPT-4o to generate a random valid D&D 5e starting character.
+    Use GPT-4o to generate a random tabletop fantasy RPG starting character.
     Returns a populated AvatarCreate payload — does NOT save to the database.
     """
     from app.llm.router import call_gpt4o

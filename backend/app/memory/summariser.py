@@ -153,7 +153,7 @@ _SUMMARY_DEPTH_INSTRUCTIONS = {
 
 def _build_post_session_system(summary_method: str) -> str:
     depth_instr = _SUMMARY_DEPTH_INSTRUCTIONS.get(summary_method, _SUMMARY_DEPTH_INSTRUCTIONS["balanced"])
-    return f"""You are a D&D session analyst. You will be given a full session transcript.
+    return f"""You are a tabletop RPG session analyst. You will be given a full session transcript.
 
 Extract the following information as valid JSON (no markdown, no backticks, just raw JSON):
 
@@ -214,7 +214,7 @@ summary_text depth: {depth_instr}
 Respond with ONLY valid JSON. If you cannot determine a value, use null or empty list."""
 
 
-_ROLLING_SUMMARY_SYSTEM = """You are a D&D session scribe. Condense the following transcript excerpt into a short, dense summary (3–5 sentences) suitable for inclusion in a future LLM context window. Focus on plot events, character decisions, and combat outcomes. Do NOT include mundane small-talk. Write in past tense."""
+_ROLLING_SUMMARY_SYSTEM = """You are a tabletop RPG session scribe. Condense the following transcript excerpt into a short, dense summary (3–5 sentences) suitable for inclusion in a future LLM context window. Focus on plot events, character decisions, and combat outcomes. Do NOT include mundane small-talk. Write in past tense."""
 
 
 # ── Summariser class ───────────────────────────────────────────────────────────

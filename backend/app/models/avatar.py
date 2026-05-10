@@ -15,7 +15,7 @@ class Avatar(Base):
     player_name = Column(String(100), nullable=False)
     portrait_path = Column(String(500), nullable=True)
 
-    # D&D Character Sheet
+    # Character Sheet
     race = Column(String(50), nullable=False, default="Human")
     char_class = Column(String(50), nullable=False, default="Fighter")
     level = Column(Integer, nullable=False, default=1)
