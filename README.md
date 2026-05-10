@@ -1,7 +1,32 @@
-# Vestige — DnD AI Avatar System
+# Vestige — AI Avatars for Tabletop RPGs
 
-> **Your absent players, always at the table.**  
-> Vestige brings AI-powered avatars to your D&D sessions — characters that listen, react, remember, and roleplay in real-time voice, as if they never left.
+> **The campaign doesn't stop. Neither do your characters.**
+
+---
+
+## The Problem Every GM Knows
+
+You've spent three weeks prepping the next arc. Maps drawn, NPCs named, a twist that'll genuinely surprise them. Tuesday rolls around and the group chat lights up:
+
+> _"Sorry, kids are sick tonight."_  
+> _"Work ran late, can't make it."_  
+> _"Can we push to next week?"_
+
+You've got two players out of five. You cancel — again. The campaign loses momentum. By the time everyone's schedule lines up, half the table has forgotten what happened last session.
+
+It's not that people don't care. Life just gets in the way. Kids, partners, shift work, travel. The older the group, the harder it gets to hold the night together.
+
+**Vestige was built for this.** It lets you create AI-powered stand-ins for your absent players — avatars that know their character, remember the campaign, speak in voice, and react to the table in real time. The rogue still makes a sarcastic comment when the paladin does something reckless. The wizard still hesitates before agreeing to something morally questionable. The bard still tries to defuse every fight with a song.
+
+You run the session. Your absent players are still there, in a way that matters.
+
+---
+
+## How It Works
+
+Vestige runs locally on your machine. Before the session, you set up an avatar for each character — name, class, personality, voice. When play starts, Vestige listens to the table through your microphone. It transcribes speech in real time, routes each utterance through a language model that knows the character, and speaks the response back through the avatar's own assigned voice — all in under a second for most exchanges.
+
+There are no turn buttons to press. No prompts to type. The avatars just... participate.
 
 ---
 
@@ -13,8 +38,8 @@ Each avatar speaks in its own distinct voice via ElevenLabs streaming TTS. Assig
 
 Two model tracks let you balance quality against latency:
 
-- **`eleven_v3`** (~300ms TTFB) — supports inline emotion and sound tags; used for roleplay, emotional beats, and backstory moments
-- **`eleven_flash_v2_5`** (~170ms TTFB) — no tags, pure speed; used for combat turns and quick reactions
+*   `**eleven_v3**` (~300ms TTFB) — supports inline emotion and sound tags; used for roleplay, emotional beats, and backstory moments
+*   `**eleven_flash_v2_5**` (~170ms TTFB) — no tags, pure speed; used for combat turns and quick reactions
 
 ### Sub-Second Transcript Latency
 
@@ -24,16 +49,16 @@ Speech-to-text uses Deepgram's nova-3 streaming WebSocket. Unlike batch STT syst
 
 Vestige uses two parallel layers to prevent the turn-based feel of most voice AI:
 
-- **Presence Layer** — real-time, no LLM. Backchannels ("mm", "yeah", "right") played probabilistically while humans speak. Holding phrases bridge the generation gap. The avatar is _in the room_.
-- **Reasoning Layer** — full STT → LLM → TTS cascade with jitter-delayed responses and context-aware routing. Every response sounds considered, not instant.
+*   **Presence Layer** — real-time, no LLM. Backchannels ("mm", "yeah", "right") played probabilistically while humans speak. Holding phrases bridge the generation gap. The avatar is _in the room_.
+*   **Reasoning Layer** — full STT → LLM → TTS cascade with jitter-delayed responses and context-aware routing. Every response sounds considered, not instant.
 
 ### Avatar-to-Avatar Banter
 
 When one avatar speaks, other avatars evaluate whether to react — producing natural multi-avatar exchanges, disagreements, and collaborative problem-solving without human input. A chain depth limit (default 3) and per-archetype gates prevent crosstalk spirals:
 
-- **Stoic** avatars never react to avatar speech unless directly named
-- **Introvert** avatars react at most once per minute to other avatars
-- All avatars use an 8-second cooldown between avatar-speech reactions
+*   **Stoic** avatars never react to avatar speech unless directly named
+*   **Introvert** avatars react at most once per minute to other avatars
+*   All avatars use an 8-second cooldown between avatar-speech reactions
 
 ### Intelligent Personality System
 
@@ -41,19 +66,19 @@ Every avatar is driven by a rich, LLM-generated personality prompt — a 150–2
 
 Four **personality archetypes** govern when an avatar speaks:
 
-- **Extrovert** — joins most conversations freely
-- **Introvert** — only speaks when directly addressed
-- **Reactive** — engages questions and combat; ignores idle chatter
-- **Stoic** — speaks only when named, addressed, or in combat
+*   **Extrovert** — joins most conversations freely
+*   **Introvert** — only speaks when directly addressed
+*   **Reactive** — engages questions and combat; ignores idle chatter
+*   **Stoic** — speaks only when named, addressed, or in combat
 
 ### Character Trait Evolution
 
 Avatars develop persistent psychological traits from campaign events. A spider encounter leaves an arachnophobia that lingers for weeks. Betrayal by a party member creates measured distrust. Each trait has:
 
-- **Strength** (0–1) that decays ~10% per week without reinforcement
-- **Trigger keywords** that fire a stochastic manifestation check when they appear in the transcript
-- **Emotional signatures** that override the TTS emotion tag when the trait manifests
-- **Active trait injection** into the system prompt so the LLM knows what tensions are present
+*   **Strength** (0–1) that decays ~10% per week without reinforcement
+*   **Trigger keywords** that fire a stochastic manifestation check when they appear in the transcript
+*   **Emotional signatures** that override the TTS emotion tag when the trait manifests
+*   **Active trait injection** into the system prompt so the LLM knows what tensions are present
 
 Structured relationship axes (trust, affection, respect) evolve similarly and are extracted from post-session summaries by Claude.
 
@@ -61,8 +86,8 @@ Structured relationship axes (trust, affection, respect) evolve similarly and ar
 
 Vestige routes between two backends based on context type:
 
-- **GPT-4o** handles combat turns, casual roleplay, and direct questions — fast, with ~460ms average latency
-- **Claude Sonnet 4.6** handles emotional beats, moral dilemmas, backstory calls, and NPC social encounters — richer responses with prompt caching enabled (system prompt cached; dynamic sections bypass the cache)
+*   **GPT-4o** handles combat turns, casual roleplay, and direct questions — fast, with ~460ms average latency
+*   **Claude Sonnet 4.6** handles emotional beats, moral dilemmas, backstory calls, and NPC social encounters — richer responses with prompt caching enabled (system prompt cached; dynamic sections bypass the cache)
 
 Routing keywords are fully configurable in plain YAML files.
 
@@ -179,14 +204,14 @@ Every LLM call is traced and surfaced in Arize Phoenix at `http://localhost:6006
 
 ### Prerequisites
 
-- Python 3.12+
-- Node.js 20+
-- API keys: **Deepgram**, **ElevenLabs**, **OpenAI**, **Anthropic**
-- NVIDIA GPU with CUDA _optional_ (only needed if using XTTS-v2 local fallback)
+*   Python 3.12+
+*   Node.js 20+
+*   API keys: **Deepgram**, **ElevenLabs**, **OpenAI**, **Anthropic**
+*   NVIDIA GPU with CUDA _optional_ (only needed if using XTTS-v2 local fallback)
 
-### 1. Backend
+### 1\. Backend
 
-```bash
+```
 cd backend
 python -m venv .venv
 
@@ -203,27 +228,27 @@ python -m alembic upgrade head   # create/migrate DB tables
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-### 2. Frontend
+### 2\. Frontend
 
-```bash
+```
 cd frontend
 npm install
 npm run dev   # opens http://localhost:5173
 ```
 
-### 3. Configure Avatars
+### 3\. Configure Avatars
 
-1. Open `http://localhost:5173/avatars`
-2. Create an avatar and fill in the character sheet
-3. In the **ElevenLabs Voice** section, enter a Voice ID from [elevenlabs.io/voice-lab](https://elevenlabs.io/voice-lab)
-4. Choose model preference: Quality (v3) for roleplay, Fast (Flash) for combat
-5. Adjust stability/style/similarity sliders to taste
+1.  Open `http://localhost:5173/avatars`
+2.  Create an avatar and fill in the character sheet
+3.  In the **ElevenLabs Voice** section, enter a Voice ID from [elevenlabs.io/voice-lab](https://elevenlabs.io/voice-lab)
+4.  Choose model preference: Quality (v3) for roleplay, Fast (Flash) for combat
+5.  Adjust stability/style/similarity sliders to taste
 
 ### Startup Order
 
-1. Phoenix (optional): `phoenix serve` → `http://localhost:6006`
-2. Backend: `cd backend && .venv/Scripts/uvicorn app.main:app --reload --port 8000`
-3. Frontend: `cd frontend && npm run dev`
+1.  Phoenix (optional): `phoenix serve` → `http://localhost:6006`
+2.  Backend: `cd backend && .venv/Scripts/uvicorn app.main:app --reload --port 8000`
+3.  Frontend: `cd frontend && npm run dev`
 
 ---
 
@@ -235,10 +260,10 @@ Create and manage your avatar roster. Each avatar has a full D&D 5e character ca
 
 **Key controls:**
 
-- **Create Avatar** — opens the avatar form. Fill in the character sheet; personality is generated on save.
-- **ElevenLabs Voice** — set Voice ID and expressiveness params (stability, style, similarity). Leave blank to fall back to Edge-TTS.
-- **Model preference** — Quality (eleven_v3, emotion tags) vs Fast (eleven_flash_v2_5).
-- **Backfill Personality** — for older avatars: `POST /api/avatars/generate-personality`.
+*   **Create Avatar** — opens the avatar form. Fill in the character sheet; personality is generated on save.
+*   **ElevenLabs Voice** — set Voice ID and expressiveness params (stability, style, similarity). Leave blank to fall back to Edge-TTS.
+*   **Model preference** — Quality (eleven\_v3, emotion tags) vs Fast (eleven\_flash\_v2\_5).
+*   **Backfill Personality** — for older avatars: `POST /api/avatars/generate-personality`.
 
 ### Sessions Page — `http://localhost:5173/sessions`
 
@@ -248,10 +273,10 @@ Manage campaign sessions. After closing a session, use **Memory Review** to gene
 
 The live game view:
 
-- **Live transcript** — every utterance transcribed in real-time via Deepgram
-- **Avatar panels** — current state, last response, and combat status
-- **DM controls** — override hotwords to force an avatar to speak, go silent, or reset state
-- **Combat tracker** — action economy and spell slots tracked automatically
+*   **Live transcript** — every utterance transcribed in real-time via Deepgram
+*   **Avatar panels** — current state, last response, and combat status
+*   **DM controls** — override hotwords to force an avatar to speak, go silent, or reset state
+*   **Combat tracker** — action economy and spell slots tracked automatically
 
 ### Settings Page — `http://localhost:5173/settings`
 
@@ -320,11 +345,11 @@ phoenix serve
 
 The backend sends OTel spans to Phoenix automatically when it's running. Open `http://localhost:6006` to access the UI. Each span includes:
 
-- Full system prompt (identity, traits, memory, rules state)
-- User message and avatar response
-- Latency end-to-end
-- Token counts including `cache_read_tokens` and `cache_write_tokens` for Claude calls
-- Avatar ID, context type, LLM route as span attributes
+*   Full system prompt (identity, traits, memory, rules state)
+*   User message and avatar response
+*   Latency end-to-end
+*   Token counts including `cache_read_tokens` and `cache_write_tokens` for Claude calls
+*   Avatar ID, context type, LLM route as span attributes
 
 ---
 
@@ -374,39 +399,9 @@ vestige/
 
 ## Running Tests
 
-```bash
+```
 cd backend
 .venv/Scripts/python -m pytest tests/ -v
 ```
 
 305 tests across all phases. All should pass on a clean install (no API keys needed — all external calls are stubbed in tests).
-
----
-
-## Documentation
-
-- [Phase 1 — Foundation](docs/phase1-foundation.md)
-- [Phase 2 — Voice Input Pipeline](docs/phase2-voice-input.md)
-- [Phase 3 — Voice Output Pipeline](docs/phase3-voice-output.md)
-- [Phase 4 — AI Brain](docs/phase4-ai-brain.md)
-- [Phase 5 — Memory System](docs/phase5-memory.md)
-- [Phase 6 — Rules Engine & Combat](docs/phase6-rules.md)
-- [Phase 7 — Polish & Inter-Avatar Dynamics](docs/phase7-polish.md)
-- [Phase 8 — Avatar Personality & Voice Behaviors](docs/phase8-avatar-personality-behaviors.md)
-- [Phase 9 — Audio Revamp](docs/phase9-audio-revamp.md)
-
----
-
-## Build Status
-
-| Phase | Description | Status |
-| --- | --- | --- |
-| **1** | Foundation — API, DB schema, avatar/session CRUD, D&D UI | ✅ Complete |
-| **2** | Voice Input — mic capture, VAD, STT, AEC | ✅ Complete |
-| **3** | Voice Output — TTS, voice cloning, backchannel pre-gen | ✅ Complete |
-| **4** | AI Brain — LLM router, context engine, prompt builder | ✅ Complete |
-| **5** | Memory — session transcripts, embeddings, sqlite-vec retrieval | ✅ Complete |
-| **6** | Rules Engine — D&D 5e action economy, spells, conditions, combat | ✅ Complete |
-| **7** | Polish — inter-avatar dynamics, DM controls, settings panel | ✅ Complete |
-| **8** | Avatar Realism — personality prompts, differentiated voices, Phoenix tracing | ✅ Complete |
-| **9** | Audio Revamp — Deepgram STT, ElevenLabs TTS, GPT-4o, avatar banter, trait evolution | ✅ Complete |
