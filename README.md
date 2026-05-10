@@ -30,6 +30,42 @@ There are no turn buttons to press. No prompts to type. The avatars just... part
 
 ---
 
+## Screenshots
+
+### Avatar Roster
+
+Manage your cast of characters — stats, personality, voice assignment, and archetype all in one place.
+
+![Avatars page showing character roster](docs/screenshots/01-avatars-list.png)
+
+### Live Table View
+
+The heart of Vestige. Avatar panels on the left show HP, AC, and listening state. The live transcript streams in real time on the right, with each speaker labelled.
+
+![Table view with live transcript and avatar panels](docs/screenshots/04-table-view.png)
+
+### Avatar Setup
+
+Full character sheet editing — ability scores, spell slots, backstory, personality, and ElevenLabs voice configuration.
+
+![Avatar edit modal with character sheet fields](docs/screenshots/02-avatar-detail.png)
+
+### Sessions & Memory Review
+
+Track campaign sessions. After closing one, generate a post-session summary with Claude, review extracted trait and relationship changes, then approve to commit them.
+
+| Sessions                                                | Memory Review                                                  |
+| ------------------------------------------------------- | -------------------------------------------------------------- |
+| ![Sessions list](docs/screenshots/03-sessions-list.png) | ![Memory review page](docs/screenshots/06-memory-review.png)   |
+
+### Settings
+
+Configure API keys, audio devices, LLM routing, and all behavioural parameters from a single page — changes take effect immediately.
+
+![Settings page](docs/screenshots/05-settings.png)
+
+---
+
 ## Features
 
 ### Fully Voiced, In-Character Avatars
