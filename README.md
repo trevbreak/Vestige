@@ -8,12 +8,12 @@
 
 You've spent three weeks on this session. The maps are drawn, the NPC names are on a sticky note above your monitor, and you've got a twist in act two that's genuinely going to land. Tuesday morning, the group chat lights up:
 
-> *"So sorry — can we push? Baby's sick."*
-> *"Ugh, same. Work is a nightmare this week."*
-> *"Next week? Or the week after?"*
-> *"I'm away the week after."*
-> *"Week after that?"*
-> *"I think I can do that...?"*
+> _"So sorry — can we push? Baby's sick."_  
+> _"Ugh, same. Work is a nightmare this week."_  
+> _"Next week? Or the week after?"_  
+> _"I'm away the week after."_  
+> _"Week after that?"_  
+> _"I think I can do that...?"_
 
 You've been having this conversation, with minor variations, for two years. You're on session seven.
 
@@ -45,21 +45,21 @@ No turn buttons. No prompts to type. The absent players are still at the table, 
 
 ![Avatar roster showing character cards with stats and personality](docs/screenshots/01-avatars-list.png)
 
-*The avatar roster — character sheets, archetype, and voice assignment for each absent player.*
+_The avatar roster — character sheets, archetype, and voice assignment for each absent player._
 
 ![Live table view with avatar panels and scrolling transcript](docs/screenshots/04-table-view.png)
 
-*The live table view. Avatar panels on the left track HP, AC, and listening state. The transcript streams in real time on the right.*
+_The live table view. Avatar panels on the left track HP, AC, and listening state. The transcript streams in real time on the right._
 
 ![Avatar edit modal showing character sheet fields](docs/screenshots/02-avatar-detail.png)
 
-*Character setup — full 5e sheet, backstory, and ElevenLabs voice tuning.*
+_Character setup — full 5e sheet, backstory, and ElevenLabs voice tuning._
 
-| Sessions                                                | Memory Review                                                   |
-| ------------------------------------------------------- | --------------------------------------------------------------- |
-| ![Sessions list](docs/screenshots/03-sessions-list.png) | ![Memory review page](docs/screenshots/06-memory-review.png)    |
+| Sessions | Memory Review |
+| --- | --- |
+| ![Sessions list](docs/screenshots/03-sessions-list.png) | ![Memory review page](docs/screenshots/06-memory-review.png) |
 
-*Sessions list (left) and post-session memory review (right) — where Claude extracts trait and relationship changes for your approval.*
+_Sessions list (left) and post-session memory review (right) — where Claude extracts trait and relationship changes for your approval._
 
 ---
 
@@ -72,7 +72,7 @@ No turn buttons. No prompts to type. The absent players are still at the table, 
 **API keys** — pay-as-you-go; a 3-hour session costs roughly $2–5 total:
 
 | Service | Used for | Sign up |
-| ------- | -------- | ------- |
+| --- | --- | --- |
 | [Deepgram](https://deepgram.com) | Streaming speech-to-text | deepgram.com |
 | [ElevenLabs](https://elevenlabs.io) | Avatar voice synthesis | elevenlabs.io |
 | [OpenAI](https://platform.openai.com) | Fast-path LLM (GPT-4o) | platform.openai.com |
@@ -80,9 +80,9 @@ No turn buttons. No prompts to type. The absent players are still at the table, 
 
 > **No ElevenLabs yet?** Vestige falls back to Edge-TTS (free, Microsoft's voices) automatically. Good enough for testing; lower quality than ElevenLabs for actual play.
 
-### 1. Clone and configure
+### 1\. Clone and configure
 
-```bash
+```
 git clone https://github.com/your-username/vestige.git
 cd vestige
 cp .env.example .env
@@ -91,14 +91,14 @@ cp .env.example .env
 
 To find your microphone device index:
 
-```bash
+```
 cd backend && python ../scripts/list_audio_devices.py
 # Set MIC_DEVICE_INDEX in .env to the right device number
 ```
 
-### 2. Backend
+### 2\. Backend
 
-```bash
+```
 cd backend
 python -m venv .venv
 
@@ -112,29 +112,29 @@ python -m alembic upgrade head
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-### 3. Frontend
+### 3\. Frontend
 
-```bash
+```
 cd frontend
 npm install
 npm run dev   # → http://localhost:5173
 ```
 
-### 4. Create an avatar and start
+### 4\. Create an avatar and start
 
-1. Open [localhost:5173](http://localhost:5173) → **New Avatar**
-2. Fill in the character sheet — personality, archetype, and voice suggestion are auto-generated on save
-3. Paste a Voice ID from [elevenlabs.io/voice-lab](https://elevenlabs.io/voice-lab) in the Voice section (or leave blank for Edge-TTS)
-4. **Sessions** → **New Session** → pick your avatars
-5. **Table** → select the session → **Start Listening**
-6. Talk. The avatars respond.
+1.  Open [localhost:5173](http://localhost:5173) → **New Avatar**
+2.  Fill in the character sheet — personality, archetype, and voice suggestion are auto-generated on save
+3.  Paste a Voice ID from [elevenlabs.io/voice-lab](https://elevenlabs.io/voice-lab) in the Voice section (or leave blank for Edge-TTS)
+4.  **Sessions** → **New Session** → pick your avatars
+5.  **Table** → select the session → **Start Listening**
+6.  Talk. The avatars respond.
 
 ---
 
 ## Pages at a Glance
 
 | Page | Route | What it's for |
-| ---- | ----- | ------------- |
+| --- | --- | --- |
 | Avatars | `/` | Create and manage your avatar roster |
 | Sessions | `/sessions` | Create sessions, assign avatars, end them when done |
 | Table | `/table` | Live game view — transcript, avatar panels, combat tracker, DM controls |
@@ -146,7 +146,7 @@ npm run dev   # → http://localhost:5173
 ## Going Deeper
 
 | Doc | What's in it |
-| --- | ------------ |
+| --- | --- |
 | [Features](docs/features.md) | How each system works: TTS emotion injection, avatar-to-avatar reactions, personality archetypes, trait evolution, LLM routing, memory retrieval |
 | [Architecture](docs/architecture.md) | Full system diagram, data flow, component breakdown, project structure, key design decisions |
 | [Configuration](docs/configuration.md) | Every `.env` variable, tuning parameter, and hot-reloadable YAML prompt file — with defaults and descriptions |
@@ -156,7 +156,7 @@ npm run dev   # → http://localhost:5173
 ## Tech Stack
 
 | Layer | Stack |
-| ----- | ----- |
+| --- | --- |
 | Backend | Python 3.13, FastAPI 0.115, SQLAlchemy async + aiosqlite, Pydantic v2 |
 | Frontend | React 19, Vite 7, Zustand, CSS Modules |
 | Database | SQLite (aiosqlite) + sqlite-vec for embeddings |
@@ -170,7 +170,7 @@ npm run dev   # → http://localhost:5173
 
 ## Tests
 
-```bash
+```
 cd backend
 .venv\Scripts\python -m pytest tests/ -v
 ```

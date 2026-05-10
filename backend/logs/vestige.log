@@ -5015,3 +5015,6 @@ INFO:     connection closed
 {"files": ["context_keywords", "holding_phrases", "length_instructions", "routing_keywords", "system_prompt_sections"], "event": "prompt_loader.loaded", "level": "info", "logger": "app.prompts.loader", "timestamp": "2026-03-15T14:37:47.065295+10:00"}
 {"event": "startup.begin", "level": "info", "logger": "app.main", "timestamp": "2026-03-15T14:37:47.092177+10:00"}
 {"collector": "http://localhost:6006/v1/traces", "note": "Spans will be exported when Phoenix is running (phoenix serve)", "event": "tracing.configured", "level": "info", "logger": "app.tracing", "timestamp": "2026-03-15T14:37:47.549362+10:00"}
+{"files": ["context_keywords", "holding_phrases", "length_instructions", "routing_keywords", "system_prompt_sections"], "event": "prompt_loader.loaded", "level": "info", "logger": "app.prompts.loader", "timestamp": "2026-05-10T17:36:43.549893+10:00"}
+{"event": "startup.begin", "level": "info", "logger": "app.main", "timestamp": "2026-05-10T17:36:43.595150+10:00"}
+{"collector": "http://localhost:6006/v1/traces", "note": "Spans will be exported when Phoenix is running (phoenix serve)", "event": "tracing.configured", "level": "info", "logger": "app.tracing", "timestamp": "2026-05-10T17:36:44.041949+10:00"}
