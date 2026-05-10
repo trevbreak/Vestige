@@ -98,28 +98,23 @@ _RANDOMISE_USER = "Generate a random valid D&D 5e starting character. Output onl
 @router.post("/randomise", response_model=AvatarCreate)
 async def randomise_avatar():
     """
-    Use Ollama to generate a random valid D&D 5e starting character.
+    Use GPT-4o to generate a random valid D&D 5e starting character.
     Returns a populated AvatarCreate payload — does NOT save to the database.
     """
-    from app.llm.router import call_ollama
-    from app.config import get_settings
-
-    settings = get_settings()
+    from app.llm.router import call_gpt4o
 
     resp = await asyncio.get_event_loop().run_in_executor(
         None,
-        lambda: call_ollama(
+        lambda: call_gpt4o(
             system_prompt=_RANDOMISE_SYSTEM,
             user_message=_RANDOMISE_USER,
-            model=settings.ollama_model,
-            num_predict=2000,
         ),
     )
 
     if resp.route == "stub" or not resp.text:
         raise HTTPException(
             status_code=503,
-            detail=f"Ollama unavailable or returned empty response: {resp.error}",
+            detail=f"LLM unavailable or returned empty response: {resp.error}",
         )
 
     # Strip think-blocks emitted by reasoning models (e.g. deepseek-r1)

@@ -4,21 +4,28 @@ Modular Prompt Builder.
 Assembles the full system prompt for an avatar LLM call at runtime.
 Each section is optional — missing data degrades gracefully.
 
-Template structure (from plan.md §4.6):
-  IDENTITY ANCHOR
+Template structure (Phase 6 — Character Card V2 / Talemate patterns):
+  IDENTITY ANCHOR  (author framing: "You are voicing X")
   CHARACTER VOICE
   MECHANICAL STATE
   PARTY RELATIONSHIPS
-  RELEVANT MEMORY       ← Phase 5 will fill this
-  CURRENT SITUATION     ← last N transcript lines
+  RELEVANT MEMORY
+  AVAILABLE ACTIONS  (combat only)
   RESPONSE RULES
+
+User message structure (actor offset pattern):
+  == CURRENT SITUATION ==
+  <history except last N lines>
+  (actor reminder — N messages from end, avoids recency bias)
+  <last N lines>
+  [Respond now as {name}.]
+  REMINDER — post-history rules (critical, stays fresh at end)
 
 All sections are pure text manipulation — no I/O, fully testable.
 """
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -93,7 +100,6 @@ class PromptBuilder:
         Assemble the system prompt and user message for one LLM call.
 
         Returns (system_prompt, user_message).
-        The user_message is the recent transcript with the final cue.
         """
         system = self._build_system(ctx)
         user = self._build_user(ctx)
@@ -114,24 +120,29 @@ class PromptBuilder:
         return "\n\n".join(s for s in sections if s)
 
     def _identity_anchor(self, ctx: AvatarContext) -> str:
+        # Phase 6: "author framing" — "You are voicing X" outperforms "You are X"
+        # for long-session consistency (avoids character capture and mechanical tone)
         lines = [
-            f"You are {ctx.name}, a {ctx.race} {ctx.char_class} (Level {ctx.level}).",
-            f"Your player ({ctx.player_name}) is absent tonight. Portray them faithfully.",
-            "",
-            "== IDENTITY ANCHOR ==",
+            f"You are voicing {ctx.name}, a Level {ctx.level} {ctx.race} {ctx.char_class} in a D&D 5e campaign.",
+            f"Speak as {ctx.name} would — in first person, from inside their perspective.",
+            f"You are a player at the table, not the Dungeon Master.",
         ]
+        if ctx.player_name:
+            lines.append(f"Your player ({ctx.player_name}) is absent tonight. Portray them faithfully.")
+
+        lines.append("")
+        lines.append("== IDENTITY ANCHOR ==")
+
         if ctx.alignment:
             lines.append(f"Alignment: {ctx.alignment}")
         if ctx.background:
             lines.append(f"Background: {ctx.background}")
 
         if ctx.personality_prompt:
-            # Phase 8: use the rich LLM-generated persona description
             lines.append("")
             lines.append("== CHARACTER PERSONA ==")
             lines.append(ctx.personality_prompt)
         else:
-            # Legacy fallback: use sparse D&D trait fields
             traits = []
             if ctx.personality_traits:
                 traits.append(f"Personality: {ctx.personality_traits}")
@@ -173,7 +184,7 @@ class PromptBuilder:
         return "\n".join(lines)
 
     def _party_relationships(self, ctx: AvatarContext) -> str:
-        if not ctx.relationships:
+        if not ctx.relationships and not ctx.cross_avatar_note:
             return ""
         lines = ["== PARTY RELATIONSHIPS =="]
         for name, note in ctx.relationships.items():
@@ -215,17 +226,55 @@ class PromptBuilder:
         ]
         return "\n".join(lines)
 
-    # ── User message (the transcript cue) ─────────────────────────────────
+    # ── User message (transcript cue with actor offset) ────────────────────
 
     def _build_user(self, ctx: AvatarContext) -> str:
         if not ctx.transcript_lines:
             return f"[The table is quiet. Respond as {ctx.name} if appropriate.]"
 
-        lines = ["== CURRENT SITUATION =="]
-        lines.extend(ctx.transcript_lines[-30:])  # cap at 30 lines
-        lines.append("")
-        lines.append(f"[Respond now as {ctx.name}.]")
-        return "\n".join(lines)
+        from app.config import get_settings
+        offset = get_settings().actor_instructions_offset
+
+        lines = ctx.transcript_lines[-30:]  # cap at 30 lines
+
+        # Phase 6: actor instructions offset — inject reminder N lines from end
+        # Prevents recency bias (too-fresh rules → mechanical) and attention decay
+        # (top-only rules → forgotten in long sessions)
+        if len(lines) > offset:
+            early = lines[:-offset]
+            late = lines[-offset:]
+        else:
+            early = []
+            late = lines
+
+        parts = ["== CURRENT SITUATION =="]
+        parts.extend(early)
+
+        # Compact actor reminder placed at the offset point
+        parts.append(
+            f"(As {ctx.name}: stay in first person; {ctx.context_type} moment — keep it brief)"
+        )
+
+        parts.extend(late)
+        parts.append("")
+        parts.append(f"[Respond now as {ctx.name}.]")
+
+        # Phase 6: post-history instructions — keeps critical rules fresh
+        # at the very end of the context the LLM sees before generating
+        parts.extend(self._post_history_instructions(ctx))
+
+        return "\n".join(parts)
+
+    def _post_history_instructions(self, ctx: AvatarContext) -> list[str]:
+        """Post-history instructions appended after transcript (Character Card V2 pattern)."""
+        length = prompt_loader.get_length_instruction(ctx.context_type)
+        return [
+            "",
+            f"REMINDER — {ctx.name}'s response rules:",
+            f"• {length}",
+            "• First person only. No markdown. No narration of outcomes.",
+            "• Respond as a D&D player at the table, not the narrator.",
+        ]
 
 
 # Module-level singleton

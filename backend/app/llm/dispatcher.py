@@ -142,7 +142,7 @@ class LLMDispatcher:
         # 2. Build prompt
         from app.tracing import get_tracer as _get_tracer
         _tracer = _get_tracer("vestige.dispatcher")
-        _dispatch_span = _tracer.start_as_current_span(
+        _dispatch_ctx = _tracer.start_as_current_span(
             f"dispatcher.dispatch/{req.avatar_name}",
             attributes={
                 "avatar.id": req.avatar_id,
@@ -155,7 +155,7 @@ class LLMDispatcher:
                 "memory.chunks_count": len(req.memory_chunks),
             },
         )
-        _dispatch_span.__enter__()
+        _dispatch_span = _dispatch_ctx.__enter__()
 
         ctx = AvatarContext(
             name=req.avatar_name,
@@ -220,7 +220,7 @@ class LLMDispatcher:
                 route=llm_result.route,
                 error=llm_result.error,
             )
-            _dispatch_span.__exit__(None, None, None)
+            _dispatch_ctx.__exit__(None, None, None)
             return
 
         # 4. Post-process
@@ -302,4 +302,4 @@ class LLMDispatcher:
             bytes=len(tts_result.audio_bytes),
         )
 
-        _dispatch_span.__exit__(None, None, None)
+        _dispatch_ctx.__exit__(None, None, None)

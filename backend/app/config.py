@@ -25,25 +25,43 @@ class Settings(BaseSettings):
 
     # ── AI / LLM ──────────────────────────────────────────────────────────
     anthropic_api_key: str = ""
+    openai_api_key: str = ""
+    claude_model: str = "claude-sonnet-4-6"
+    claude_max_tokens: int = 256
+    gpt4o_model: str = "gpt-4o"
+    gpt4o_max_tokens: int = 200
+    gpt4o_temperature: float = 0.85
+
+    # Kept for backward compat during migration — no longer used for routing
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1:8b"
     ollama_timeout_s: float = 30.0
-    claude_model: str = "claude-haiku-4-5-20251001"
-    claude_max_tokens: int = 256
+
+    # ── STT — Deepgram ────────────────────────────────────────────────────
+    deepgram_api_key: str = ""
+    deepgram_model: str = "nova-3"
+    deepgram_endpointing_ms: int = 800   # ms of silence = end of utterance
+
+    # Kept for backward compat — faster-whisper/silero no longer primary path
+    sample_rate: int = 16000
+    chunk_ms: int = 30
+    vad_threshold: float = 0.30
+    vad_trailing_silence_ms: int = 1500
+    whisper_model: str = "large-v3"
+    whisper_device: str = "cuda"
+    whisper_compute_type: str = "float16"
+    whisper_beam_size: int = 5
+    whisper_no_speech_threshold: float = 0.80
+    whisper_log_prob_threshold: float = -2.0
+
+    # ── TTS — ElevenLabs ──────────────────────────────────────────────────
+    elevenlabs_api_key: str = ""
+    elevenlabs_model_quality: str = "eleven_v3"          # for emotional/story moments
+    elevenlabs_model_fast: str = "eleven_flash_v2_5"     # for combat/quick reactions
 
     # ── Audio Input ───────────────────────────────────────────────────────
     mic_device_index: int = 0
-    sample_rate: int = 16000        # Hz — required by silero-vad and faster-whisper
-    chunk_ms: int = 30              # VAD chunk size in ms (silero needs 30ms @ 16 kHz)
-    vad_threshold: float = 0.30          # Silero VAD sensitivity (0.0–1.0)
-    vad_trailing_silence_ms: int = 1500  # ms of silence required before flushing speech buffer
-    aec_decay_ms: int = 200              # ms to gate mic after TTS ends
-    whisper_model: str = "large-v3"      # faster-whisper model size (requires restart to change)
-    whisper_device: str = "cuda"          # "cuda" | "cpu" (requires restart to change)
-    whisper_compute_type: str = "float16" # "float16" | "int8" | "float32" (requires restart to change)
-    whisper_beam_size: int = 5            # beam search width — higher = more accurate, slower
-    whisper_no_speech_threshold: float = 0.80  # drop segments where no_speech_prob exceeds this
-    whisper_log_prob_threshold: float = -2.0   # drop segments below this avg log-prob
+    aec_decay_ms: int = 200    # ms to gate mic after TTS ends
 
     # ── Trigger Timing ────────────────────────────────────────────────────
     silence_gap_trigger: float = 4.0    # seconds of silence before passive response
@@ -57,10 +75,23 @@ class Settings(BaseSettings):
     backchannel_min_gap: float = 8.0  # min seconds between backchannels
     backchannel_chance: float = 0.35  # probability of backchannel when eligible
 
+    # ── Avatar-to-avatar ──────────────────────────────────────────────────
+    max_avatar_chain_depth: int = 3
+    avatar_speech_cooldown_s: float = 8.0
+
+    # ── Character traits ──────────────────────────────────────────────────
+    trait_decay_weekly_pct: float = 0.10
+    trait_manifestation_base_probability: float = 0.30
+
+    # ── Prompt architecture ───────────────────────────────────────────────
+    actor_instructions_offset: int = 3   # inject actor reminder N messages from history end
+
     # ── Memory ────────────────────────────────────────────────────────────
     memory_top_k: int = 5
     transcript_context_lines: int = 30
     mid_session_compress_mins: int = 60
+    summary_method: str = "balanced"     # "facts" | "short" | "balanced" | "long"
+    summary_previous_sessions: int = 6   # how many prior summaries to include as context
 
     @property
     def cors_origins_list(self) -> list[str]:

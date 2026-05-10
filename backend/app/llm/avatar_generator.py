@@ -88,15 +88,12 @@ _VALID_VOICE_IDS = frozenset(VOICE_CATALOGUE["en"].keys())
 
 def generate_personality_data(avatar_data: dict) -> dict:
     """
-    Call Ollama to generate personality_prompt, archetype, verbosity,
+    Call GPT-4o to generate personality_prompt, archetype, verbosity,
     interrupts_often, and voice_id for the given avatar data dict.
 
     Returns a dict with the five keys, or sensible defaults on failure.
     """
-    from app.llm.router import call_ollama
-    from app.config import get_settings
-
-    settings = get_settings()
+    from app.llm.router import call_gpt4o
 
     user_msg = (
         f"Name: {avatar_data.get('name', 'Unknown')}, "
@@ -113,15 +110,13 @@ def generate_personality_data(avatar_data: dict) -> dict:
     )
 
     try:
-        resp = call_ollama(
+        resp = call_gpt4o(
             system_prompt=_GENERATOR_SYSTEM,
             user_message=user_msg,
-            model=settings.ollama_model,
-            num_predict=600,
         )
 
         if resp.route == "stub" or not resp.text:
-            log.warning("avatar_generator.ollama_unavailable", name=avatar_data.get("name"))
+            log.warning("avatar_generator.llm_unavailable", name=avatar_data.get("name"))
             return _defaults(avatar_data)
 
         raw = resp.text.strip()

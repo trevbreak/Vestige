@@ -23,10 +23,10 @@ settings = get_settings()
 
 # ── Context type → routing + max sentence length ─────────────────────────────
 CONTEXT_TYPES: dict[str, dict] = {
-    "combat_turn":     {"max_sentences": 2, "route": "ollama"},
-    "casual_roleplay": {"max_sentences": 2, "route": "ollama"},
-    "party_debate":    {"max_sentences": 2, "route": "ollama"},
-    "direct_question": {"max_sentences": 3, "route": "ollama"},
+    "combat_turn":     {"max_sentences": 2, "route": "gpt4o"},
+    "casual_roleplay": {"max_sentences": 2, "route": "gpt4o"},
+    "party_debate":    {"max_sentences": 2, "route": "gpt4o"},
+    "direct_question": {"max_sentences": 3, "route": "gpt4o"},
     "emotional_beat":  {"max_sentences": 5, "route": "claude"},
     "backstory_call":  {"max_sentences": 5, "route": "claude"},
     "npc_social":      {"max_sentences": 4, "route": "claude"},
@@ -39,7 +39,7 @@ class EngineDecision:
     should_respond: bool
     priority: int                      # 1 (highest) – 5 (lowest)
     context_type: str = "casual_roleplay"
-    route: str = "ollama"              # "ollama" | "claude" | "template"
+    route: str = "gpt4o"               # "gpt4o" | "claude" | "template"
     interrupt_score: float = 0.0
     reason: str = ""                   # debug / logging
 

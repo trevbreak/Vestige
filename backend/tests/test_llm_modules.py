@@ -142,17 +142,17 @@ class TestPromptBuilder:
 # ── LLM Router ────────────────────────────────────────────────────────────────
 
 class TestLLMRouter:
-    def test_combat_routes_to_ollama(self):
+    def test_combat_routes_to_gpt4o(self):
         from app.llm.router import select_route
-        assert select_route("combat_turn") == "ollama"
+        assert select_route("combat_turn") == "gpt4o"
 
-    def test_casual_roleplay_routes_to_ollama(self):
+    def test_casual_roleplay_routes_to_gpt4o(self):
         from app.llm.router import select_route
-        assert select_route("casual_roleplay") == "ollama"
+        assert select_route("casual_roleplay") == "gpt4o"
 
-    def test_direct_question_routes_to_ollama(self):
+    def test_direct_question_routes_to_gpt4o(self):
         from app.llm.router import select_route
-        assert select_route("direct_question") == "ollama"
+        assert select_route("direct_question") == "gpt4o"
 
     def test_emotional_beat_routes_to_claude(self):
         from app.llm.router import select_route
@@ -189,16 +189,19 @@ class TestLLMRouter:
     def test_no_escalation_on_neutral_text(self):
         from app.llm.router import select_route
         result = select_route("casual_roleplay", recent_transcript="the goblin attacks the village")
-        assert result == "ollama"
+        assert result == "gpt4o"
 
-    def test_ollama_stub_when_unreachable(self):
-        """Ollama call returns stub response when server is not running."""
-        from app.llm.router import call_ollama
-        result = call_ollama("System.", "User.", model="llama3.1:8b")
-        # Should return an LLMResponse without crashing
-        assert result.route in ("ollama", "stub")
-        assert isinstance(result.text, str)
-        assert isinstance(result.error, str)
+    def test_gpt4o_stub_when_no_api_key(self):
+        """GPT-4o call returns stub when no API key is configured."""
+        from app.llm.router import call_gpt4o
+        import unittest.mock
+        mock_settings = unittest.mock.MagicMock()
+        mock_settings.openai_api_key = ""
+        mock_settings.gpt4o_model = "gpt-4o"
+        with unittest.mock.patch("app.llm.router.get_settings", return_value=mock_settings):
+            result = call_gpt4o("System.", "User.")
+        assert result.route == "stub"
+        assert result.error == "no_api_key"
 
     def test_claude_stub_when_no_api_key(self):
         """Claude call returns stub when no API key is configured."""
@@ -216,20 +219,20 @@ class TestLLMRouter:
         """call_llm selects the right backend based on context_type."""
         from app.llm.router import call_llm
         import unittest.mock
-        with unittest.mock.patch("app.llm.router.call_ollama") as mock_ollama, \
+        with unittest.mock.patch("app.llm.router.call_gpt4o") as mock_gpt4o, \
              unittest.mock.patch("app.llm.router.call_claude") as mock_claude:
             from app.llm.router import LLMResponse
-            mock_ollama.return_value = LLMResponse(text="I attack.", route="ollama", model="llama3.1:8b")
-            mock_claude.return_value = LLMResponse(text="I hesitate.", route="claude", model="claude-haiku")
-            # Combat → Ollama
+            mock_gpt4o.return_value = LLMResponse(text="I attack.", route="gpt4o", model="gpt-4o")
+            mock_claude.return_value = LLMResponse(text="I hesitate.", route="claude", model="claude-sonnet-4-6")
+            # Combat → GPT-4o
             call_llm("sys", "user", "combat_turn")
-            mock_ollama.assert_called_once()
+            mock_gpt4o.assert_called_once()
             mock_claude.assert_not_called()
-            mock_ollama.reset_mock()
+            mock_gpt4o.reset_mock()
             # Emotional → Claude
             call_llm("sys", "user", "emotional_beat")
             mock_claude.assert_called_once()
-            mock_ollama.assert_not_called()
+            mock_gpt4o.assert_not_called()
 
 
 # ── LLM Dispatcher ────────────────────────────────────────────────────────────
@@ -282,7 +285,7 @@ class TestLLMDispatcher:
              patch("asyncio.sleep", return_value=None):
             from app.llm.router import LLMResponse
             from app.audio.response_post_processor import ProcessedResponse
-            mock_llm.return_value = LLMResponse(text=llm_text, route="ollama", model="llama3.1:8b")
+            mock_llm.return_value = LLMResponse(text=llm_text, route="gpt4o", model="gpt-4o")
             mock_proc.process.return_value = ProcessedResponse(
                 text=llm_text, emotion="default", delay_seconds=0.0, original=llm_text
             )
@@ -290,6 +293,7 @@ class TestLLMDispatcher:
             req = DispatchRequest(
                 session_id=1, avatar_id=1, avatar_name="Aldric",
                 context_type="combat_turn", interrupt_score=0.8, priority=2,
+                holding_phrase_chance=1.0,  # guarantee holding phrase always plays
             )
             await dispatcher.dispatch(req)
 
@@ -306,7 +310,7 @@ class TestLLMDispatcher:
              patch("asyncio.sleep", return_value=None):
             from app.llm.router import LLMResponse
             from app.audio.response_post_processor import ProcessedResponse
-            mock_llm.return_value = LLMResponse(text=llm_text, route="ollama", model="llama3.1:8b")
+            mock_llm.return_value = LLMResponse(text=llm_text, route="gpt4o", model="gpt-4o")
             mock_proc.process.return_value = ProcessedResponse(
                 text=llm_text, emotion="default", delay_seconds=0.0, original=llm_text
             )
@@ -329,7 +333,7 @@ class TestLLMDispatcher:
              patch("asyncio.sleep", return_value=None):
             from app.llm.router import LLMResponse
             from app.audio.response_post_processor import ProcessedResponse
-            mock_llm.return_value = LLMResponse(text=llm_text, route="ollama", model="llama3.1:8b")
+            mock_llm.return_value = LLMResponse(text=llm_text, route="gpt4o", model="gpt-4o")
             mock_proc.process.return_value = ProcessedResponse(
                 text=llm_text, emotion="default", delay_seconds=0.0, original=llm_text
             )
@@ -352,7 +356,7 @@ class TestLLMDispatcher:
              patch("asyncio.sleep", return_value=None):
             from app.llm.router import LLMResponse
             from app.audio.response_post_processor import ProcessedResponse
-            mock_llm.return_value = LLMResponse(text=llm_text, route="ollama", model="llama3.1:8b")
+            mock_llm.return_value = LLMResponse(text=llm_text, route="gpt4o", model="gpt-4o")
             mock_proc.process.return_value = ProcessedResponse(
                 text=llm_text, emotion="default", delay_seconds=0.0, original=llm_text
             )
@@ -378,7 +382,7 @@ class TestLLMDispatcher:
              patch("asyncio.sleep", return_value=None):
             from app.llm.router import LLMResponse
             from app.audio.response_post_processor import ProcessedResponse
-            mock_llm.return_value = LLMResponse(text=llm_text, route="ollama", model="llama3.1:8b")
+            mock_llm.return_value = LLMResponse(text=llm_text, route="gpt4o", model="gpt-4o")
             mock_proc.process.return_value = ProcessedResponse(
                 text=llm_text, emotion="default", delay_seconds=0.0, original=llm_text
             )

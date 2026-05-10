@@ -2,23 +2,23 @@
 LLM Router — Hybrid Brain.
 
 Routes LLM calls to either:
-  • Ollama (llama3.1:8b) — fast, local, no API cost
-  • Claude API (claude-haiku) — higher quality for emotional/complex moments
+  • GPT-4o (gpt-4o) — fast, low-latency for combat/ambient/quick reactions
+  • Claude Sonnet 4.6  — richer emotional/story moments with prompt caching
 
-Routing logic (from plan.md §4.5):
-  combat_turn, casual_roleplay, direct_question, party_debate → Ollama
-  emotional_beat, backstory_call, npc_social, moral_dilemma    → Claude
+Routing logic:
+  emotional_beat, backstory_call, npc_social, moral_dilemma → Claude
+  combat_turn, tactical, quick_reaction, ambient, default    → GPT-4o
 
-Both clients degrade gracefully:
-  - Ollama: returns stub if server not reachable
-  - Claude: returns stub if API key missing or call fails
+Keyword escalation: if the recent transcript contains emotional keywords,
+route to Claude regardless of context_type (loaded from routing_keywords.yaml).
 
-All I/O is blocking (designed to run in asyncio thread pool).
+Both clients degrade gracefully — return stub LLMResponse on any failure.
 """
 
 from __future__ import annotations
 
 import json
+import time
 import structlog
 from dataclasses import dataclass
 
@@ -33,7 +33,7 @@ log = structlog.get_logger()
 @dataclass
 class LLMResponse:
     text: str
-    route: str          # "ollama" | "claude" | "stub"
+    route: str          # "gpt4o" | "claude" | "stub"
     model: str
     prompt_tokens: int = 0
     completion_tokens: int = 0
@@ -43,41 +43,113 @@ class LLMResponse:
 
 def select_route(context_type: str, recent_transcript: str = "") -> str:
     """
-    Return 'claude' or 'ollama' for the given context.
+    Return 'claude' or 'gpt4o' for the given context.
 
     Keyword escalation: if the recent transcript contains emotional keywords,
     route to Claude regardless of context_type.
-    Keywords and context types are loaded from routing_keywords.yaml.
     """
     lower = recent_transcript.lower()
     if any(kw in lower for kw in prompt_loader.claude_routing_keywords):
         return "claude"
     if context_type in prompt_loader.claude_context_types:
         return "claude"
-    return "ollama"
+    return "gpt4o"
 
 
-# ── Ollama client ─────────────────────────────────────────────────────────────
+# ── GPT-4o client ─────────────────────────────────────────────────────────────
 
-def call_ollama(
+def call_gpt4o(
     system_prompt: str,
     user_message: str,
     model: str | None = None,
-    num_predict: int = 120,
 ) -> LLMResponse:
     """
-    Synchronous Ollama chat call.
-    Returns a stub response if Ollama is unreachable.
+    Synchronous OpenAI chat call via GPT-4o.
+    Returns a stub response if API key is missing or call fails.
     """
-    import time
     _settings = get_settings()
-    model = model or _settings.ollama_model
+    model = model or _settings.gpt4o_model
     t0 = time.monotonic()
 
-    # Phase 8: OTel span for Phoenix tracing (no-op if Phoenix not configured)
+    if not _settings.openai_api_key:
+        log.warning("llm.gpt4o_no_api_key")
+        return LLMResponse(text="", route="stub", model=model, error="no_api_key")
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=_settings.openai_api_key)
+
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=_settings.gpt4o_max_tokens,
+            temperature=_settings.gpt4o_temperature,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_message},
+            ],
+        )
+
+        text = (response.choices[0].message.content or "").strip()
+        latency = (time.monotonic() - t0) * 1000
+        usage = response.usage or type("U", (), {"prompt_tokens": 0, "completion_tokens": 0})()
+        prompt_tok = getattr(usage, "prompt_tokens", 0)
+        completion_tok = getattr(usage, "completion_tokens", 0)
+
+        log.info(
+            "llm.gpt4o_response",
+            model=model,
+            latency_ms=round(latency),
+            prompt_tokens=prompt_tok,
+            completion_tokens=completion_tok,
+            response_preview=text[:120],
+        )
+        return LLMResponse(
+            text=text,
+            route="gpt4o",
+            model=model,
+            prompt_tokens=prompt_tok,
+            completion_tokens=completion_tok,
+            latency_ms=latency,
+        )
+
+    except Exception as e:
+        latency = (time.monotonic() - t0) * 1000
+        log.error("llm.gpt4o_failed", error=str(e), latency_ms=round(latency))
+        return LLMResponse(
+            text="",
+            route="stub",
+            model=model,
+            latency_ms=latency,
+            error=str(e),
+        )
+
+
+# ── Claude client ─────────────────────────────────────────────────────────────
+
+def call_claude(
+    system_prompt: str,
+    user_message: str,
+    model: str | None = None,
+) -> LLMResponse:
+    """
+    Synchronous Anthropic API call with prompt caching.
+
+    The system prompt is sent as a single cacheable block — Anthropic caches
+    the prefix on first call (ephemeral TTL: 5 min) so repeated calls with
+    the same static system content pay only the completion tokens.
+    """
+    _settings = get_settings()
+    model = model or _settings.claude_model
+    t0 = time.monotonic()
+
+    if not _settings.anthropic_api_key:
+        log.warning("llm.claude_no_api_key")
+        return LLMResponse(text="", route="stub", model=model, error="no_api_key")
+
+    # Phase 3: OTel span for Phoenix tracing (no-op if not configured)
     try:
         from app.tracing import get_tracer as _get_tracer
-        _span_ctx = _get_tracer("vestige.ollama").start_as_current_span("ollama.chat")
+        _span_ctx = _get_tracer("vestige.claude").start_as_current_span("claude.chat")
     except Exception:
         _span_ctx = nullcontext()
 
@@ -94,52 +166,47 @@ def call_ollama(
         _set_attr("llm.user", user_message[:500])
 
         try:
-            import urllib.request
-            import urllib.error
+            import anthropic
+            client = anthropic.Anthropic(api_key=_settings.anthropic_api_key)
 
-            payload = json.dumps({
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user",   "content": user_message},
+            msg = client.messages.create(
+                model=model,
+                max_tokens=_settings.claude_max_tokens,
+                system=[
+                    {
+                        "type": "text",
+                        "text": system_prompt,
+                        "cache_control": {"type": "ephemeral"},
+                    }
                 ],
-                "stream": False,
-                "options": {
-                    "temperature": 0.85,
-                    "top_p": 0.9,
-                    "num_predict": num_predict,
-                },
-            }).encode()
-
-            req = urllib.request.Request(
-                f"{_settings.ollama_base_url}/api/chat",
-                data=payload,
-                headers={"Content-Type": "application/json"},
-                method="POST",
+                messages=[{"role": "user", "content": user_message}],
             )
-            with urllib.request.urlopen(req, timeout=_settings.ollama_timeout_s) as resp:
-                body = json.loads(resp.read())
 
-            text = body.get("message", {}).get("content", "").strip()
+            text = msg.content[0].text.strip() if msg.content else ""
             latency = (time.monotonic() - t0) * 1000
-            prompt_tok = body.get("prompt_eval_count", 0)
-            completion_tok = body.get("eval_count", 0)
+            prompt_tok = msg.usage.input_tokens
+            completion_tok = msg.usage.output_tokens
+            cache_read = getattr(msg.usage, "cache_read_input_tokens", 0) or 0
+            cache_write = getattr(msg.usage, "cache_creation_input_tokens", 0) or 0
 
             _set_attr("llm.response", text[:500])
             _set_attr("llm.latency_ms", round(latency))
             _set_attr("llm.completion_tokens", completion_tok)
+            _set_attr("llm.cache_read_tokens", cache_read)
 
             log.info(
-                "llm.ollama_response",
+                "llm.claude_response",
                 model=model,
                 latency_ms=round(latency),
                 prompt_tokens=prompt_tok,
                 completion_tokens=completion_tok,
+                cache_read_tokens=cache_read,
+                cache_write_tokens=cache_write,
                 response_preview=text[:120],
             )
             return LLMResponse(
                 text=text,
-                route="ollama",
+                route="claude",
                 model=model,
                 prompt_tokens=prompt_tok,
                 completion_tokens=completion_tok,
@@ -148,7 +215,7 @@ def call_ollama(
 
         except Exception as e:
             latency = (time.monotonic() - t0) * 1000
-            log.warning("llm.ollama_failed", error=str(e), latency_ms=round(latency))
+            log.error("llm.claude_failed", error=str(e), latency_ms=round(latency))
             return LLMResponse(
                 text="",
                 route="stub",
@@ -156,76 +223,6 @@ def call_ollama(
                 latency_ms=latency,
                 error=str(e),
             )
-
-
-# ── Claude client ─────────────────────────────────────────────────────────────
-
-def call_claude(
-    system_prompt: str,
-    user_message: str,
-    model: str | None = None,
-) -> LLMResponse:
-    """
-    Synchronous Anthropic API call.
-    Returns a stub response if API key is missing or call fails.
-    """
-    import time
-    _settings = get_settings()
-    model = model or _settings.claude_model
-    t0 = time.monotonic()
-
-    if not _settings.anthropic_api_key:
-        log.warning("llm.claude_no_api_key")
-        return LLMResponse(
-            text="",
-            route="stub",
-            model=model,
-            error="no_api_key",
-        )
-
-    try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=_settings.anthropic_api_key)
-
-        msg = client.messages.create(
-            model=model,
-            max_tokens=_settings.claude_max_tokens,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_message}],
-        )
-
-        text = msg.content[0].text.strip() if msg.content else ""
-        latency = (time.monotonic() - t0) * 1000
-        prompt_tok = msg.usage.input_tokens
-        completion_tok = msg.usage.output_tokens
-
-        log.info(
-            "llm.claude_response",
-            model=model,
-            latency_ms=round(latency),
-            prompt_tokens=prompt_tok,
-            completion_tokens=completion_tok,
-            response_preview=text[:120],
-        )
-        return LLMResponse(
-            text=text,
-            route="claude",
-            model=model,
-            prompt_tokens=prompt_tok,
-            completion_tokens=completion_tok,
-            latency_ms=latency,
-        )
-
-    except Exception as e:
-        latency = (time.monotonic() - t0) * 1000
-        log.error("llm.claude_failed", error=str(e), latency_ms=round(latency))
-        return LLMResponse(
-            text="",
-            route="stub",
-            model=model,
-            latency_ms=latency,
-            error=str(e),
-        )
 
 
 # ── Unified call ──────────────────────────────────────────────────────────────
@@ -237,8 +234,7 @@ def call_llm(
     recent_transcript: str = "",
 ) -> LLMResponse:
     """
-    Route to Ollama or Claude based on context_type and keyword escalation,
-    then call the appropriate backend.
+    Route to GPT-4o or Claude based on context_type and keyword escalation.
     """
     route = select_route(context_type, recent_transcript)
     keyword_escalated = (
@@ -253,4 +249,17 @@ def call_llm(
     )
     if route == "claude":
         return call_claude(system_prompt, user_message)
-    return call_ollama(system_prompt, user_message)
+    return call_gpt4o(system_prompt, user_message)
+
+
+# ── Backward-compat stub ──────────────────────────────────────────────────────
+
+def call_ollama(
+    system_prompt: str,
+    user_message: str,
+    model: str | None = None,
+    num_predict: int = 120,
+) -> LLMResponse:
+    """Deprecated — routes to GPT-4o. Kept so existing tests don't break."""
+    log.warning("llm.call_ollama_deprecated", hint="use call_gpt4o or call_llm instead")
+    return call_gpt4o(system_prompt, user_message, model=model)

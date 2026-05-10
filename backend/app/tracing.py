@@ -76,9 +76,18 @@ def get_tracer(name: str = "vestige"):
         return _NoOpTracer()
 
 
+class _NoOpSpan:
+    """No-op span — absorbs all attribute/event calls silently."""
+    def set_attribute(self, *a, **kw): pass
+    def set_status(self, *a, **kw): pass
+    def add_event(self, *a, **kw): pass
+    def record_exception(self, *a, **kw): pass
+    def __enter__(self): return self
+    def __exit__(self, *a): pass
+
+
 class _NoOpTracer:
     """Minimal no-op tracer for use when OTel is not installed."""
 
     def start_as_current_span(self, name: str, **_):
-        from contextlib import nullcontext
-        return nullcontext()
+        return _NoOpSpan()

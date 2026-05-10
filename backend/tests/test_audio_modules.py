@@ -195,12 +195,12 @@ class TestContextEngine:
         assert d.should_respond is False
         assert d.reason == "self_cooldown"
 
-    def test_combat_context_routes_to_ollama(self):
+    def test_combat_context_routes_to_gpt4o(self):
         engine = self._engine_with_avatar()
         d = engine.evaluate("Aldric, roll initiative!", avatar_id=1)
         assert d.should_respond is True
         assert d.context_type == "combat_turn"
-        assert d.route == "ollama"
+        assert d.route == "gpt4o"
 
     def test_backstory_routes_to_claude(self):
         engine = self._engine_with_avatar()

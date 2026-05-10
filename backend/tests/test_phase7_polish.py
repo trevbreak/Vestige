@@ -122,23 +122,25 @@ class TestSettingsAPI:
 
     def test_get_settings_returns_all_fields(self):
         s = self._get()
-        assert hasattr(s, 'vad_threshold')
-        assert hasattr(s, 'ollama_model')
+        assert hasattr(s, 'gpt4o_model')
+        assert hasattr(s, 'deepgram_endpointing_ms')
         assert hasattr(s, 'silence_gap_trigger')
         assert hasattr(s, 'backchannel_chance')
+        assert hasattr(s, 'openai_api_key_set')
+        assert hasattr(s, 'deepgram_api_key_set')
+        assert hasattr(s, 'elevenlabs_api_key_set')
 
-    def test_patch_vad_threshold(self):
+    def test_patch_deepgram_endpointing(self):
         from app.routers.settings import update_settings, RuntimeSettings, get_current_settings
         from app.config import get_settings
 
-        original = get_settings().vad_threshold
+        original = get_settings().deepgram_endpointing_ms
         try:
-            body = RuntimeSettings(vad_threshold=0.8)
+            body = RuntimeSettings(deepgram_endpointing_ms=600)
             result = update_settings(body)
-            assert result.vad_threshold == 0.8
+            assert result.deepgram_endpointing_ms == 600
         finally:
-            # Restore
-            object.__setattr__(get_settings(), 'vad_threshold', original)
+            object.__setattr__(get_settings(), 'deepgram_endpointing_ms', original)
 
     def test_patch_multiple_fields(self):
         from app.routers.settings import update_settings, RuntimeSettings

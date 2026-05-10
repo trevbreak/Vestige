@@ -25,27 +25,28 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 class RuntimeSettings(BaseModel):
     """Settings that can be tuned at runtime without restart."""
 
-    # Credentials
-    anthropic_api_key: Optional[str] = None  # write-only; never echoed back
+    # Credentials (write-only; never echoed back)
+    anthropic_api_key: Optional[str] = None
+    openai_api_key: Optional[str] = None
+    deepgram_api_key: Optional[str] = None
+    elevenlabs_api_key: Optional[str] = None
 
     # LLM routing
-    ollama_model: Optional[str] = None
     claude_model: Optional[str] = None
     claude_max_tokens: Optional[int] = Field(None, ge=64, le=4096)
-    ollama_timeout_s: Optional[float] = Field(None, ge=5.0, le=300.0)
+    gpt4o_model: Optional[str] = None
+    gpt4o_max_tokens: Optional[int] = Field(None, ge=64, le=1024)
+    gpt4o_temperature: Optional[float] = Field(None, ge=0.0, le=2.0)
+
+    # STT
+    deepgram_endpointing_ms: Optional[int] = Field(None, ge=200, le=3000)
+
+    # TTS
+    elevenlabs_model_quality: Optional[str] = None
+    elevenlabs_model_fast: Optional[str] = None
 
     # Audio input
-    vad_threshold: Optional[float] = Field(None, ge=0.05, le=0.99)
-    vad_trailing_silence_ms: Optional[int] = Field(None, ge=100, le=5000)
     aec_decay_ms: Optional[int] = Field(None, ge=0, le=2000)
-    # Whisper transcription (beam_size, thresholds take effect immediately;
-    # whisper_model/device/compute_type require server restart)
-    whisper_beam_size: Optional[int] = Field(None, ge=1, le=10)
-    whisper_no_speech_threshold: Optional[float] = Field(None, ge=0.1, le=1.0)
-    whisper_log_prob_threshold: Optional[float] = Field(None, ge=-5.0, le=0.0)
-    whisper_model: Optional[str] = None
-    whisper_device: Optional[str] = None
-    whisper_compute_type: Optional[str] = None
 
     # Trigger timing
     silence_gap_trigger: Optional[float] = Field(None, ge=1.0, le=30.0)
@@ -62,30 +63,44 @@ class RuntimeSettings(BaseModel):
     # Audio device
     mic_device_index: Optional[int] = Field(None, ge=0)
 
+    # Avatar-to-avatar
+    max_avatar_chain_depth: Optional[int] = Field(None, ge=1, le=10)
+    avatar_speech_cooldown_s: Optional[float] = Field(None, ge=1.0, le=60.0)
+
+    # Character traits
+    trait_decay_weekly_pct: Optional[float] = Field(None, ge=0.0, le=1.0)
+    trait_manifestation_base_probability: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+    # Prompt architecture
+    actor_instructions_offset: Optional[int] = Field(None, ge=0, le=10)
+
     # Memory
     memory_top_k: Optional[int] = Field(None, ge=1, le=20)
     transcript_context_lines: Optional[int] = Field(None, ge=5, le=100)
+    summary_method: Optional[str] = None
+    summary_previous_sessions: Optional[int] = Field(None, ge=0, le=20)
 
 
 class SettingsOut(BaseModel):
     """All currently active runtime settings."""
-    # Credentials (masked)
+    # Credentials (masked — only shows whether set)
     anthropic_api_key_set: bool
+    openai_api_key_set: bool
+    deepgram_api_key_set: bool
+    elevenlabs_api_key_set: bool
     # LLM
-    ollama_model: str
     claude_model: str
     claude_max_tokens: int
-    ollama_timeout_s: float
+    gpt4o_model: str
+    gpt4o_max_tokens: int
+    gpt4o_temperature: float
+    # STT
+    deepgram_endpointing_ms: int
+    # TTS
+    elevenlabs_model_quality: str
+    elevenlabs_model_fast: str
     # Audio
-    vad_threshold: float
-    vad_trailing_silence_ms: int
     aec_decay_ms: int
-    whisper_beam_size: int
-    whisper_no_speech_threshold: float
-    whisper_log_prob_threshold: float
-    whisper_model: str
-    whisper_device: str
-    whisper_compute_type: str
     # Timing
     silence_gap_trigger: float
     self_cooldown_seconds: float
@@ -98,9 +113,19 @@ class SettingsOut(BaseModel):
     backchannel_chance: float
     # Audio device
     mic_device_index: int
+    # Avatar-to-avatar
+    max_avatar_chain_depth: int
+    avatar_speech_cooldown_s: float
+    # Character traits
+    trait_decay_weekly_pct: float
+    trait_manifestation_base_probability: float
+    # Prompt architecture
+    actor_instructions_offset: int
     # Memory
     memory_top_k: int
     transcript_context_lines: int
+    summary_method: str
+    summary_previous_sessions: int
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -110,20 +135,19 @@ def get_current_settings():
     """Return all currently active runtime-tunable settings."""
     s = get_settings()
     return SettingsOut(
-        anthropic_api_key_set=bool(s.anthropic_api_key and s.anthropic_api_key != "sk-ant-..."),
-        ollama_model=s.ollama_model,
+        anthropic_api_key_set=bool(s.anthropic_api_key),
+        openai_api_key_set=bool(s.openai_api_key),
+        deepgram_api_key_set=bool(s.deepgram_api_key),
+        elevenlabs_api_key_set=bool(s.elevenlabs_api_key),
         claude_model=s.claude_model,
         claude_max_tokens=s.claude_max_tokens,
-        ollama_timeout_s=s.ollama_timeout_s,
-        vad_threshold=s.vad_threshold,
-        vad_trailing_silence_ms=s.vad_trailing_silence_ms,
+        gpt4o_model=s.gpt4o_model,
+        gpt4o_max_tokens=s.gpt4o_max_tokens,
+        gpt4o_temperature=s.gpt4o_temperature,
+        deepgram_endpointing_ms=s.deepgram_endpointing_ms,
+        elevenlabs_model_quality=s.elevenlabs_model_quality,
+        elevenlabs_model_fast=s.elevenlabs_model_fast,
         aec_decay_ms=s.aec_decay_ms,
-        whisper_beam_size=s.whisper_beam_size,
-        whisper_no_speech_threshold=s.whisper_no_speech_threshold,
-        whisper_log_prob_threshold=s.whisper_log_prob_threshold,
-        whisper_model=s.whisper_model,
-        whisper_device=s.whisper_device,
-        whisper_compute_type=s.whisper_compute_type,
         silence_gap_trigger=s.silence_gap_trigger,
         self_cooldown_seconds=s.self_cooldown_seconds,
         avatar_cooldown_seconds=s.avatar_cooldown_seconds,
@@ -133,8 +157,15 @@ def get_current_settings():
         backchannel_min_gap=s.backchannel_min_gap,
         backchannel_chance=s.backchannel_chance,
         mic_device_index=s.mic_device_index,
+        max_avatar_chain_depth=s.max_avatar_chain_depth,
+        avatar_speech_cooldown_s=s.avatar_speech_cooldown_s,
+        trait_decay_weekly_pct=s.trait_decay_weekly_pct,
+        trait_manifestation_base_probability=s.trait_manifestation_base_probability,
+        actor_instructions_offset=s.actor_instructions_offset,
         memory_top_k=s.memory_top_k,
         transcript_context_lines=s.transcript_context_lines,
+        summary_method=s.summary_method,
+        summary_previous_sessions=s.summary_previous_sessions,
     )
 
 
@@ -151,6 +182,9 @@ def update_settings(body: RuntimeSettings):
     jitter_max = body.response_jitter_max if body.response_jitter_max is not None else s.response_jitter_max
     if jitter_min > jitter_max:
         raise HTTPException(400, "response_jitter_min must be ≤ response_jitter_max")
+
+    if body.summary_method is not None and body.summary_method not in ("facts", "short", "balanced", "long"):
+        raise HTTPException(400, "summary_method must be one of: facts, short, balanced, long")
 
     updates = body.model_dump(exclude_none=True)
     for key, val in updates.items():
