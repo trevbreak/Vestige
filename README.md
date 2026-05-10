@@ -9,166 +9,169 @@
 
 ### Fully Voiced, In-Character Avatars
 
-Each avatar speaks in its own distinct voice. Vestige ships with a catalogue of regional British and Irish neural voices — automatically matched to the avatar's race, class, and personality at creation time. Assign a brooding Irish ranger a low, deliberate tenor. Give your Welsh druid something ancient and warm. Every character sounds like someone, not something.
+Each avatar speaks in its own distinct voice via ElevenLabs streaming TTS. Assign a distinct ElevenLabs voice to each character and tune expressiveness with per-avatar stability, style, and similarity sliders. Emotion tags (`[somber]`, `[excited]`, `[laughing]`) are injected automatically before synthesis via a secondary LLM pass, so combat lines sound tense and triumphant moments feel earned.
+
+Two model tracks let you balance quality against latency:
+
+- **`eleven_v3`** (~300ms TTFB) — supports inline emotion and sound tags; used for roleplay, emotional beats, and backstory moments
+- **`eleven_flash_v2_5`** (~170ms TTFB) — no tags, pure speed; used for combat turns and quick reactions
+
+### Sub-Second Transcript Latency
+
+Speech-to-text uses Deepgram's nova-3 streaming WebSocket. Unlike batch STT systems that wait for silence, Deepgram handles VAD and endpointing internally and fires the `speech_final` callback within ~200ms of sentence completion — dramatically reducing the time from someone speaking to the avatar beginning to respond.
 
 ### Two-Layer Conversational Presence
 
-Vestige was built to solve the core flaw of every voice AI system: they feel robotic because they're turn-based. Real people at a table don't wait for silence to react — they murmur agreement mid-story, half-start sentences, chime in before you finish.
+Vestige uses two parallel layers to prevent the turn-based feel of most voice AI:
 
-Vestige uses two parallel layers:
+- **Presence Layer** — real-time, no LLM. Backchannels ("mm", "yeah", "right") played probabilistically while humans speak. Holding phrases bridge the generation gap. The avatar is _in the room_.
+- **Reasoning Layer** — full STT → LLM → TTS cascade with jitter-delayed responses and context-aware routing. Every response sounds considered, not instant.
 
-*   **Presence Layer** — real-time, no LLM. Backchannels ("mm", "yeah", "right") played probabilistically while the humans speak. Holding phrases ("Let me think on that…") bridge the generation gap. The avatar is _in the room_.
-*   **Reasoning Layer** — a full STT → LLM → TTS cascade with jitter-delayed responses and context-aware routing. Every response sounds considered, not instant.
+### Avatar-to-Avatar Banter
 
-Combined, avatars feel like they're at the table — not waiting in a queue.
+When one avatar speaks, other avatars evaluate whether to react — producing natural multi-avatar exchanges, disagreements, and collaborative problem-solving without human input. A chain depth limit (default 3) and per-archetype gates prevent crosstalk spirals:
+
+- **Stoic** avatars never react to avatar speech unless directly named
+- **Introvert** avatars react at most once per minute to other avatars
+- All avatars use an 8-second cooldown between avatar-speech reactions
 
 ### Intelligent Personality System
 
-Every avatar is driven by a rich, LLM-generated personality prompt — a 150–200 word first-person internal monologue describing how the character thinks, speaks, and chooses when to engage. Dry and clipped? Verbose and digressive? Fierce when threatened, jokey otherwise? It's all there, and it shapes every response.
+Every avatar is driven by a rich, LLM-generated personality prompt — a 150–200 word first-person internal monologue describing how the character thinks, speaks, and chooses when to engage.
 
 Four **personality archetypes** govern when an avatar speaks:
 
-*   **Extrovert** — joins most conversations freely
-*   **Introvert** — only speaks when directly addressed
-*   **Reactive** — engages questions and combat; ignores idle chatter
-*   **Stoic** — speaks only when named, addressed, or in combat
+- **Extrovert** — joins most conversations freely
+- **Introvert** — only speaks when directly addressed
+- **Reactive** — engages questions and combat; ignores idle chatter
+- **Stoic** — speaks only when named, addressed, or in combat
 
-A per-avatar **verbosity** dial (0.0–1.0) controls how often ambient triggers produce a response. An **interrupts often** flag lowers the interrupt threshold — some characters just can't help themselves.
+### Character Trait Evolution
 
-### Full D&D 5e Rules Engine
+Avatars develop persistent psychological traits from campaign events. A spider encounter leaves an arachnophobia that lingers for weeks. Betrayal by a party member creates measured distrust. Each trait has:
 
-Vestige knows the rules. The built-in rules engine tracks action economy (action, bonus action, reaction, free actions), spell slot expenditure and recovery, concentration, and all standard conditions (stunned, grappled, frightened, and more). Avatars won't cast a spell they've already used. They won't burn a reaction they don't have. Combat turns are tracked automatically and surfaced to the AI context so responses stay tactically coherent.
+- **Strength** (0–1) that decays ~10% per week without reinforcement
+- **Trigger keywords** that fire a stochastic manifestation check when they appear in the transcript
+- **Emotional signatures** that override the TTS emotion tag when the trait manifests
+- **Active trait injection** into the system prompt so the LLM knows what tensions are present
 
-### Persistent Memory Across Sessions
-
-Avatars remember. Every session is transcribed, embedded, and stored in a local vector database. When something relevant comes up — a name mentioned before, a promise made three sessions ago, a grudge carried forward — Vestige retrieves the right memories and injects them into the AI context. Characters grow over time.
+Structured relationship axes (trust, affection, respect) evolve similarly and are extracted from post-session summaries by Claude.
 
 ### Smart LLM Routing
 
-Not every response needs the same depth. Vestige routes between two LLM backends based on context type:
+Vestige routes between two backends based on context type:
 
-*   **Ollama (local, fast)** handles combat turns, casual roleplay, and direct short-answer questions — low latency, no API call.
-*   **Claude (Anthropic API)** handles deep roleplay, emotional beats, moral dilemmas, and backstory moments — richer, more considered responses when it matters.
+- **GPT-4o** handles combat turns, casual roleplay, and direct questions — fast, with ~460ms average latency
+- **Claude Sonnet 4.6** handles emotional beats, moral dilemmas, backstory calls, and NPC social encounters — richer responses with prompt caching enabled (system prompt cached; dynamic sections bypass the cache)
 
-The routing keywords are fully configurable in plain YAML files, editable without restarting the server.
+Routing keywords are fully configurable in plain YAML files.
 
-### Configurable Prompts — No Code Required
+### Full D&D 5e Rules Engine
 
-All keyword lists, holding phrase text, routing rules, and system prompt sections live in editable YAML files under `backend/prompts/`. Change what triggers combat mode. Add new holding phrases. Adjust response length guidance per context type. After editing, a single API call hot-reloads everything atomically.
+The built-in rules engine tracks action economy, spell slot expenditure and recovery, concentration, and all standard conditions. Avatars won't cast a spell they've already used. Combat turns are tracked automatically and surfaced to the AI context.
+
+### Persistent Memory Across Sessions
+
+Every session is transcribed, embedded, and stored in a local vector database. Relevant memories — a name mentioned before, a promise made three sessions ago, a grudge carried forward — are retrieved and injected into context. Post-session summaries include psychological trait and relationship deltas extracted by Claude.
+
+Layered summary context: the last 6 prior session summaries are injected when generating a new one, giving the model a running narrative thread.
 
 ### LLM Observability with Arize Phoenix
 
-Every LLM call — Claude and Ollama — is traced and surfaced in Arize Phoenix, a local observability UI running at `http://localhost:6006`. Inspect the full system prompt and response for any avatar interaction, review latency and token counts, annotate responses, and run evaluations. Install once, start alongside the backend.
-
-### Inter-Avatar Dynamics
-
-Avatars are aware of each other. They react to what other avatars say, reference each other by name, and can form opinions. Cooldowns and directionality prevent crosstalk spirals. The DM retains full control with override hotwords and session management tools.
+Every LLM call is traced and surfaced in Arize Phoenix at `http://localhost:6006`. Inspect full prompts, responses, latency, token counts (including cache hits), and avatar/context attributes.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    BROWSER  ·  http://localhost:5173                        │
-│                                                                             │
-│   ┌─────────────┐  ┌──────────┐  ┌──────────────────────┐  ┌───────────┐  │
-│   │  Avatars    │  │ Sessions │  │  Table (live game)   │  │ Settings  │  │
-│   │  (CRUD +    │  │  (CRUD + │  │  transcript • avatar │  │  Memory   │  │
-│   │   voices)   │  │  history)│  │  panels • DM controls│  │  Review   │  │
-│   └─────────────┘  └──────────┘  └──────────────────────┘  └───────────┘  │
-│                         React 19 + Vite 7 + Zustand + CSS Modules           │
-└──────────────────────────────────┬──────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                    BROWSER  ·  http://localhost:5173                         │
+│                                                                              │
+│   ┌─────────────┐  ┌──────────┐  ┌──────────────────────┐  ┌────────────┐  │
+│   │  Avatars    │  │ Sessions │  │  Table (live game)   │  │ Settings / │  │
+│   │  (CRUD +    │  │  (CRUD + │  │  transcript • avatar │  │  Memory /  │  │
+│   │   voices)   │  │  history)│  │  panels • DM controls│  │  Traits    │  │
+│   └─────────────┘  └──────────┘  └──────────────────────┘  └────────────┘  │
+│                         React 19 + Vite 7 + Zustand + CSS Modules            │
+└──────────────────────────────────┬───────────────────────────────────────────┘
                                    │  HTTP REST + WebSocket (/ws)
-┌──────────────────────────────────▼──────────────────────────────────────────┐
-│                    BACKEND  ·  http://localhost:8000                        │
-│                    FastAPI 0.115  ·  Python 3.13                            │
-│                                                                             │
-│  Routers: /api/avatars  /api/sessions  /api/transcripts                    │
-│           /api/settings  /api/prompts  /api/system                         │
-│                                                                             │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                        AUDIO PIPELINE                                │  │
-│  │                                                                      │  │
-│  │  🎤 Mic                                                              │  │
-│  │   └─ sounddevice ──► AEC Gate ──► silero-VAD ──► faster-whisper     │  │
-│  │                                                      (CUDA, STT)    │  │
-│  │                                         ┌────────────────┘          │  │
-│  │                                         ▼                           │  │
-│  │                            ┌─────────────────────┐                  │  │
-│  │           ┌────────────────┤  Backchannel        ├──► Presence      │  │
-│  │           │                │  Classifier         │    Layer         │  │
-│  │           │                └──────────┬──────────┘    (backchannels │  │
-│  │           │                           │                + holding    │  │
-│  │           │                           ▼                  phrases)   │  │
-│  │           │                ┌─────────────────────┐                  │  │
-│  │           │                │  Context Engine     │                  │  │
-│  │           │                │  · overlap detector │                  │  │
-│  │           │                │  · per-avatar eval  │                  │  │
-│  │           │                │  · archetype/       │                  │  │
-│  │           │                │    verbosity filter │                  │  │
-│  │           │                └──────────┬──────────┘                  │  │
-│  │           │                           │ DispatchRequest             │  │
-│  │           │                           ▼                             │  │
-│  │           │       ┌───────────────────────────────────────┐         │  │
-│  │           │       │           LLM DISPATCHER              │         │  │
-│  │           │       │                                       │         │  │
-│  │           │       │  Memory Retriever (sqlite-vec)        │         │  │
-│  │           │       │  Prompt Builder (YAML-driven)         │         │  │
-│  │           │       │  Cross-Avatar Referencer              │         │  │
-│  │           │       │  Rules Engine (D&D 5e)                │         │  │
-│  │           │       │         ↓ route selection             │         │  │
-│  │           │       │  ┌─────────────┐  ┌───────────────┐  │         │  │
-│  │           │       │  │ Ollama      │  │  Claude API   │  │         │  │
-│  │           │       │  │ (local LLM) │  │  (Anthropic)  │  │         │  │
-│  │           │       │  │ fast-path:  │  │  deep-path:   │  │         │  │
-│  │           │       │  │ combat,     │  │  roleplay,    │  │         │  │
-│  │           │       │  │ roleplay,   │  │  emotional,   │  │         │  │
-│  │           │       │  │ questions   │  │  backstory    │  │         │  │
-│  │           │       │  └──────┬──────┘  └──────┬────────┘  │         │  │
-│  │           │       │         └────────┬────────┘           │         │  │
-│  │           │       └──────────────────┼────────────────────┘         │  │
-│  │           │                          ▼                               │  │
-│  │           │             ┌────────────────────────┐                  │  │
-│  │           │             │  Response Post-        │                  │  │
-│  │           │             │  Processor             │                  │  │
-│  │           │             │  · emotion tag strip   │                  │  │
-│  │           │             │  · length truncation   │                  │  │
-│  │           │             │  · response jitter     │                  │  │
-│  │           │             └────────────┬───────────┘                  │  │
-│  │           │                          ▼                               │  │
-│  │           │    ┌───────────────────────────────────────────┐        │  │
-│  │           │    │                TTS ENGINE                 │        │  │
-│  │           │    │                                           │        │  │
-│  │           │    │  Edge-TTS  ──► imageio-ffmpeg (MP3→WAV)  │        │  │
-│  │           │    │  (neural accent voices, per-avatar)       │        │  │
-│  │           │    │                    ── or ──               │        │  │
-│  │           │    │  XTTS-v2 (CUDA, voice clone from .wav)   │        │  │
-│  │           │    └───────────────────────┬───────────────────┘        │  │
-│  │           │                            │                             │  │
-│  │           └────────────────────────────┘                             │  │
-│  │                                         ▼                            │  │
-│  │                                    🔊 Speaker                        │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  ┌──────────────────────────┐   ┌──────────────────────────────────────┐   │
-│  │  SQLite (aiosqlite)      │   │  Arize Phoenix (optional, separate   │   │
-│  │  · avatars / sessions    │   │  process)  ·  http://localhost:6006  │   │
-│  │  · transcripts           │   │  OTel spans for every LLM call:      │   │
-│  │  · memories (embeddings) │   │  prompts · responses · latency ·     │   │
-│  │  · settings              │   │  tokens · avatar/context attributes  │   │
-│  └──────────────────────────┘   └──────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────▼───────────────────────────────────────────┐
+│                    BACKEND  ·  http://localhost:8000                         │
+│                    FastAPI 0.115  ·  Python 3.13                             │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                        AUDIO PIPELINE                                │   │
+│  │                                                                      │   │
+│  │  🎤 Mic → PCM frames                                                 │   │
+│  │   └─ AEC Gate ──► Deepgram STT (nova-3, streaming WebSocket)        │   │
+│  │                        ↓ speech_final (~200ms latency)               │   │
+│  │           ┌────────────────────────┐                                 │   │
+│  │           │  Backchannel Classifier│──► Presence Layer               │   │
+│  │           └──────────┬─────────────┘    (backchannels + holding)    │   │
+│  │                      ▼                                               │   │
+│  │           ┌────────────────────────┐                                 │   │
+│  │           │  Context Engine        │                                 │   │
+│  │           │  · overlap detector    │                                 │   │
+│  │           │  · per-avatar eval     │                                 │   │
+│  │           │  · archetype/verbosity │                                 │   │
+│  │           │  · avatar-speech gates │                                 │   │
+│  │           │  · trait trigger check │                                 │   │
+│  │           └──────────┬─────────────┘                                │   │
+│  │                      │ DispatchRequest                               │   │
+│  │                      ▼                                               │   │
+│  │     ┌─────────────────────────────────────────────┐                 │   │
+│  │     │               LLM DISPATCHER                │                 │   │
+│  │     │                                             │                 │   │
+│  │     │  Memory Retriever (sqlite-vec)               │                 │   │
+│  │     │  Prompt Builder (author framing, actor      │                 │   │
+│  │     │    offset, active traits, YAML-driven)      │                 │   │
+│  │     │  Cross-Avatar Referencer                    │                 │   │
+│  │     │  Rules Engine (D&D 5e)                      │                 │   │
+│  │     │         ↓ route selection                   │                 │   │
+│  │     │  ┌─────────────────┐  ┌──────────────────┐  │                 │   │
+│  │     │  │ GPT-4o          │  │ Claude Sonnet 4.6│  │                 │   │
+│  │     │  │ (fast-path)     │  │ (deep-path,      │  │                 │   │
+│  │     │  │ combat, roleplay│  │  emotional,      │  │                 │   │
+│  │     │  │ questions       │  │  backstory,      │  │                 │   │
+│  │     │  │                 │  │  + prompt cache) │  │                 │   │
+│  │     │  └────────┬────────┘  └────────┬─────────┘  │                 │   │
+│  │     │           └──────────┬──────────┘            │                 │   │
+│  │     └──────────────────────┼──────────────────────-┘                │   │
+│  │                            ▼                                         │   │
+│  │          ┌──────────────────────────────────┐                       │   │
+│  │          │  Response Post-Processor         │                       │   │
+│  │          │  · emotion tag / trait override  │                       │   │
+│  │          │  · audio tag injection (Haiku)   │                       │   │
+│  │          └──────────────────┬───────────────┘                       │   │
+│  │                             ▼                                        │   │
+│  │          ┌──────────────────────────────────┐                       │   │
+│  │          │  TTS ENGINE                      │                       │   │
+│  │          │                                  │                       │   │
+│  │          │  ElevenLabs (primary)            │                       │   │
+│  │          │  · eleven_v3 (300ms, emotion     │                       │   │
+│  │          │    tags, quality)                │                       │   │
+│  │          │  · eleven_flash_v2_5 (170ms,     │                       │   │
+│  │          │    combat/quick)                 │                       │   │
+│  │          │  Streams raw PCM chunks → browser│                       │   │
+│  │          │  (plays before synthesis done)   │                       │   │
+│  │          │         ── fallbacks ──           │                       │   │
+│  │          │  Edge-TTS  /  XTTS-v2 (CUDA)     │                       │   │
+│  │          └──────────────────────────────────┘                       │   │
+│  │                                        ▼                             │   │
+│  │                              🔊 Browser AudioContext                 │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+│  ┌──────────────────────────┐   ┌────────────────────────────────────────┐  │
+│  │  SQLite (aiosqlite)      │   │  Arize Phoenix (optional, separate     │  │
+│  │  · avatars / sessions    │   │  process)  ·  http://localhost:6006    │  │
+│  │  · transcripts           │   │  OTel spans: prompts · responses ·     │  │
+│  │  · memories (embeddings) │   │  latency · cache tokens ·              │  │
+│  │  · character_traits      │   │  avatar/context attributes             │  │
+│  │  · relationship_states   │   └────────────────────────────────────────┘  │
+│  └──────────────────────────┘                                                │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
-
-### GPU Memory Budget (24 GB)
-
-| Model | VRAM |
-| --- | --- |
-| faster-whisper large-v3 | ~3 GB |
-| Coqui XTTS-v2 | ~3–4 GB |
-| Ollama llama3.1:8b Q4 | ~5–6 GB |
-| **Total** | **~12 GB** (12 GB headroom) |
 
 ---
 
@@ -176,44 +179,14 @@ Avatars are aware of each other. They react to what other avatars say, reference
 
 ### Prerequisites
 
-*   Python 3.12+
-*   Node.js 20+
-*   NVIDIA GPU with CUDA (for audio pipeline)
-*   [Ollama](https://ollama.com/download) installed and running locally
-*   Anthropic API key (for Claude routing)
-*   No system ffmpeg needed — Edge-TTS MP3 decoding uses the `imageio-ffmpeg` bundled binary (installed automatically via `requirements.txt`)
-*   `arize-phoenix` for LLM tracing (optional but recommended): `pip install arize-phoenix`
+- Python 3.12+
+- Node.js 20+
+- API keys: **Deepgram**, **ElevenLabs**, **OpenAI**, **Anthropic**
+- NVIDIA GPU with CUDA _optional_ (only needed if using XTTS-v2 local fallback)
 
-### 1\. Install and Start Ollama
+### 1. Backend
 
-Vestige uses Ollama for fast, local LLM inference. It must be running before you start the backend.
-
-**Install:** Download from [ollama.com/download](https://ollama.com/download) and run the installer.
-
-**Start the server** (it may already run as a background service after install):
-
-```
-ollama serve
-```
-
-**Pull the required model:**
-
-```
-ollama pull llama3.1:8b
-```
-
-**Verify:**
-
-```
-curl http://localhost:11434/api/tags
-# Should return JSON listing available models
-```
-
-> Ollama must stay running while using Vestige. Without it, fast-path responses (combat, roleplay) will be silently skipped.
-
-### 2\. Backend
-
-```
+```bash
 cd backend
 python -m venv .venv
 
@@ -223,27 +196,34 @@ python -m venv .venv
 source .venv/bin/activate && pip install -r requirements.txt
 
 cp ../.env.example ../.env
-# Edit .env — add ANTHROPIC_API_KEY at minimum
+# Edit .env — add API keys (see Configuration section below)
+
+python -m alembic upgrade head   # create/migrate DB tables
 
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-### 3\. Frontend
+### 2. Frontend
 
-```
+```bash
 cd frontend
 npm install
 npm run dev   # opens http://localhost:5173
 ```
 
+### 3. Configure Avatars
+
+1. Open `http://localhost:5173/avatars`
+2. Create an avatar and fill in the character sheet
+3. In the **ElevenLabs Voice** section, enter a Voice ID from [elevenlabs.io/voice-lab](https://elevenlabs.io/voice-lab)
+4. Choose model preference: Quality (v3) for roleplay, Fast (Flash) for combat
+5. Adjust stability/style/similarity sliders to taste
+
 ### Startup Order
 
-Start services in this order each session:
-
-1.  `ollama serve` (or confirm it's already running)
-2.  Phoenix (optional): `phoenix serve` — starts the tracing UI at `http://localhost:6006`
-3.  Backend: `cd backend && .venv/Scripts/uvicorn app.main:app --reload --port 8000`
-4.  Frontend: `cd frontend && npm run dev`
+1. Phoenix (optional): `phoenix serve` → `http://localhost:6006`
+2. Backend: `cd backend && .venv/Scripts/uvicorn app.main:app --reload --port 8000`
+3. Frontend: `cd frontend && npm run dev`
 
 ---
 
@@ -251,72 +231,35 @@ Start services in this order each session:
 
 ### Avatars Page — `http://localhost:5173/avatars`
 
-Create and manage your avatar roster. Each avatar has a full D&D 5e character card: race, class, alignment, traits, ideals, bonds, flaws, and backstory. At creation time, Vestige calls Ollama to generate a personality prompt, archetype, verbosity, and voice assignment automatically.
+Create and manage your avatar roster. Each avatar has a full D&D 5e character card. At creation time, Vestige calls GPT-4o to generate a personality prompt, archetype, verbosity, and voice assignment automatically.
 
 **Key controls:**
 
-*   **Create Avatar** — opens the avatar form. Fill in the character card fields; the personality prompt will be generated on save.
-*   **Edit Avatar** — revisit any field including the generated personality prompt, which you can freely edit before saving.
-*   **Voice Assignment** — `voice_id` is chosen automatically by Ollama at creation time based on the character's race, class, and personality. Each active avatar is assigned a distinct voice from the catalogue. To reassign all existing avatars, run `scripts/seed_avatar_voices.py`.
-*   **Voice Engine** — `tts_engine_preference` switches between `edge` (accent voices, default) and `xtts` (voice cloning from a reference `.wav`). Leave as `auto` to use Edge-TTS when a `voice_id` is set and fall back to XTTS-v2 if a speaker embedding is loaded.
-*   **Backfill Personality** — for avatars created before Phase 8, call `POST /api/avatars/generate-personality` to generate missing personality data.
+- **Create Avatar** — opens the avatar form. Fill in the character sheet; personality is generated on save.
+- **ElevenLabs Voice** — set Voice ID and expressiveness params (stability, style, similarity). Leave blank to fall back to Edge-TTS.
+- **Model preference** — Quality (eleven_v3, emotion tags) vs Fast (eleven_flash_v2_5).
+- **Backfill Personality** — for older avatars: `POST /api/avatars/generate-personality`.
 
 ### Sessions Page — `http://localhost:5173/sessions`
 
-Manage campaign sessions. Create a new session to begin tracking a game night; close it when done. Session metadata (date, participant avatars) is stored and linked to all transcripts and memories generated during that session.
+Manage campaign sessions. After closing a session, use **Memory Review** to generate a post-session summary with Claude, review trait and relationship deltas, then approve to persist them.
 
 ### Table Page — `http://localhost:5173/table`
 
-The live game view. This is where you run Vestige during an actual session.
+The live game view:
 
-*   **Live transcript** — every spoken utterance is transcribed and displayed in real-time.
-*   **Avatar panels** — one panel per active avatar showing current state, last response, and combat status.
-*   **DM controls** — override hotwords allow the DM to force an avatar to speak, go silent, or reset state mid-session.
-*   **Combat tracker** — initiate and manage combat encounters; the rules engine tracks action economy and spell slots per avatar automatically.
+- **Live transcript** — every utterance transcribed in real-time via Deepgram
+- **Avatar panels** — current state, last response, and combat status
+- **DM controls** — override hotwords to force an avatar to speak, go silent, or reset state
+- **Combat tracker** — action economy and spell slots tracked automatically
 
 ### Settings Page — `http://localhost:5173/settings`
 
-Configure audio devices, microphone selection, and system-level behavior. Changes are persisted to the database and take effect immediately — no restart required.
+Configure API keys, audio devices, and behavior parameters. Changes are persisted and take effect immediately.
 
 ### Memory Review Page — `http://localhost:5173/memory`
 
-Browse and inspect stored memories per avatar. Memories are vector-embedded summaries of past session transcripts, retrieved and injected into context when relevant. Use this page to audit what an avatar "knows" going into a session.
-
----
-
-## Monitoring with Arize Phoenix
-
-Phoenix runs as a separate process alongside Vestige. Install it once:
-
-```
-pip install arize-phoenix
-phoenix serve
-```
-
-The backend sends OTel spans to Phoenix automatically when it's running. If Phoenix is not running, the backend starts normally — no errors, just no tracing. Open `**http://localhost:6006**` to access the UI.
-
-### What Phoenix shows you
-
-Phoenix captures every LLM call made by Vestige — both Claude and Ollama — as a trace. Each trace includes:
-
-*   The full system prompt sent to the model (including the injected personality prompt, memory context, and rules state)
-*   The user message (what was said at the table)
-*   The model's full response
-*   Latency (end-to-end and time-to-first-token)
-*   Token counts (prompt and completion)
-*   Avatar ID and context type as span attributes
-
-### Navigating Phoenix
-
-1.  Open `http://localhost:6006` in your browser.
-2.  The **Traces** tab lists every LLM call in reverse chronological order. Click any row to expand the full span detail.
-3.  Use the **filter bar** to narrow by avatar ID (`avatar_id = 3`), context type (`context_type = emotional_beat`), or date range.
-4.  The **Span Detail** panel shows the full prompt/response, latency breakdown, and all custom attributes.
-5.  The **Evaluations** tab allows you to annotate responses (thumbs up/down, free text notes) for quality tracking over time.
-
-Phoenix is read-only from Vestige's perspective — it observes but does not affect the pipeline. You can leave it open during a session to watch traces arrive in real-time.
-
-For advanced workflows (batch evaluations, dataset export, custom metrics), see the [Arize Phoenix docs](https://docs.arize.com/phoenix).
+Browse stored memories per avatar. After a session, generate a summary here — Claude extracts events, trait deltas, and relationship shifts. Review and approve to commit them to the avatar's long-term memory.
 
 ---
 
@@ -324,25 +267,35 @@ For advanced workflows (batch evaluations, dataset export, custom metrics), see 
 
 Key `.env` settings:
 
-| Variable | Default | Description |
+| Variable | Description |
+| --- | --- |
+| `DEEPGRAM_API_KEY` | Required for streaming STT |
+| `OPENAI_API_KEY` | Required for GPT-4o (fast-path LLM) |
+| `ANTHROPIC_API_KEY` | Required for Claude Sonnet 4.6 (deep-path LLM + summariser) |
+| `ELEVENLABS_API_KEY` | Required for ElevenLabs TTS |
+| `DATABASE_URL` | `sqlite+aiosqlite:///./data/campaign.db` |
+| `HOST` | `0.0.0.0` |
+| `PORT` | `8000` |
+| `CORS_ORIGINS` | `http://localhost:5173,...` |
+
+### Tuning Parameters (Settings page / config.py)
+
+| Setting | Default | Description |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | — | Required for Claude routing |
-| `MIC_DEVICE_INDEX` | `0` | Audio device index (run `scripts/list_audio_devices.py`) |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama endpoint |
-| `OLLAMA_MODEL` | `llama3.1:8b` | Model used for fast-path LLM calls |
-| `CLAUDE_MODEL` | `claude-haiku-4-5-20251001` | Model used for deep/emotional LLM calls |
-| `DATABASE_URL` | `sqlite+aiosqlite:///./data/campaign.db` | SQLite path |
-| `HOST` | `0.0.0.0` | Backend bind address |
-| `PORT` | `8000` | Backend port |
-| `CORS_ORIGINS` | `http://localhost:5173,...` | Allowed frontend origins |
+| `deepgram_endpointing_ms` | `800` | ms of silence = utterance end |
+| `max_avatar_chain_depth` | `3` | Max avatar-to-avatar reaction chain |
+| `avatar_speech_cooldown_s` | `8.0` | Min seconds between avatar-speech reactions |
+| `trait_decay_weekly_pct` | `0.10` | Trait strength decay per week (10%) |
+| `actor_instructions_offset` | `3` | Lines from transcript end to inject actor reminder |
+| `summary_method` | `balanced` | Post-session summary verbosity: facts/short/balanced/long |
 
 ### Hot-Reloadable Prompt Files
 
-All routing logic and prompt text lives in `backend/prompts/*.yaml`. Edit these files to customise behavior without touching Python code:
+All routing logic and prompt text lives in `backend/prompts/*.yaml`:
 
 | File | Controls |
 | --- | --- |
-| `routing_keywords.yaml` | What triggers Claude vs Ollama |
+| `routing_keywords.yaml` | What triggers Claude vs GPT-4o |
 | `context_keywords.yaml` | Combat triggers, DM hotwords, directed fragments |
 | `length_instructions.yaml` | Per context-type response length guidance |
 | `holding_phrases.yaml` | "Thinking out loud" phrases per context type |
@@ -356,6 +309,25 @@ POST http://localhost:8000/api/prompts/reload
 
 ---
 
+## Monitoring with Arize Phoenix
+
+Phoenix runs as a separate process alongside Vestige. Install it once:
+
+```
+pip install arize-phoenix
+phoenix serve
+```
+
+The backend sends OTel spans to Phoenix automatically when it's running. Open `http://localhost:6006` to access the UI. Each span includes:
+
+- Full system prompt (identity, traits, memory, rules state)
+- User message and avatar response
+- Latency end-to-end
+- Token counts including `cache_read_tokens` and `cache_write_tokens` for Claude calls
+- Avatar ID, context type, LLM route as span attributes
+
+---
+
 ## Project Structure
 
 ```
@@ -366,16 +338,17 @@ vestige/
 │   │   ├── config.py            # Settings (pydantic-settings)
 │   │   ├── tracing.py           # Arize Phoenix + OpenTelemetry init
 │   │   ├── db/database.py       # Async engine, session, Base
-│   │   ├── models/              # SQLAlchemy models
+│   │   ├── models/              # SQLAlchemy models (avatar, session, transcript,
+│   │   │                        #   memory, character_trait, relationship_state)
 │   │   ├── schemas/             # Pydantic schemas
 │   │   ├── routers/             # API routers + WebSocket
-│   │   ├── audio/               # Pipeline, VAD, STT, TTS, AEC, post-processor
-│   │   │   └── edge_tts_engine.py  # Edge-TTS accent voices
-│   │   ├── llm/                 # Prompt builder, router, dispatcher
-│   │   │   └── avatar_generator.py  # LLM-generated personality + voice
+│   │   ├── audio/               # Pipeline, Deepgram STT, ElevenLabs TTS,
+│   │   │                        #   audio tag injector, AEC, output manager
+│   │   ├── llm/                 # Prompt builder, GPT-4o/Claude router, dispatcher
+│   │   ├── memory/              # Embedder, store, summariser (trait/rel deltas)
 │   │   ├── prompts/             # Prompt loader module
 │   │   ├── presence/            # Backchannel player, ambient reactions, layer
-│   │   └── services/            # Business logic (pipeline manager, etc.)
+│   │   └── services/            # Pipeline manager, combat manager, trait service
 │   ├── prompts/                 # Editable YAML prompt/keyword files
 │   ├── alembic/                 # DB migrations
 │   ├── tests/                   # pytest test suite (305 tests)
@@ -385,10 +358,10 @@ vestige/
 │   ├── src/
 │   │   ├── api/client.js        # Fetch wrapper for all endpoints
 │   │   ├── stores/              # Zustand state stores
-│   │   ├── components/          # Reusable UI components
+│   │   ├── components/          # Reusable UI components (AvatarForm with ElevenLabs config)
 │   │   └── pages/               # Avatars, Sessions, Table, Settings, MemoryReview
 │   └── package.json
-├── voice_samples/               # Avatar voice .wav reference files
+├── voice_samples/               # Avatar voice .wav reference files (XTTS-v2 fallback)
 ├── data/                        # SQLite DB (gitignored)
 ├── docs/                        # Per-phase implementation notes
 ├── scripts/                     # Setup / utility scripts
@@ -401,25 +374,26 @@ vestige/
 
 ## Running Tests
 
-```
+```bash
 cd backend
 .venv/Scripts/python -m pytest tests/ -v
 ```
 
-305 tests across all phases. All should pass on a clean install.
+305 tests across all phases. All should pass on a clean install (no API keys needed — all external calls are stubbed in tests).
 
 ---
 
 ## Documentation
 
-*   [Phase 1 — Foundation](docs/phase1-foundation.md)
-*   [Phase 2 — Voice Input Pipeline](docs/phase2-voice-input.md)
-*   [Phase 3 — Voice Output Pipeline](docs/phase3-voice-output.md)
-*   [Phase 4 — AI Brain](docs/phase4-ai-brain.md)
-*   [Phase 5 — Memory System](docs/phase5-memory.md)
-*   [Phase 6 — Rules Engine & Combat](docs/phase6-rules.md)
-*   [Phase 7 — Polish & Inter-Avatar Dynamics](docs/phase7-polish.md)
-*   [Phase 8 — Avatar Personality & Voice Behaviors](docs/phase8-avatar-personality-behaviors.md)
+- [Phase 1 — Foundation](docs/phase1-foundation.md)
+- [Phase 2 — Voice Input Pipeline](docs/phase2-voice-input.md)
+- [Phase 3 — Voice Output Pipeline](docs/phase3-voice-output.md)
+- [Phase 4 — AI Brain](docs/phase4-ai-brain.md)
+- [Phase 5 — Memory System](docs/phase5-memory.md)
+- [Phase 6 — Rules Engine & Combat](docs/phase6-rules.md)
+- [Phase 7 — Polish & Inter-Avatar Dynamics](docs/phase7-polish.md)
+- [Phase 8 — Avatar Personality & Voice Behaviors](docs/phase8-avatar-personality-behaviors.md)
+- [Phase 9 — Audio Revamp](docs/phase9-audio-revamp.md)
 
 ---
 
@@ -428,10 +402,11 @@ cd backend
 | Phase | Description | Status |
 | --- | --- | --- |
 | **1** | Foundation — API, DB schema, avatar/session CRUD, D&D UI | ✅ Complete |
-| **2** | Voice Input — mic capture, VAD (silero), STT (faster-whisper), AEC | ✅ Complete |
-| **3** | Voice Output — XTTS-v2 TTS, voice cloning, backchannel pre-gen | ✅ Complete |
-| **4** | AI Brain — Ollama/Claude router, context engine, prompt builder | ✅ Complete |
+| **2** | Voice Input — mic capture, VAD, STT, AEC | ✅ Complete |
+| **3** | Voice Output — TTS, voice cloning, backchannel pre-gen | ✅ Complete |
+| **4** | AI Brain — LLM router, context engine, prompt builder | ✅ Complete |
 | **5** | Memory — session transcripts, embeddings, sqlite-vec retrieval | ✅ Complete |
 | **6** | Rules Engine — D&D 5e action economy, spells, conditions, combat | ✅ Complete |
 | **7** | Polish — inter-avatar dynamics, DM controls, settings panel | ✅ Complete |
 | **8** | Avatar Realism — personality prompts, differentiated voices, Phoenix tracing | ✅ Complete |
+| **9** | Audio Revamp — Deepgram STT, ElevenLabs TTS, GPT-4o, avatar banter, trait evolution | ✅ Complete |
