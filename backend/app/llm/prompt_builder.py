@@ -89,6 +89,9 @@ class AvatarContext:
     # Phase 8: LLM-generated rich persona description (replaces sparse traits block when set)
     personality_prompt: str = ""
 
+    # Phase 9: active character traits text (pre-formatted for injection)
+    active_traits_text: str = ""
+
 
 class PromptBuilder:
     """
@@ -114,6 +117,7 @@ class PromptBuilder:
             self._mechanical_state(ctx),
             self._party_relationships(ctx),
             self._relevant_memory(ctx),
+            self._active_traits(ctx),
             self._available_actions(ctx),
             self._response_rules(ctx),
         ]
@@ -199,6 +203,18 @@ class PromptBuilder:
         lines = ["== RELEVANT MEMORY =="]
         for chunk in ctx.memory_chunks:
             lines.append(f"- {chunk}")
+        return "\n".join(lines)
+
+    def _active_traits(self, ctx: AvatarContext) -> str:
+        """Phase 9: inject active character traits into the system prompt."""
+        if not ctx.active_traits_text:
+            return ""
+        lines = ["== ACTIVE CHARACTER TRAITS =="]
+        lines.append(ctx.active_traits_text)
+        lines.append(
+            "These traits may influence your tone subtly — you are not defined by them, "
+            "and they do not always manifest. Trust your character's voice."
+        )
         return "\n".join(lines)
 
     def _available_actions(self, ctx: AvatarContext) -> str:

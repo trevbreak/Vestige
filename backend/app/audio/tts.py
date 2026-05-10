@@ -141,6 +141,21 @@ class TTSEngine:
         language: str = "en",
         volume: float = 1.0,
     ) -> SynthesisResult:
+        # Phase 9: ElevenLabs takes priority when configured for this avatar
+        try:
+            from app.audio.elevenlabs_tts import elevenlabs_tts_engine
+            if avatar_id in elevenlabs_tts_engine._voice_configs:
+                el_result = elevenlabs_tts_engine.synthesize(text, avatar_id, emotion)
+                return SynthesisResult(
+                    audio_bytes=el_result.audio_bytes,
+                    sample_rate=el_result.sample_rate,
+                    duration_s=el_result.duration_s,
+                    emotion=el_result.emotion,
+                    text=el_result.text,
+                )
+        except Exception as e:
+            log.warning("tts.elevenlabs_fallthrough", error=str(e))
+
         # Phase 8: dispatch to Edge-TTS if configured
         pref = self._engine_preferences.get(avatar_id, "auto")
         voice_id = self._voice_ids.get(avatar_id)

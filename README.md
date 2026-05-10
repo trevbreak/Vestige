@@ -69,32 +69,96 @@ Avatars are aware of each other. They react to what other avatars say, reference
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│  React + Vite Frontend  (http://localhost:5173)                  │
-│  Avatars │ Sessions │ Table (live transcript + avatar panels)    │
-└────────────────────┬─────────────────────────────────────────────┘
-                     │ HTTP REST + WebSocket
-┌────────────────────▼─────────────────────────────────────────────┐
-│  FastAPI Backend  (http://localhost:8000)                        │
-│  /api/avatars  /api/sessions  /api/transcripts  /ws             │
-│  SQLite (SQLAlchemy async)  •  Static file serving               │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-```
-Mic → sounddevice → silero-vad → faster-whisper (CUDA)
-                                       ↓
-                           Backchannel Classifier
-                                       ↓
-                           Context Engine / LLM Router
-                          /                         \
-                   Ollama (fast)              Claude API (deep)
-                          \                         /
-                           Response Post-Processor
-                                       ↓
-                    XTTS-v2 (CUDA) or Edge-TTS (imageio-ffmpeg) → Speaker
-
-LLM Tracing UI: http://localhost:6006 (separate Phoenix process)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    BROWSER  ·  http://localhost:5173                        │
+│                                                                             │
+│   ┌─────────────┐  ┌──────────┐  ┌──────────────────────┐  ┌───────────┐  │
+│   │  Avatars    │  │ Sessions │  │  Table (live game)   │  │ Settings  │  │
+│   │  (CRUD +    │  │  (CRUD + │  │  transcript • avatar │  │  Memory   │  │
+│   │   voices)   │  │  history)│  │  panels • DM controls│  │  Review   │  │
+│   └─────────────┘  └──────────┘  └──────────────────────┘  └───────────┘  │
+│                         React 19 + Vite 7 + Zustand + CSS Modules           │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │  HTTP REST + WebSocket (/ws)
+┌──────────────────────────────────▼──────────────────────────────────────────┐
+│                    BACKEND  ·  http://localhost:8000                        │
+│                    FastAPI 0.115  ·  Python 3.13                            │
+│                                                                             │
+│  Routers: /api/avatars  /api/sessions  /api/transcripts                    │
+│           /api/settings  /api/prompts  /api/system                         │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │                        AUDIO PIPELINE                                │  │
+│  │                                                                      │  │
+│  │  🎤 Mic                                                              │  │
+│  │   └─ sounddevice ──► AEC Gate ──► silero-VAD ──► faster-whisper     │  │
+│  │                                                      (CUDA, STT)    │  │
+│  │                                         ┌────────────────┘          │  │
+│  │                                         ▼                           │  │
+│  │                            ┌─────────────────────┐                  │  │
+│  │           ┌────────────────┤  Backchannel        ├──► Presence      │  │
+│  │           │                │  Classifier         │    Layer         │  │
+│  │           │                └──────────┬──────────┘    (backchannels │  │
+│  │           │                           │                + holding    │  │
+│  │           │                           ▼                  phrases)   │  │
+│  │           │                ┌─────────────────────┐                  │  │
+│  │           │                │  Context Engine     │                  │  │
+│  │           │                │  · overlap detector │                  │  │
+│  │           │                │  · per-avatar eval  │                  │  │
+│  │           │                │  · archetype/       │                  │  │
+│  │           │                │    verbosity filter │                  │  │
+│  │           │                └──────────┬──────────┘                  │  │
+│  │           │                           │ DispatchRequest             │  │
+│  │           │                           ▼                             │  │
+│  │           │       ┌───────────────────────────────────────┐         │  │
+│  │           │       │           LLM DISPATCHER              │         │  │
+│  │           │       │                                       │         │  │
+│  │           │       │  Memory Retriever (sqlite-vec)        │         │  │
+│  │           │       │  Prompt Builder (YAML-driven)         │         │  │
+│  │           │       │  Cross-Avatar Referencer              │         │  │
+│  │           │       │  Rules Engine (D&D 5e)                │         │  │
+│  │           │       │         ↓ route selection             │         │  │
+│  │           │       │  ┌─────────────┐  ┌───────────────┐  │         │  │
+│  │           │       │  │ Ollama      │  │  Claude API   │  │         │  │
+│  │           │       │  │ (local LLM) │  │  (Anthropic)  │  │         │  │
+│  │           │       │  │ fast-path:  │  │  deep-path:   │  │         │  │
+│  │           │       │  │ combat,     │  │  roleplay,    │  │         │  │
+│  │           │       │  │ roleplay,   │  │  emotional,   │  │         │  │
+│  │           │       │  │ questions   │  │  backstory    │  │         │  │
+│  │           │       │  └──────┬──────┘  └──────┬────────┘  │         │  │
+│  │           │       │         └────────┬────────┘           │         │  │
+│  │           │       └──────────────────┼────────────────────┘         │  │
+│  │           │                          ▼                               │  │
+│  │           │             ┌────────────────────────┐                  │  │
+│  │           │             │  Response Post-        │                  │  │
+│  │           │             │  Processor             │                  │  │
+│  │           │             │  · emotion tag strip   │                  │  │
+│  │           │             │  · length truncation   │                  │  │
+│  │           │             │  · response jitter     │                  │  │
+│  │           │             └────────────┬───────────┘                  │  │
+│  │           │                          ▼                               │  │
+│  │           │    ┌───────────────────────────────────────────┐        │  │
+│  │           │    │                TTS ENGINE                 │        │  │
+│  │           │    │                                           │        │  │
+│  │           │    │  Edge-TTS  ──► imageio-ffmpeg (MP3→WAV)  │        │  │
+│  │           │    │  (neural accent voices, per-avatar)       │        │  │
+│  │           │    │                    ── or ──               │        │  │
+│  │           │    │  XTTS-v2 (CUDA, voice clone from .wav)   │        │  │
+│  │           │    └───────────────────────┬───────────────────┘        │  │
+│  │           │                            │                             │  │
+│  │           └────────────────────────────┘                             │  │
+│  │                                         ▼                            │  │
+│  │                                    🔊 Speaker                        │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌──────────────────────────┐   ┌──────────────────────────────────────┐   │
+│  │  SQLite (aiosqlite)      │   │  Arize Phoenix (optional, separate   │   │
+│  │  · avatars / sessions    │   │  process)  ·  http://localhost:6006  │   │
+│  │  · transcripts           │   │  OTel spans for every LLM call:      │   │
+│  │  · memories (embeddings) │   │  prompts · responses · latency ·     │   │
+│  │  · settings              │   │  tokens · avatar/context attributes  │   │
+│  └──────────────────────────┘   └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### GPU Memory Budget (24 GB)

@@ -24,8 +24,11 @@ Endpoints:
 from __future__ import annotations
 
 import asyncio
+import structlog
 from datetime import datetime, timezone
 from typing import Any
+
+log = structlog.get_logger()
 
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from pydantic import BaseModel
@@ -260,12 +263,37 @@ async def approve_summary(
         )
         avatar_updates.append(au)
 
+    from app.memory.summariser import TraitDelta, RelationshipDelta
+    trait_deltas = []
+    for t in sj.get("trait_deltas", []) or []:
+        trait_deltas.append(TraitDelta(
+            avatar_name=t.get("avatar_name", ""),
+            trait_name=t.get("trait_name", ""),
+            description=t.get("description", ""),
+            strength_change=t.get("strength_change", 0.5),
+            trigger_keywords=t.get("trigger_keywords", []),
+            emotional_signature=t.get("emotional_signature", ""),
+            is_positive=t.get("is_positive", False),
+        ))
+    rel_deltas_structured = []
+    for r in sj.get("relationship_deltas_structured", []) or []:
+        rel_deltas_structured.append(RelationshipDelta(
+            avatar_name=r.get("avatar_name", ""),
+            target_name=r.get("target_name", ""),
+            trust_delta=r.get("trust_delta", 0.0),
+            affection_delta=r.get("affection_delta", 0.0),
+            respect_delta=r.get("respect_delta", 0.0),
+            reason=r.get("reason", ""),
+        ))
+
     result_obj = SummaryResult(
         events=sj.get("events", []) or [],
         npcs=sj.get("npcs", []) or [],
         items=sj.get("items", []) or [],
         relationship_deltas=sj.get("relationship_deltas", []) or [],
         avatar_updates=avatar_updates,
+        trait_deltas=trait_deltas,
+        relationship_deltas_structured=rel_deltas_structured,
         summary_text=summary_row.summary_text or "",
     )
 
@@ -299,10 +327,97 @@ async def approve_summary(
             )
             chunks_created += 1
 
+    # Apply trait deltas — create/update CharacterTrait records
+    from app.models.character_trait import CharacterTrait
+    from app.models.relationship_state import RelationshipState
+    from datetime import datetime, timezone as _tz
+    traits_applied = 0
+    for td in result_obj.trait_deltas:
+        a_id = avatar_id_map.get(td.avatar_name.lower())
+        if not a_id:
+            continue
+        existing_trait = await db.execute(
+            select(CharacterTrait).where(
+                CharacterTrait.avatar_id == a_id,
+                CharacterTrait.trait_name == td.trait_name,
+            )
+        )
+        trait_row = existing_trait.scalar_one_or_none()
+        if trait_row:
+            trait_row.current_strength = max(0.0, min(1.0, trait_row.current_strength + td.strength_change))
+            trait_row.last_reinforced_at = datetime.now(_tz.utc)
+            if td.description and not trait_row.description:
+                trait_row.description = td.description
+        else:
+            import json as _json
+            trait_row = CharacterTrait(
+                avatar_id=a_id,
+                trait_name=td.trait_name,
+                description=td.description,
+                current_strength=max(0.0, min(1.0, td.strength_change)),
+                last_reinforced_at=datetime.now(_tz.utc),
+                manifestation_probability=0.3,
+                trigger_keywords=_json.dumps(td.trigger_keywords) if td.trigger_keywords else None,
+                emotional_signature=td.emotional_signature or None,
+                onset_session_id=session_id,
+                is_resolved=False,
+                is_positive=td.is_positive,
+            )
+            db.add(trait_row)
+        traits_applied += 1
+
+    # Apply relationship deltas — create/update RelationshipState records
+    rels_applied = 0
+    for rd in result_obj.relationship_deltas_structured:
+        a_id = avatar_id_map.get(rd.avatar_name.lower())
+        if not a_id:
+            continue
+        b_id = avatar_id_map.get(rd.target_name.lower())
+        existing_rel = await db.execute(
+            select(RelationshipState).where(
+                RelationshipState.avatar_a_id == a_id,
+                RelationshipState.target_name == rd.target_name if not b_id
+                else RelationshipState.avatar_b_id == b_id,
+            )
+        )
+        rel_row = existing_rel.scalar_one_or_none()
+        if rel_row:
+            rel_row.trust = max(0.0, min(1.0, rel_row.trust + rd.trust_delta))
+            rel_row.affection = max(-1.0, min(1.0, rel_row.affection + rd.affection_delta))
+            rel_row.respect = max(0.0, min(1.0, rel_row.respect + rd.respect_delta))
+            rel_row.last_updated_session_id = session_id
+            if rd.reason:
+                import json as _json2
+                moments = _json2.loads(rel_row.key_moments or "[]")
+                moments.append(rd.reason)
+                rel_row.key_moments = _json2.dumps(moments[-10:])  # keep last 10
+        else:
+            import json as _json3
+            rel_row = RelationshipState(
+                avatar_a_id=a_id,
+                avatar_b_id=b_id,
+                target_name=rd.target_name,
+                trust=max(0.0, min(1.0, 0.5 + rd.trust_delta)),
+                affection=max(-1.0, min(1.0, 0.0 + rd.affection_delta)),
+                respect=max(0.0, min(1.0, 0.5 + rd.respect_delta)),
+                key_moments=_json3.dumps([rd.reason]) if rd.reason else None,
+                last_updated_session_id=session_id,
+            )
+            db.add(rel_row)
+        rels_applied += 1
+
     # Mark as approved
     summary_row.is_approved = True
-    summary_row.reviewed_at = datetime.now(timezone.utc)
+    summary_row.reviewed_at = datetime.now(_tz.utc)
     await db.commit()
+
+    log.info(
+        "memory.approved",
+        session_id=session_id,
+        chunks=chunks_created,
+        traits=traits_applied,
+        relationships=rels_applied,
+    )
 
     return ApproveResponse(session_id=session_id, chunks_created=chunks_created)
 

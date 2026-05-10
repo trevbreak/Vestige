@@ -30,11 +30,14 @@ class AudioJob:
     # These fields are excluded from comparison
     avatar_id: int = field(compare=False)
     avatar_name: str = field(compare=False)
-    wav_bytes: bytes = field(compare=False)
+    wav_bytes: bytes = field(compare=False, default=b"")
     volume: float = field(compare=False, default=1.0)
     utterance_type: str = field(compare=False, default="speech")
     session_id: int = field(compare=False, default=0)
     enqueued_at: float = field(compare=False, default_factory=time.monotonic)
+    # PCM streaming fields (ElevenLabs path)
+    pcm_stream: object = field(compare=False, default=None)  # AsyncIterator[bytes] | None
+    sample_rate: int = field(compare=False, default=24000)
 
 
 # WAV streaming chunk size (bytes sent per WebSocket message)
@@ -85,7 +88,31 @@ class AudioOutputManager:
             session_id=self.session_id,
         )
         await self._queue.put(job)
+        self._maybe_preempt(priority)
 
+    async def enqueue_stream(
+        self,
+        avatar_id: int,
+        avatar_name: str,
+        pcm_stream,   # AsyncIterator[bytes] of raw int16 PCM at 24 kHz
+        priority: int = 5,
+        utterance_type: str = "speech",
+        sample_rate: int = 24000,
+    ) -> None:
+        """Queue a streaming PCM job (ElevenLabs path). Starts playing before all audio arrives."""
+        job = AudioJob(
+            priority=priority,
+            avatar_id=avatar_id,
+            avatar_name=avatar_name,
+            utterance_type=utterance_type,
+            session_id=self.session_id,
+            pcm_stream=pcm_stream,
+            sample_rate=sample_rate,
+        )
+        await self._queue.put(job)
+        self._maybe_preempt(priority)
+
+    def _maybe_preempt(self, priority: int) -> None:
         # Preempt current job if new job has higher priority (lower number)
         if (
             self._current_job is not None
@@ -133,11 +160,15 @@ class AudioOutputManager:
         log.info("output_manager.stopped", session_id=self.session_id)
 
     async def _play_job(self, job: AudioJob) -> None:
-        """Stream one WAV job to the browser via WebSocket."""
-        # 1. Close AEC gate — stop the mic
-        self._gate.on_tts_start()
+        """Deliver one audio job to the browser via WebSocket."""
+        if job.pcm_stream is not None:
+            await self._play_pcm_stream(job)
+        else:
+            await self._play_wav_bytes(job)
 
-        # 2. Broadcast avatar speaking status
+    async def _play_wav_bytes(self, job: AudioJob) -> None:
+        """Stream a pre-synthesised WAV to the browser in chunks."""
+        self._gate.on_tts_start()
         await self._broadcast({
             "type": "avatar_speaking",
             "session_id": self.session_id,
@@ -147,13 +178,11 @@ class AudioOutputManager:
             "speaking": True,
         })
 
-        # 3. Stream WAV in chunks
         wav = job.wav_bytes
         offset = 0
         chunk_count = 0
         cancelled = False
 
-        # Signal start of audio stream
         await self._broadcast({
             "type": "audio_start",
             "session_id": self.session_id,
@@ -161,10 +190,10 @@ class AudioOutputManager:
             "avatar_name": job.avatar_name,
             "utterance_type": job.utterance_type,
             "total_bytes": len(wav),
+            "encoding": "wav",
         })
 
         while offset < len(wav) and not cancelled:
-            # Check preemption
             if self._cancel_current.is_set():
                 cancelled = True
                 log.debug("output_manager.job_preempted", avatar=job.avatar_name)
@@ -181,11 +210,8 @@ class AudioOutputManager:
             })
             offset += STREAM_CHUNK_BYTES
             chunk_count += 1
-
-            # Small yield to avoid starving the event loop
             await asyncio.sleep(0)
 
-        # 4. Signal end of audio stream
         await self._broadcast({
             "type": "audio_end",
             "session_id": self.session_id,
@@ -193,8 +219,6 @@ class AudioOutputManager:
             "avatar_name": job.avatar_name,
             "cancelled": cancelled,
         })
-
-        # 5. Broadcast avatar stopped speaking
         await self._broadcast({
             "type": "avatar_speaking",
             "session_id": self.session_id,
@@ -203,14 +227,78 @@ class AudioOutputManager:
             "utterance_type": job.utterance_type,
             "speaking": False,
         })
-
-        # 6. Open AEC gate — mic unblocked after decay
         self._gate.on_tts_end()
-
         log.debug(
-            "output_manager.job_done",
+            "output_manager.wav_done",
             avatar=job.avatar_name,
             bytes=len(wav),
+            chunks=chunk_count,
+            cancelled=cancelled,
+        )
+
+    async def _play_pcm_stream(self, job: AudioJob) -> None:
+        """Stream raw PCM chunks from ElevenLabs directly to the browser."""
+        self._gate.on_tts_start()
+        await self._broadcast({
+            "type": "avatar_speaking",
+            "session_id": self.session_id,
+            "avatar_id": job.avatar_id,
+            "avatar_name": job.avatar_name,
+            "utterance_type": job.utterance_type,
+            "speaking": True,
+        })
+
+        await self._broadcast({
+            "type": "audio_start",
+            "session_id": self.session_id,
+            "avatar_id": job.avatar_id,
+            "avatar_name": job.avatar_name,
+            "utterance_type": job.utterance_type,
+            "total_bytes": -1,  # Unknown for streaming
+            "encoding": "pcm_s16le",
+            "sample_rate": job.sample_rate,
+        })
+
+        chunk_count = 0
+        cancelled = False
+        try:
+            async for chunk in job.pcm_stream:
+                if self._cancel_current.is_set():
+                    cancelled = True
+                    break
+                if not chunk:
+                    continue
+                encoded = base64.b64encode(chunk).decode("ascii")
+                await self._broadcast({
+                    "type": "audio_chunk",
+                    "session_id": self.session_id,
+                    "avatar_id": job.avatar_id,
+                    "data": encoded,
+                })
+                chunk_count += 1
+                await asyncio.sleep(0)
+        except Exception as e:
+            log.error("output_manager.pcm_stream_error", error=str(e))
+
+        await self._broadcast({
+            "type": "audio_end",
+            "session_id": self.session_id,
+            "avatar_id": job.avatar_id,
+            "avatar_name": job.avatar_name,
+            "cancelled": cancelled,
+        })
+        await self._broadcast({
+            "type": "avatar_speaking",
+            "session_id": self.session_id,
+            "avatar_id": job.avatar_id,
+            "avatar_name": job.avatar_name,
+            "utterance_type": job.utterance_type,
+            "speaking": False,
+        })
+        self._gate.on_tts_end()
+        log.debug(
+            "output_manager.pcm_stream_done",
+            avatar=job.avatar_name,
             chunks=chunk_count,
             cancelled=cancelled,
         )

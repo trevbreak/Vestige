@@ -14,6 +14,10 @@ const DEFAULTS = {
   backstory: '', personality_traits: '', ideals: '', bonds: '', flaws: '',
   sentence_style: '', verbal_tics: '', never_say: '',
   mode: 'active',
+  // ElevenLabs voice
+  elevenlabs_voice_id: '',
+  elevenlabs_model_preference: 'eleven_v3',
+  elevenlabs_voice_params: null,
 }
 
 export default function AvatarForm({ initial, onClose }) {
@@ -28,6 +32,23 @@ export default function AvatarForm({ initial, onClose }) {
 
   const set = (field) => (e) =>
     setForm((f) => ({ ...f, [field]: e.target.type === 'number' ? Number(e.target.value) : e.target.value }))
+
+  const setVoiceParam = (param) => (e) => {
+    const val = parseFloat(e.target.value)
+    setForm((f) => ({
+      ...f,
+      elevenlabs_voice_params: {
+        stability: 0.7, similarity_boost: 0.8, style: 0.4, use_speaker_boost: true,
+        ...(f.elevenlabs_voice_params || {}),
+        [param]: val,
+      },
+    }))
+  }
+
+  const voiceParams = {
+    stability: 0.7, similarity_boost: 0.8, style: 0.4, use_speaker_boost: true,
+    ...(form.elevenlabs_voice_params || {}),
+  }
 
   const handleRandomise = async () => {
     setRolling(true)
@@ -195,6 +216,39 @@ export default function AvatarForm({ initial, onClose }) {
             <Field label="Never Say (one per line)">
               <textarea value={form.never_say} onChange={set('never_say')} placeholder={'certainly\nindeed\nas an AI'} />
             </Field>
+          </Section>
+
+          <Section title="ElevenLabs Voice">
+            <Field label="Voice ID (from elevenlabs.io/voice-lab)">
+              <input
+                value={form.elevenlabs_voice_id || ''}
+                onChange={set('elevenlabs_voice_id')}
+                placeholder="e.g. 21m00Tcm4TlvDq8ikWAM"
+              />
+            </Field>
+            <Field label="Model preference">
+              <select value={form.elevenlabs_model_preference || 'eleven_v3'} onChange={set('elevenlabs_model_preference')}>
+                <option value="eleven_v3">Quality — eleven_v3 (emotion tags, ~300ms TTFB)</option>
+                <option value="eleven_flash_v2_5">Fast — eleven_flash_v2_5 (~170ms TTFB)</option>
+              </select>
+            </Field>
+            <Row>
+              <Field label={`Stability: ${voiceParams.stability.toFixed(2)}`}>
+                <input type="range" min="0" max="1" step="0.05"
+                  value={voiceParams.stability} onChange={setVoiceParam('stability')} />
+              </Field>
+              <Field label={`Style: ${voiceParams.style.toFixed(2)}`}>
+                <input type="range" min="0" max="1" step="0.05"
+                  value={voiceParams.style} onChange={setVoiceParam('style')} />
+              </Field>
+              <Field label={`Similarity: ${voiceParams.similarity_boost.toFixed(2)}`}>
+                <input type="range" min="0" max="1" step="0.05"
+                  value={voiceParams.similarity_boost} onChange={setVoiceParam('similarity_boost')} />
+              </Field>
+            </Row>
+            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
+              Leave Voice ID blank to use Edge-TTS or XTTS-v2 instead.
+            </p>
           </Section>
 
           <Section title="Portrait">

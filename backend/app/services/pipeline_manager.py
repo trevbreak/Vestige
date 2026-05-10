@@ -90,6 +90,23 @@ class PipelineManager:
                 engine_preference=profile.get("tts_engine_preference", "auto"),
             )
 
+        # Phase 9: register ElevenLabs voice config when present
+        from app.audio.elevenlabs_tts import elevenlabs_tts_engine
+        for aid, profile in (avatar_profiles or {}).items():
+            el_voice_id = profile.get("elevenlabs_voice_id", "")
+            if el_voice_id:
+                elevenlabs_tts_engine.register_avatar(
+                    avatar_id=aid,
+                    voice_id=el_voice_id,
+                    voice_params=profile.get("elevenlabs_voice_params"),
+                    model_preference=profile.get("elevenlabs_model_preference", "eleven_v3"),
+                )
+                log.info(
+                    "pipeline_manager.elevenlabs_registered",
+                    avatar_id=aid,
+                    model=profile.get("elevenlabs_model_preference", "eleven_v3"),
+                )
+
         # ── AudioPipeline (owns the EchoGate we'll share) ─────────────────
         # AudioPipeline.__init__ loads the Whisper model (blocking, up to 30s).
         # Run it in a thread executor so the event loop stays responsive.

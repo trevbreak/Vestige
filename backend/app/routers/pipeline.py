@@ -80,6 +80,10 @@ async def start_pipeline(session_id: int, db: AsyncSession = Depends(get_db)):
                 "holding_phrase_chance": avatar.holding_phrase_chance if avatar.holding_phrase_chance is not None else 0.5,
                 "voice_id": avatar.voice_id,
                 "tts_engine_preference": avatar.tts_engine_preference or "auto",
+                # Phase 9: ElevenLabs voice config
+                "elevenlabs_voice_id": avatar.elevenlabs_voice_id or "",
+                "elevenlabs_voice_params": avatar.elevenlabs_voice_params,
+                "elevenlabs_model_preference": avatar.elevenlabs_model_preference or "eleven_v3",
             }
 
     async def broadcast_entry(entry):

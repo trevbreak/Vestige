@@ -20,6 +20,7 @@ from app.routers import settings as settings_router
 from app.routers import system as system_router
 from app.routers import audio_ws
 from app.routers import prompts as prompts_router
+from app.routers import traits as traits_router
 from app.startup_checks import run_startup_checks
 from app.tracing import init_tracing
 
@@ -92,3 +93,4 @@ app.include_router(settings_router.router, prefix="/api")
 app.include_router(system_router.router, prefix="/api")
 app.include_router(audio_ws.router)
 app.include_router(prompts_router.router, prefix="/api")
+app.include_router(traits_router.router, prefix="/api")

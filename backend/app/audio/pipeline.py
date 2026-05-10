@@ -399,6 +399,46 @@ class AudioPipeline:
             requesting_avatar_name=avatar_name,
         )
 
+        # Phase 9: fetch active character traits and check for trigger manifestations
+        active_traits_text = ""
+        emotion_hints: list[str] = []
+        if db_factory is not None:
+            try:
+                from app.models.character_trait import CharacterTrait
+                from app.services.trait_service import check_trait_triggers
+                import json as _json
+                recent_text = " ".join(transcript_lines[-5:]) if transcript_lines else ""
+                async with db_factory() as db:
+                    from sqlalchemy import select as _select
+                    result = await db.execute(
+                        _select(CharacterTrait).where(
+                            CharacterTrait.avatar_id == avatar_id,
+                            CharacterTrait.is_resolved == False,  # noqa: E712
+                        )
+                    )
+                    traits = result.scalars().all()
+                    if traits:
+                        # Build traits text for prompt injection
+                        trait_lines = []
+                        for t in traits:
+                            strength_label = (
+                                "strong" if t.current_strength > 0.7
+                                else "moderate" if t.current_strength > 0.4
+                                else "mild"
+                            )
+                            line = f"• {strength_label.capitalize()} {t.trait_name} (strength: {t.current_strength:.1f})"
+                            if t.description:
+                                line += f": {t.description}"
+                            trait_lines.append(line)
+                        active_traits_text = "\n".join(trait_lines)
+                        # Check if any trait keywords appear in recent transcript
+                        if recent_text:
+                            emotion_hints = check_trait_triggers(recent_text, traits)
+                            if emotion_hints:
+                                await db.commit()
+            except Exception as e:
+                log.warning("pipeline.trait_fetch_failed", error=str(e))
+
         req = DispatchRequest(
             session_id=self.session_id,
             avatar_id=avatar_id,
@@ -410,6 +450,8 @@ class AudioPipeline:
             memory_chunks=memory_chunks,
             available_actions_text=available_actions_text,
             cross_avatar_note=cross_avatar_note,
+            active_traits_text=active_traits_text,
+            emotion_hints=emotion_hints,
             **{k: v for k, v in profile.items() if k != "name"},
         )
         # Fire and forget — do not block the pipeline loop

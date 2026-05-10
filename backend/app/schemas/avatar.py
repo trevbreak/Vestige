@@ -56,6 +56,11 @@ class AvatarBase(BaseModel):
     voice_id: Optional[str] = None
     tts_engine_preference: str = "auto"
 
+    # Phase 9: ElevenLabs voice
+    elevenlabs_voice_id: Optional[str] = None
+    elevenlabs_voice_params: Optional[dict[str, Any]] = None
+    elevenlabs_model_preference: str = "eleven_v3"
+
     @field_validator("personality_archetype")
     @classmethod
     def validate_archetype(cls, v: str) -> str:
@@ -119,6 +124,11 @@ class AvatarUpdate(BaseModel):
     holding_phrase_chance: Optional[float] = Field(None, ge=0.0, le=1.0)
     voice_id: Optional[str] = None
     tts_engine_preference: Optional[str] = None
+
+    # Phase 9: ElevenLabs voice
+    elevenlabs_voice_id: Optional[str] = None
+    elevenlabs_voice_params: Optional[dict[str, Any]] = None
+    elevenlabs_model_preference: Optional[str] = None
 
 
 class AvatarResponse(AvatarBase):

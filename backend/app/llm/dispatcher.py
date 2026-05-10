@@ -75,6 +75,15 @@ class DispatchRequest:
     voice_id: str = ""
     tts_engine_preference: str = "auto"
 
+    # Phase 9: ElevenLabs voice config
+    elevenlabs_voice_id: str = ""
+    elevenlabs_voice_params: dict = None
+    elevenlabs_model_preference: str = "eleven_v3"
+
+    # Phase 9: active traits (pre-formatted text) + emotion hints from trait triggers
+    active_traits_text: str = ""
+    emotion_hints: list = None
+
     # Current session context
     transcript_lines: list[str] = None   # ["Speaker: text", ...]
     memory_chunks: list[str] = None      # Phase 5: retrieved memory
@@ -92,6 +101,10 @@ class DispatchRequest:
             self.transcript_lines = []
         if self.memory_chunks is None:
             self.memory_chunks = []
+        if self.elevenlabs_voice_params is None:
+            self.elevenlabs_voice_params = {}
+        if self.emotion_hints is None:
+            self.emotion_hints = []
 
 
 class LLMDispatcher:
@@ -183,6 +196,7 @@ class LLMDispatcher:
             available_actions_text=req.available_actions_text,
             cross_avatar_note=req.cross_avatar_note,
             personality_prompt=req.personality_prompt,
+            active_traits_text=req.active_traits_text,
         )
         system_prompt, user_message = _prompt_builder.build(ctx)
 
@@ -240,20 +254,28 @@ class LLMDispatcher:
             delay_s=round(processed.delay_seconds, 1),
         )
 
+        # 4.5 Override emotion with trait hint if one fired (trait takes priority)
+        if req.emotion_hints:
+            from dataclasses import replace as _replace
+            processed = _replace(processed, emotion=req.emotion_hints[0])
+
         # 5. Jitter delay (simulate natural thinking time)
         await asyncio.sleep(processed.delay_seconds)
 
-        # 6. TTS synthesis in thread pool
-        tts_result = await loop.run_in_executor(
-            None,
-            lambda: self._tts.synthesize(
-                text=processed.text,
-                avatar_id=req.avatar_id,
-                emotion=processed.emotion,
-            ),
-        )
+        # 5.5 Audio tag injection — ElevenLabs v3 only (v3 supports inline tone/sound tags)
+        tts_text = processed.text
+        if req.elevenlabs_voice_id and req.elevenlabs_model_preference == "eleven_v3":
+            try:
+                from app.audio.audio_tag_injector import inject_audio_tags
+                tts_text = await inject_audio_tags(
+                    tts_text, req.avatar_name, req.context_type,
+                )
+            except Exception as e:
+                log.warning("dispatcher.audio_tag_injection_failed", error=str(e))
 
-        # 7. Broadcast transcript entry for the avatar's speech
+        # 6+7+8. TTS synthesis, transcript broadcast, and audio delivery
+        # For ElevenLabs: stream PCM chunks directly — first audio in ~300ms
+        # For other engines: batch synthesis then enqueue WAV
         await self._broadcast({
             "type": "transcript",
             "session_id": self.session_id,
@@ -272,15 +294,40 @@ class LLMDispatcher:
             },
         })
 
-        # 8. Enqueue audio
-        await self._output.enqueue(
-            avatar_id=req.avatar_id,
-            avatar_name=req.avatar_name,
-            wav_bytes=tts_result.audio_bytes,
-            priority=req.priority,
-            volume=1.0,
-            utterance_type="speech",
-        )
+        if req.elevenlabs_voice_id:
+            from app.audio.elevenlabs_tts import elevenlabs_tts_engine
+            pcm_stream = elevenlabs_tts_engine.synthesize_stream(
+                text=tts_text,
+                voice_id=req.elevenlabs_voice_id,
+                voice_params=req.elevenlabs_voice_params or None,
+                model=req.elevenlabs_model_preference,
+                emotion=processed.emotion,
+            )
+            await self._output.enqueue_stream(
+                avatar_id=req.avatar_id,
+                avatar_name=req.avatar_name,
+                pcm_stream=pcm_stream,
+                priority=req.priority,
+                utterance_type="speech",
+                sample_rate=24000,
+            )
+        else:
+            tts_result = await loop.run_in_executor(
+                None,
+                lambda: self._tts.synthesize(
+                    text=tts_text,
+                    avatar_id=req.avatar_id,
+                    emotion=processed.emotion,
+                ),
+            )
+            await self._output.enqueue(
+                avatar_id=req.avatar_id,
+                avatar_name=req.avatar_name,
+                wav_bytes=tts_result.audio_bytes,
+                priority=req.priority,
+                volume=1.0,
+                utterance_type="speech",
+            )
 
         # 9. Mark avatar as having spoken (updates context engine cooldowns)
         self._context_engine.on_avatar_spoke(req.avatar_id)
